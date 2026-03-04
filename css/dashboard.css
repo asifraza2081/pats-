@@ -1,0 +1,73 @@
+body {
+            background: #f4f6f9;
+            font-family: 'Segoe UI', sans-serif;
+        }
+
+        .process-wrapper {
+            background: #f8f9fc;
+            padding: 20px 10px;
+        }
+
+        .process-header h3 {
+            font-weight: 600;
+            font-size: 22px;
+            margin: 0;
+        }
+
+        .title-blue {
+            color: #4e73df;
+        }
+
+        .manual-link {
+            color: #e74a3b;
+            font-weight: 600;
+            text-decoration: underline;
+        }
+
+        .process-steps {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            text-align: center;
+            margin-top: 20px;
+        }
+
+        .step-box {
+            flex: 1;
+        }
+
+        .circle {
+            width: 40px;
+            height: 40px;
+            border-radius: 50%;
+            background: #1cc88a;
+            color: white;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            margin: 0 auto 10px;
+            font-weight: bold;
+            font-size: 16px;
+        }
+
+        .step-box p {
+            font-size: 14px;
+            margin: 0;
+            color: #333;
+        }
+
+        .instructions-wrapper {
+            background: #f8f9fc;
+            padding: 20px;
+            border-radius: 6px;
+        }
+
+        .instruction-box p {
+            font-size: 14px;
+            margin-bottom: 12px;
+        }
+
+        .urdu-text {
+            font-family: 'Noto Nastaliq Urdu', serif;
+            line-height: 1.8;
+        }
