@@ -56,18 +56,29 @@ class Request
 
     public function isAjax(): bool
     {
-        return ($_SERVER['HTTP_X_REQUESTED_WITH'] ?? '') === 'XMLHttpRequest';
+        $requestedWith = $_SERVER['HTTP_X_REQUESTED_WITH'] ?? '';
+        $accept = $_SERVER['HTTP_ACCEPT'] ?? '';
+        return $requestedWith === 'XMLHttpRequest' || str_contains($accept, 'application/json');
     }
 
     public function uri(): string
     {
         $uri = $_SERVER['REQUEST_URI'] ?? '/';
-        $basePath = rtrim(dirname($_SERVER['SCRIPT_NAME']), '/');
+        // Normalize slashes for Windows
+        $scriptName = str_replace('\\', '/', dirname($_SERVER['SCRIPT_NAME']));
+        $basePath = rtrim($scriptName, '/');
+        
         // Strip base path prefix for sub-directory installs
         if ($basePath && str_starts_with($uri, $basePath)) {
             $uri = substr($uri, strlen($basePath));
         }
-        return '/' . ltrim(strtok($uri, '?'), '/');
+        $uri = strtok($uri, '?');
+        $uri = '/' . ltrim($uri, '/');
+        // Final normalization: remove trailing slash except for root
+        if ($uri !== '/') {
+            $uri = rtrim($uri, '/');
+        }
+        return $uri;
     }
 
     public function ip(): string

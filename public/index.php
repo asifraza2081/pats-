@@ -9,9 +9,7 @@ declare(strict_types=1);
  * ============================================================
  */
 
-define('BASE_PATH', dirname(__DIR__));
-
-require BASE_PATH . '/bootstrap.php';
+require __DIR__ . '/../bootstrap.php';
 
 use App\Core\Request;
 use App\Core\Router;
