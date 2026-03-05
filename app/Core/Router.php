@@ -31,7 +31,7 @@ class Router
     private function uriToPattern(string $uri): string
     {
         // Convert {param} placeholders to named regex groups
-        $pattern = preg_replace('/\{([a-z_]+)\}/', '(?P<$1>[^/]+)', $uri);
+        $pattern = preg_replace('/\{([a-zA-Z0-9_]+)\}/', '(?P<$1>[^/]+)', $uri);
         return '#^' . $pattern . '$#';
     }
 
@@ -65,6 +65,7 @@ class Router
         }
 
         // No route matched
+        error_log("Router 404: " . $method . " " . $uri);
         Response::abort(404);
     }
 

@@ -63,8 +63,11 @@ $router->get('/challan/{id}',       [ChallanController::class, 'print']);
 $router->get('/slip/{id}',          [RollNumberController::class, 'slip']);
 
 // AJAX endpoints
-$router->get('/api/centers/{projectId}',  [ApplicationController::class, 'centersForProject']);
-$router->get('/api/slots/{centerId}',     [ApplicationController::class, 'slotsForCenter']);
+$router->get('/lookup/centers/{projectId}', [ApplicationController::class, 'centersForProject']);
+$router->get('/lookup/slots/{centerId}',    [ApplicationController::class, 'slotsForCenter']);
+
+$router->get('/unauthorized',         [\App\Controllers\ErrorsController::class, 'unauthorized']);
+$router->get('/404',                  [\App\Controllers\ErrorsController::class, 'notFound']);
 
 // ── Admin Routes ───────────────────────────────────────────
 
@@ -120,4 +123,4 @@ $router->post('/admin/sms/send',                         [AdminSms::class, 'send
 
 // Reports
 $router->get('/admin/reports',                           [AdminReport::class, 'index']);
-$router->post('/admin/reports/export',                   [AdminReport::class, 'export']);
+$router->get('/admin/reports/applications',              [AdminReport::class, 'exportApplications']);

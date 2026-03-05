@@ -8,7 +8,7 @@
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet">
     <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.min.css" rel="stylesheet">
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
-    <link href="/pats/public/assets/css/admin.css" rel="stylesheet">
+    <link href="<?= APP_URL ?>/assets/css/admin.css" rel="stylesheet">
 </head>
 <body class="bg-light">
 
@@ -17,7 +17,7 @@
     <!-- Sidebar -->
     <nav id="sidebar" class="bg-dark text-white d-flex flex-column p-0" style="min-width:240px;min-height:100vh">
         <div class="p-3 border-bottom border-secondary">
-            <a href="/pats/public/admin/dashboard" class="text-white text-decoration-none fw-bold fs-5">
+            <a href="<?= APP_URL ?>/admin/dashboard" class="text-white text-decoration-none fw-bold fs-5">
                 <i class="bi bi-shield-check me-2"></i><?= htmlspecialchars($_ENV['APP_NAME'] ?? 'PATS') ?>
             </a>
             <div class="small text-secondary mt-1">Admin Panel</div>
@@ -25,53 +25,53 @@
 
         <ul class="nav nav-pills flex-column mt-2 px-2 flex-grow-1">
             <li class="nav-item">
-                <a href="/pats/public/admin/dashboard" class="nav-link text-white <?= str_contains($_SERVER['REQUEST_URI']??'', '/admin/dashboard') ? 'active' : '' ?>">
+                <a href="<?= APP_URL ?>/admin/dashboard" class="nav-link text-white <?= str_contains($_SERVER['REQUEST_URI']??'', '/admin/dashboard') ? 'active' : '' ?>">
                     <i class="bi bi-speedometer2 me-2"></i>Dashboard
                 </a>
             </li>
 
             <li class="nav-header small text-secondary px-3 pt-3 pb-1 text-uppercase fw-semibold" style="font-size:.7rem;letter-spacing:.08em">Projects</li>
             <li class="nav-item">
-                <a href="/pats/public/admin/projects" class="nav-link text-white <?= str_contains($_SERVER['REQUEST_URI']??'', '/admin/projects') ? 'active' : '' ?>">
+                <a href="<?= APP_URL ?>/admin/projects" class="nav-link text-white <?= str_contains($_SERVER['REQUEST_URI']??'', '/admin/projects') ? 'active' : '' ?>">
                     <i class="bi bi-folder2-open me-2"></i>Projects
                 </a>
             </li>
             <li class="nav-item">
-                <a href="/pats/public/admin/jobs" class="nav-link text-white <?= str_contains($_SERVER['REQUEST_URI']??'', '/admin/jobs') ? 'active' : '' ?>">
+                <a href="<?= APP_URL ?>/admin/jobs" class="nav-link text-white <?= str_contains($_SERVER['REQUEST_URI']??'', '/admin/jobs') ? 'active' : '' ?>">
                     <i class="bi bi-briefcase me-2"></i>Jobs / Posts
                 </a>
             </li>
 
             <li class="nav-header small text-secondary px-3 pt-3 pb-1 text-uppercase fw-semibold" style="font-size:.7rem;letter-spacing:.08em">Operations</li>
             <li class="nav-item">
-                <a href="/pats/public/admin/centers" class="nav-link text-white <?= str_contains($_SERVER['REQUEST_URI']??'', '/admin/centers') ? 'active' : '' ?>">
+                <a href="<?= APP_URL ?>/admin/centers" class="nav-link text-white <?= str_contains($_SERVER['REQUEST_URI']??'', '/admin/centers') ? 'active' : '' ?>">
                     <i class="bi bi-geo-alt me-2"></i>Test Centers
                 </a>
             </li>
             <li class="nav-item">
-                <a href="/pats/public/admin/applications" class="nav-link text-white <?= str_contains($_SERVER['REQUEST_URI']??'', '/admin/applications') ? 'active' : '' ?>">
+                <a href="<?= APP_URL ?>/admin/applications" class="nav-link text-white <?= str_contains($_SERVER['REQUEST_URI']??'', '/admin/applications') ? 'active' : '' ?>">
                     <i class="bi bi-file-earmark-person me-2"></i>Applications
                 </a>
             </li>
             <li class="nav-item">
-                <a href="/pats/public/admin/challans" class="nav-link text-white <?= str_contains($_SERVER['REQUEST_URI']??'', '/admin/challans') ? 'active' : '' ?>">
+                <a href="<?= APP_URL ?>/admin/challans" class="nav-link text-white <?= str_contains($_SERVER['REQUEST_URI']??'', '/admin/challans') ? 'active' : '' ?>">
                     <i class="bi bi-cash-coin me-2"></i>Fee Challans
                 </a>
             </li>
             <li class="nav-item">
-                <a href="/pats/public/admin/results" class="nav-link text-white <?= str_contains($_SERVER['REQUEST_URI']??'', '/admin/results') ? 'active' : '' ?>">
+                <a href="<?= APP_URL ?>/admin/results" class="nav-link text-white <?= str_contains($_SERVER['REQUEST_URI']??'', '/admin/results') ? 'active' : '' ?>">
                     <i class="bi bi-bar-chart-line me-2"></i>Results
                 </a>
             </li>
 
             <li class="nav-header small text-secondary px-3 pt-3 pb-1 text-uppercase fw-semibold" style="font-size:.7rem;letter-spacing:.08em">Communications</li>
             <li class="nav-item">
-                <a href="/pats/public/admin/sms" class="nav-link text-white <?= str_contains($_SERVER['REQUEST_URI']??'', '/admin/sms') ? 'active' : '' ?>">
+                <a href="<?= APP_URL ?>/admin/sms" class="nav-link text-white <?= str_contains($_SERVER['REQUEST_URI']??'', '/admin/sms') ? 'active' : '' ?>">
                     <i class="bi bi-chat-dots me-2"></i>Send SMS
                 </a>
             </li>
             <li class="nav-item">
-                <a href="/pats/public/admin/reports" class="nav-link text-white <?= str_contains($_SERVER['REQUEST_URI']??'', '/admin/reports') ? 'active' : '' ?>">
+                <a href="<?= APP_URL ?>/admin/reports" class="nav-link text-white <?= str_contains($_SERVER['REQUEST_URI']??'', '/admin/reports') ? 'active' : '' ?>">
                     <i class="bi bi-download me-2"></i>Reports
                 </a>
             </li>
@@ -81,7 +81,7 @@
             <i class="bi bi-person-circle me-1"></i>
             <?= htmlspecialchars(\App\Core\Auth::user()['name'] ?? 'Admin') ?>
             &nbsp;|&nbsp;
-            <a href="/pats/public/logout" class="text-danger text-decoration-none">Logout</a>
+            <a href="<?= APP_URL ?>/logout" class="text-danger text-decoration-none">Logout</a>
         </div>
     </nav>
 
@@ -124,6 +124,6 @@
 </div>
 
 <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
-<script src="/pats/public/assets/js/admin.js"></script>
+<script src="<?= APP_URL ?>/assets/js/admin.js"></script>
 </body>
 </html>

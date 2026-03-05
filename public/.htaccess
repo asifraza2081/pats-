@@ -1,7 +1,7 @@
 Options -Indexes
 
 RewriteEngine On
-RewriteBase /pats/public/
+RewriteBase /
 
 # Serve existing files and directories directly
 RewriteCond %{REQUEST_FILENAME} !-f
