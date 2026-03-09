@@ -67,7 +67,7 @@
                             <a href="{{ route('candidate.apply',$job) }}" class="btn btn-pats btn-sm fw-semibold">Apply Now</a>
                             @endif
                             @else
-                            <a href="{{ route('auth.login') }}" class="btn btn-outline-primary btn-sm">Login to Apply</a>
+                            <a href="{{ route('login') }}" class="btn btn-outline-primary btn-sm">Login to Apply</a>
                             @endauth
                         </div>
                     </div>

@@ -109,7 +109,7 @@
                 </a>
             </div>
             <div class="col-6 col-md-3">
-                <a href="{{ route('auth.login') }}" class="text-white text-decoration-none">
+                <a href="{{ route('login') }}" class="text-white text-decoration-none">
                     <i class="bi bi-box-arrow-in-right fs-2 mb-2 d-block" style="color:#f9ca24"></i>
                     <div class="fw-semibold">Candidate Portal</div>
                 </a>

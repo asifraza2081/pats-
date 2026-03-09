@@ -73,7 +73,7 @@
                         </form>
                     </li>
                 @else
-                    <li class="nav-item"><a class="btn btn-sm btn-outline-light ms-2" href="{{ route('auth.login') }}">Login</a></li>
+                    <li class="nav-item"><a class="btn btn-sm btn-outline-light ms-2" href="{{ route('login') }}">Login</a></li>
                     <li class="nav-item"><a class="btn btn-sm ms-2" style="background:var(--pats-accent);color:#fff" href="{{ route('auth.register') }}">Register</a></li>
                 @endauth
             </ul>

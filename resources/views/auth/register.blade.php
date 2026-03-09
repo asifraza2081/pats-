@@ -82,7 +82,7 @@
                     </form>
 
                     <div class="text-center mt-4 small">
-                        Already registered? <a href="{{ route('auth.login') }}" class="fw-semibold">Login</a>
+                        Already registered? <a href="{{ route('login') }}" class="fw-semibold">Login</a>
                     </div>
                 </div>
             </div>

@@ -18,7 +18,7 @@
                         </div>
                         <button type="submit" class="btn btn-pats w-100">Send OTP</button>
                     </form>
-                    <div class="mt-3 small"><a href="{{ route('auth.login') }}">Back to Login</a></div>
+                    <div class="mt-3 small"><a href="{{ route('login') }}">Back to Login</a></div>
                 </div>
             </div>
         </div>
