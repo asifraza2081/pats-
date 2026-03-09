@@ -11,7 +11,7 @@ return new class extends Migration {
             $table->id();
             $table->string('first_name', 80);
             $table->string('last_name', 80);
-            $table->string('email', 150)->unique();
+            $table->string('email', 150)->nullable()->unique();
             $table->string('cnic', 15)->unique()->comment('13 digits, no dashes');
             $table->string('phone', 15);
             $table->enum('nationality', ['Pakistani', 'Foreigner'])->default('Pakistani');

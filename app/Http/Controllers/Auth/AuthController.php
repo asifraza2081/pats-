@@ -59,7 +59,7 @@ class AuthController extends Controller
         $userId  = session('otp_user_id');
         $purpose = session('otp_purpose', 'verify_phone');
 
-        if (!$userId) return redirect()->route('auth.login');
+        if (!$userId) return redirect()->route('login');
 
         $user = User::findOrFail($userId);
 
@@ -82,13 +82,13 @@ class AuthController extends Controller
             return redirect()->route('auth.reset-password');
         }
 
-        return redirect()->route('auth.login');
+        return redirect()->route('login');
     }
 
     public function resendOtp()
     {
         $userId = session('otp_user_id');
-        if (!$userId) return redirect()->route('auth.login');
+        if (!$userId) return redirect()->route('login');
 
         $user = User::findOrFail($userId);
         $otp  = $user->generateOtp();
@@ -164,7 +164,7 @@ class AuthController extends Controller
         ]);
 
         $userId = session('reset_user_id');
-        if (!$userId) return redirect()->route('auth.login');
+        if (!$userId) return redirect()->route('login');
 
         User::findOrFail($userId)->update(['password' => Hash::make($request->password)]);
         session()->forget('reset_user_id');

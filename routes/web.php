@@ -28,7 +28,7 @@ Route::get('/results/verify/{roll}', [ResultController::class, 'verify'])->name(
 Route::middleware('guest')->group(function () {
     Route::get('/register',           [AuthController::class, 'showRegister'])->name('auth.register');
     Route::post('/register',          [AuthController::class, 'register']);
-    Route::get('/login',              [AuthController::class, 'showLogin'])->name('auth.login');
+    Route::get('/login',              [AuthController::class, 'showLogin'])->name('login');
     Route::post('/login',             [AuthController::class, 'login'])->name('auth.login.post');
     Route::get('/forgot-password',    [AuthController::class, 'showForgotPassword'])->name('auth.forgot-password');
     Route::post('/forgot-password',   [AuthController::class, 'forgotPassword']);

@@ -6,6 +6,8 @@ use Illuminate\Database\Eloquent\Model;
 
 class RollNumber extends Model
 {
+    public $timestamps = false;
+
     protected $fillable = [
         'application_id', 'roll_number', 'slip_ready', 'assigned_at',
     ];

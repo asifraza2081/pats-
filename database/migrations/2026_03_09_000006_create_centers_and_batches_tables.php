@@ -14,7 +14,8 @@ return new class extends Migration {
             $table->string('city', 80);
             $table->string('province', 80);
             $table->text('address')->nullable();
-            $table->smallInteger('capacity')->unsigned()->comment('Max candidates per batch');
+            $table->string('map_url')->nullable();
+            $table->smallInteger('total_capacity')->unsigned()->comment('Max candidates per batch');
             $table->boolean('is_active')->default(true);
             $table->timestamps();
         });
