@@ -41,19 +41,22 @@ class AuthController
             'password_confirmation' => 'required|confirmed:password',
         ]);
 
-        // Check uniqueness manually
-        $cnic = preg_replace('/[-\s]/', '', $data['cnic'] ?? '');
-        if (!$v->fails()) {
-            if (User::findByCnic($cnic)) {
-                $v->validate(['cnic_dup' => 'required']); // force fail
-                Session::flash('error', 'A user with this CNIC already exists.');
-            } elseif (User::findByEmail(strtolower($data['email'] ?? ''))) {
-                Session::flash('error', 'This email address is already registered.');
-            }
-        }
-
+        // Bail early on format errors
         if ($v->fails()) {
             Session::flash('errors', $v->errors());
+            Session::flash('old', $data);
+            Response::redirect('/register');
+        }
+
+        // Check uniqueness
+        $cnic = preg_replace('/[-\s]/', '', $data['cnic'] ?? '');
+        if (User::findByCnic($cnic)) {
+            Session::flash('error', 'A user with this CNIC already exists.');
+            Session::flash('old', $data);
+            Response::redirect('/register');
+        }
+        if (User::findByEmail(strtolower($data['email'] ?? ''))) {
+            Session::flash('error', 'This email address is already registered.');
             Session::flash('old', $data);
             Response::redirect('/register');
         }
@@ -70,7 +73,7 @@ class AuthController
         $sms->send($data['phone'], "PATS: Your verification OTP is {$otp}. Expires in 10 minutes.", 'registration_otp');
 
         Session::set('otp_user_id', $userId);
-        Session::flash('success', 'Registration successful! Please enter the OTP sent to your mobile.');
+        Session::flash('success', 'Registration successful! Please enter the OTP sent to your mobile number.');
         Response::redirect('/verify-otp');
     }
 

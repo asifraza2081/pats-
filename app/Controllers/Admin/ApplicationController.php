@@ -33,7 +33,7 @@ class ApplicationController
                     u.name as candidate_name, u.cnic,
                     j.title as job_title, j.bps_grade,
                     p.name as project_name,
-                    tc.name as center_name, tc.city as center_city,
+                    tc.name as center_name, tc.city,
                     cs.slot_date, cs.slot_time,
                     pay.status as payment_status
              FROM applications a
@@ -46,7 +46,7 @@ class ApplicationController
              LEFT JOIN payments pay ON pay.application_id = a.id
              $where
              ORDER BY a.applied_at DESC
-             LIMIT 500" // LIMIT for demo performance
+             LIMIT 500"
         );
 
         $jobs = $db->fetchAll('SELECT id, title, project_id FROM jobs ORDER BY id DESC');
@@ -73,13 +73,8 @@ class ApplicationController
         try {
             Application::updateWhere(['status' => 'scheduled'], ['id' => $appId]);
             
-            // Generate Roll Number (e.g. CenterID-JobID-AppID)
-            $rollNo = sprintf('%03d-%04d-%06d', $app['slot_id'], $app['job_id'], $appId);
-            
-            \App\Models\RollNumber::create([
-                'application_id' => $appId,
-                'roll_number'    => $rollNo
-            ]);
+            // Generate Roll Number using standardised format
+            $rollNo = \App\Models\RollNumber::generate($appId);
             
             $db->commit();
             
@@ -87,11 +82,11 @@ class ApplicationController
             $fullApp = Application::getDetails($appId);
             if ($fullApp && $fullApp['phone']) {
                 $sms = new \App\Services\SmsService();
-                $msg = "PATS: You are scheduled for test! Roll No: {$rollNo}. Download slip from portal.";
+                $msg = "PATS: You are scheduled. Roll No: {$rollNo}. Download your admit card from the portal.";
                 $sms->send($fullApp['phone'], $msg, 'roll_no_assigned');
             }
             
-            Session::flash('success', "Application officially scheduled. Roll No. {$rollNo} assigned.");
+            Session::flash('success', "Scheduled. Roll No. {$rollNo} assigned.");
         } catch (\Exception $e) {
             $db->rollBack();
             Session::flash('error', 'Error assigning roll number: ' . $e->getMessage());
@@ -105,15 +100,15 @@ class ApplicationController
         CSRF::check();
         $appId = (int) $params['id'];
         
-        // Real logic might release booked_seats from center_slot
+        $db = Database::getInstance();
         $app = Application::find($appId);
         if ($app) {
-            $db = Database::getInstance();
-            $db->execute('UPDATE center_slots SET booked_seats = booked_seats - 1 WHERE id = ?', [$app['slot_id']]);
+            // Free up the booked seat
+            $db->query('UPDATE center_slots SET booked_seats = booked_seats - 1 WHERE id = ? AND booked_seats > 0', [$app['slot_id']]);
             Application::deleteWhere(['id' => $appId]);
         }
         
-        Session::flash('success', 'Application rejected and removed. Seat freed.');
+        Session::flash('success', 'Application rejected and seat freed.');
         Response::redirect('/admin/applications');
     }
 }
