@@ -92,3 +92,18 @@ Simulates an admin marking candidate attendance, uploading a simulated CSV test 
 ```bash
 php artisan tinker e2e_admin_test.php
 ```
+
+---
+
+## 📄 File Templates
+
+### Result Upload Format (CSV or Excel)
+When an admin uploads the results for a project, the system expects a file (`.csv`, `.xlsx`, or `.xls`) with the following precise header names (case-insensitive):
+
+| roll_number | score | total_marks | status |
+|---|---|---|---|
+| LHE010001 | 85.5 | 100 | pass |
+| LHE010002 | 40.0 | 100 | fail |
+| LHE010003 | 0 | 100 | absent |
+
+**Allowed Status Values:** `pass`, `fail`, `absent`, `withheld`.
