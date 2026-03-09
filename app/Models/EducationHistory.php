@@ -46,4 +46,15 @@ class EducationHistory extends Model
         }
         return null;
     }
+
+    public function getPercentageDisplayAttribute(): string
+    {
+        if ($this->marks_type === 'CGPA') {
+            return $this->obtained_marks ? number_format($this->obtained_marks, 2) . ' CGPA' : '—';
+        }
+        if ($this->obtained_marks && $this->total_marks) {
+            return $this->obtained_marks . '/' . $this->total_marks . ' (' . $this->percentage . '%)';
+        }
+        return '—';
+    }
 }

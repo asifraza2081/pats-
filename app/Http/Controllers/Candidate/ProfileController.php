@@ -41,7 +41,7 @@ class ProfileController extends Controller
             'religion'              => 'required|in:Islam,Christianity,Hinduism,Sikhism,Other',
             'blood_group'           => 'nullable|string|max:5',
             'current_occupation'    => 'nullable|string|max:120',
-            'disability'            => 'required|boolean',
+            'disability'            => 'nullable|boolean',
             'disability_type'       => 'nullable|string|max:120',
             'province_of_domicile'  => 'required|string|max:80',
             'district_of_domicile'  => 'required|string|max:80',
@@ -50,6 +50,10 @@ class ProfileController extends Controller
             'same_postal_address'   => 'nullable|boolean',
             'alternate_phone'       => 'nullable|string|max:15',
         ]);
+
+        // Ensure disability is always boolean (false when checkbox unchecked)
+        $data['disability'] = $request->boolean('disability');
+
 
         // Handle same postal address
         if ($request->boolean('same_postal_address')) {

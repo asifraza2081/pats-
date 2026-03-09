@@ -4,30 +4,6 @@ namespace App\Models;
 
 use Illuminate\Database\Eloquent\Model;
 
-class TestCenter extends Model
-{
-    protected $table = 'test_centers';
-
-    protected $fillable = ['tcid', 'name', 'city', 'province', 'address', 'capacity', 'is_active'];
-
-    protected function casts(): array
-    {
-        return ['is_active' => 'boolean', 'capacity' => 'integer'];
-    }
-
-    public function batches()  { return $this->hasMany(Batch::class, 'center_id'); }
-    public function projects() { return $this->belongsToMany(Project::class, 'project_centers', 'center_id', 'project_id'); }
-
-    /** Available seats across all batches for a given project */
-    public function availableSeatsForProject(int $projectId): int
-    {
-        return $this->batches()
-            ->where('project_id', $projectId)
-            ->selectRaw('SUM(total_seats - booked_seats) as available')
-            ->value('available') ?? 0;
-    }
-}
-
 class Batch extends Model
 {
     protected $table = 'batches';
@@ -41,10 +17,10 @@ class Batch extends Model
     protected function casts(): array
     {
         return [
-            'test_date'    => 'date',
-            'booked_seats' => 'integer',
-            'total_seats'  => 'integer',
-            'envelope_size'=> 'integer',
+            'test_date'     => 'date',
+            'booked_seats'  => 'integer',
+            'total_seats'   => 'integer',
+            'envelope_size' => 'integer',
         ];
     }
 
@@ -53,8 +29,8 @@ class Batch extends Model
     public function applications() { return $this->hasMany(Application::class, 'batch_id'); }
     public function scans()        { return $this->hasMany(AttendanceScan::class, 'batch_id'); }
 
-    public function hasCapacity(): bool     { return $this->booked_seats < $this->total_seats; }
-    public function availableSeats(): int   { return max(0, $this->total_seats - $this->booked_seats); }
+    public function hasCapacity(): bool   { return $this->booked_seats < $this->total_seats; }
+    public function availableSeats(): int { return max(0, $this->total_seats - $this->booked_seats); }
 
     /** Whether the test has started (slip download disabled) */
     public function hasStarted(): bool
