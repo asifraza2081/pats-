@@ -1,20 +1,49 @@
 <?php
 
-declare(strict_types=1);
-
 namespace App\Models;
 
-use App\Core\Model;
+use Illuminate\Database\Eloquent\Model;
 
 class EducationHistory extends Model
 {
-    protected static string $table = 'education_history';
+    protected $table = 'education_history';
 
-    /**
-     * Get all education records for a candidate.
-     */
-    public static function getForCandidate(int $candidateId): array
+    protected $fillable = [
+        'candidate_id', 'degree_level', 'degree_name', 'subject_major',
+        'institution', 'passing_year', 'marks_type',
+        'obtained_marks', 'total_marks', 'certificate_path',
+    ];
+
+    protected function casts(): array
     {
-        return static::where(['candidate_id' => $candidateId], 'passing_year DESC');
+        return [
+            'degree_level'   => 'integer',
+            'obtained_marks' => 'float',
+            'total_marks'    => 'float',
+        ];
+    }
+
+    public static array $levelLabels = [
+        1 => 'Matric (10 Years)',
+        2 => 'Intermediate (12 Years)',
+        3 => 'Bachelor (14 Years)',
+        4 => 'Master (16 Years)',
+        5 => 'M.Phil',
+        6 => 'PhD',
+    ];
+
+    public function candidate() { return $this->belongsTo(Candidate::class); }
+
+    public function getLevelLabelAttribute(): string
+    {
+        return self::$levelLabels[$this->degree_level] ?? 'Unknown';
+    }
+
+    public function getPercentageAttribute(): ?float
+    {
+        if ($this->marks_type === 'Marks' && $this->total_marks > 0) {
+            return round(($this->obtained_marks / $this->total_marks) * 100, 2);
+        }
+        return null;
     }
 }

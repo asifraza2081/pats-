@@ -1,21 +1,20 @@
 <?php
 
-declare(strict_types=1);
+use Illuminate\Foundation\Application;
+use Illuminate\Http\Request;
 
-/**
- * ============================================================
- * PATS Front Controller
- * All HTTP requests are routed through here.
- * ============================================================
- */
+define('LARAVEL_START', microtime(true));
 
-require __DIR__ . '/../bootstrap.php';
+// Determine if the application is in maintenance mode...
+if (file_exists($maintenance = __DIR__.'/../storage/framework/maintenance.php')) {
+    require $maintenance;
+}
 
-use App\Core\Request;
-use App\Core\Router;
-use App\Core\Session;
+// Register the Composer autoloader...
+require __DIR__.'/../vendor/autoload.php';
 
-Session::start();
+// Bootstrap Laravel and handle the request...
+/** @var Application $app */
+$app = require_once __DIR__.'/../bootstrap/app.php';
 
-$request = new Request();
-Router::load($request);
+$app->handleRequest(Request::capture());

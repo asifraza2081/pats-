@@ -1,0 +1,125 @@
+<?php
+
+use App\Http\Controllers\Auth\AuthController;
+use App\Http\Controllers\Candidate\ApplicationController;
+use App\Http\Controllers\Candidate\DashboardController;
+use App\Http\Controllers\Candidate\ProfileController;
+use App\Http\Controllers\Public\HomeController;
+use App\Http\Controllers\Public\ResultController;
+use App\Http\Controllers\Admin;
+use Illuminate\Support\Facades\Route;
+
+// ═══════════════════════════════════════════════════
+// PUBLIC ROUTES
+// ═══════════════════════════════════════════════════
+Route::get('/', [HomeController::class, 'index'])->name('home');
+Route::get('/projects', [HomeController::class, 'projects'])->name('projects');
+Route::get('/projects/{project}', [HomeController::class, 'project'])->name('projects.show');
+Route::get('/projects/{project}/jobs/{job}', [HomeController::class, 'job'])->name('jobs.show');
+
+// Public result search
+Route::get('/results', [ResultController::class, 'search'])->name('results.search');
+Route::post('/results', [ResultController::class, 'search'])->name('results.search.post');
+Route::get('/results/verify/{roll}', [ResultController::class, 'verify'])->name('results.verify');
+
+// ═══════════════════════════════════════════════════
+// AUTH ROUTES (guests only)
+// ═══════════════════════════════════════════════════
+Route::middleware('guest')->group(function () {
+    Route::get('/register',           [AuthController::class, 'showRegister'])->name('auth.register');
+    Route::post('/register',          [AuthController::class, 'register']);
+    Route::get('/login',              [AuthController::class, 'showLogin'])->name('auth.login');
+    Route::post('/login',             [AuthController::class, 'login'])->name('auth.login.post');
+    Route::get('/forgot-password',    [AuthController::class, 'showForgotPassword'])->name('auth.forgot-password');
+    Route::post('/forgot-password',   [AuthController::class, 'forgotPassword']);
+    Route::get('/reset-password',     [AuthController::class, 'showResetPassword'])->name('auth.reset-password');
+    Route::post('/reset-password',    [AuthController::class, 'resetPassword']);
+});
+
+// OTP verification (available to partially authenticated users)
+Route::get('/verify-otp',    [AuthController::class, 'showOtp'])->name('auth.otp');
+Route::post('/verify-otp',   [AuthController::class, 'verifyOtp']);
+Route::post('/resend-otp',   [AuthController::class, 'resendOtp'])->name('auth.otp.resend');
+
+// Logout
+Route::post('/logout', [AuthController::class, 'logout'])->name('auth.logout');
+
+// ═══════════════════════════════════════════════════
+// CANDIDATE ROUTES
+// ═══════════════════════════════════════════════════
+Route::middleware(['auth', 'role:candidate'])->prefix('candidate')->name('candidate.')->group(function () {
+
+    // Dashboard
+    Route::get('/dashboard', [DashboardController::class, 'index'])->name('dashboard');
+
+    // Profile
+    Route::get('/profile',      [ProfileController::class, 'show'])->name('profile.show');
+    Route::put('/profile',      [ProfileController::class, 'update'])->name('profile.update');
+
+    // Education History
+    Route::post('/education',           [ProfileController::class, 'addEducation'])->name('education.store');
+    Route::put('/education/{edu}',      [ProfileController::class, 'updateEducation'])->name('education.update');
+    Route::delete('/education/{edu}',   [ProfileController::class, 'deleteEducation'])->name('education.destroy');
+
+    // Work Experience
+    Route::post('/experience',          [ProfileController::class, 'addExperience'])->name('experience.store');
+    Route::put('/experience/{exp}',     [ProfileController::class, 'updateExperience'])->name('experience.update');
+    Route::delete('/experience/{exp}',  [ProfileController::class, 'deleteExperience'])->name('experience.destroy');
+
+    // Applications
+    Route::get('/apply/{job}',              [ApplicationController::class, 'create'])->name('apply');
+    Route::post('/apply/{job}',             [ApplicationController::class, 'store'])->name('apply.store');
+    Route::get('/applications',             [ApplicationController::class, 'index'])->name('applications');
+    Route::get('/applications/{app}',       [ApplicationController::class, 'show'])->name('applications.show');
+    Route::get('/applications/{app}/challan',  [ApplicationController::class, 'challan'])->name('challan');
+    Route::get('/applications/{app}/slip',     [ApplicationController::class, 'slip'])->name('slip');
+    Route::get('/applications/{app}/result',   [ApplicationController::class, 'result'])->name('result');
+});
+
+// ═══════════════════════════════════════════════════
+// ADMIN ROUTES
+// ═══════════════════════════════════════════════════
+Route::middleware(['auth', 'role:admin|data_entry|super_admin'])->prefix('admin')->name('admin.')->group(function () {
+
+    Route::get('/dashboard', [Admin\DashboardController::class, 'index'])->name('dashboard');
+
+    // Projects & Jobs
+    Route::resource('projects', Admin\ProjectController::class);
+    Route::resource('projects.jobs', Admin\JobController::class)->shallow();
+
+    // Test Centers & Batches
+    Route::resource('centers', Admin\TestCenterController::class);
+    Route::resource('batches', Admin\BatchController::class);
+    Route::post('batches/{batch}/ready', [Admin\BatchController::class, 'markReady'])->name('batches.ready');
+    Route::get('batches/{batch}/summary', [Admin\BatchController::class, 'summary'])->name('batches.summary');
+    Route::get('batches/{batch}/attendance', [Admin\BatchController::class, 'attendance'])->name('batches.attendance');
+    Route::get('batches/{batch}/attendance-sheet', [Admin\BatchController::class, 'attendanceSheet'])->name('batches.attendance-sheet');
+    Route::post('batches/{batch}/scans', [Admin\BatchController::class, 'uploadScan'])->name('batches.scans.upload');
+    Route::post('batches/{batch}/mark-attendance', [Admin\BatchController::class, 'markAttendance'])->name('batches.attendance.mark');
+
+    // Applications
+    Route::get('applications', [Admin\ApplicationController::class, 'index'])->name('applications.index');
+    Route::get('applications/{app}', [Admin\ApplicationController::class, 'show'])->name('applications.show');
+
+    // Payments
+    Route::get('payments', [Admin\PaymentController::class, 'index'])->name('payments.index');
+    Route::get('payments/{payment}', [Admin\PaymentController::class, 'show'])->name('payments.show');
+    Route::post('payments/{payment}/verify', [Admin\PaymentController::class, 'verify'])->name('payments.verify');
+
+    // Roll Numbers
+    Route::get('roll-numbers', [Admin\RollNumberController::class, 'index'])->name('rollnumbers.index');
+    Route::get('applications/{app}/slip', [Admin\RollNumberController::class, 'slip'])->name('rollnumbers.slip');
+
+    // Results
+    Route::get('results', [Admin\ResultController::class, 'index'])->name('results.index');
+    Route::get('results/upload', [Admin\ResultController::class, 'showUpload'])->name('results.upload');
+    Route::post('results/upload', [Admin\ResultController::class, 'upload'])->name('results.upload.post');
+    Route::post('results/publish/{project}', [Admin\ResultController::class, 'publish'])->name('results.publish');
+    Route::get('results/{app}', [Admin\ResultController::class, 'show'])->name('results.show');
+
+    // User Management (super_admin only)
+    Route::middleware('role:super_admin')->group(function () {
+        Route::resource('users', Admin\UserController::class);
+        Route::post('users/{user}/toggle', [Admin\UserController::class, 'toggle'])->name('users.toggle');
+    });
+});

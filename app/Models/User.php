@@ -1,111 +1,59 @@
 <?php
 
-declare(strict_types=1);
-
 namespace App\Models;
 
-use App\Core\Model;
-use App\Core\Database;
+use Illuminate\Database\Eloquent\Factories\HasFactory;
+use Illuminate\Foundation\Auth\User as Authenticatable;
+use Illuminate\Notifications\Notifiable;
+use Spatie\Permission\Traits\HasRoles;
 
-class User extends Model
+class User extends Authenticatable
 {
-    protected static string $table = 'users';
+    use HasFactory, Notifiable, HasRoles;
 
-    /**
-     * Find user by CNIC.
-     */
-    public static function findByCnic(string $cnic): ?array
+    protected $fillable = [
+        'first_name', 'last_name', 'email', 'cnic', 'phone',
+        'nationality', 'password', 'otp', 'otp_expires_at',
+    ];
+
+    protected $hidden = ['password', 'remember_token', 'otp'];
+
+    protected function casts(): array
     {
-        return static::findBy('cnic', $cnic);
+        return [
+            'phone_verified_at'  => 'datetime',
+            'email_verified_at'  => 'datetime',
+            'otp_expires_at'     => 'datetime',
+            'password'           => 'hashed',
+        ];
     }
 
-    /**
-     * Find user by email.
-     */
-    public static function findByEmail(string $email): ?array
+    // ── Relationships ───────────────────────────────────────
+    public function candidate()
     {
-        return static::findBy('email', $email);
+        return $this->hasOne(Candidate::class);
     }
 
-    /**
-     * Find user by phone.
-     */
-    public static function findByPhone(string $phone): ?array
+    // ── Helpers ─────────────────────────────────────────────
+    public function getFullNameAttribute(): string
     {
-        return static::findBy('phone', $phone);
+        return "{$this->first_name} {$this->last_name}";
     }
 
-    /**
-     * Register a new candidate user.
-     */
-    public static function register(array $data): int
+    public function isOtpValid(): bool
     {
-        return static::create([
-            'cnic'     => preg_replace('/[-\s]/', '', $data['cnic']),
-            'name'     => $data['name'],
-            'email'    => strtolower($data['email']),
-            'phone'    => $data['phone'],
-            'password' => password_hash($data['password'], PASSWORD_BCRYPT),
-            'role'     => 'candidate',
-        ]);
+        return $this->otp && $this->otp_expires_at && $this->otp_expires_at->isFuture();
     }
 
-    /**
-     * Verify password and return user or null.
-     */
-    public static function attempt(string $cnic, string $password): ?array
+    public function generateOtp(): string
     {
-        $cnic = preg_replace('/[-\s]/', '', $cnic);
-        $user = static::findByCnic($cnic);
-        if (!$user) return null;
-        if (!password_verify($password, $user['password'])) return null;
-        return $user;
+        $otp = str_pad((string) random_int(0, 999999), 6, '0', STR_PAD_LEFT);
+        $this->update(['otp' => $otp, 'otp_expires_at' => now()->addMinutes(10)]);
+        return $otp;
     }
 
-    /**
-     * Set OTP for phone/password reset.
-     */
-    public static function setOtp(int $userId, string $otp): void
+    public function clearOtp(): void
     {
-        static::updateWhere(
-            [
-                'otp'            => $otp,
-                'otp_expires_at' => date('Y-m-d H:i:s', strtotime('+10 minutes')),
-            ],
-            ['id' => $userId]
-        );
-    }
-
-    /**
-     * Verify OTP and return true if valid and not expired.
-     */
-    public static function verifyOtp(int $userId, string $otp): bool
-    {
-        $user = static::find($userId);
-        if (!$user) return false;
-        if ($user['otp'] !== $otp) return false;
-        if (strtotime($user['otp_expires_at']) < time()) return false;
-        // Clear OTP
-        static::updateWhere(['otp' => null, 'otp_expires_at' => null], ['id' => $userId]);
-        return true;
-    }
-
-    /**
-     * Mark user as verified.
-     */
-    public static function markVerified(int $userId): void
-    {
-        static::updateWhere(['is_verified' => 1], ['id' => $userId]);
-    }
-
-    /**
-     * Update password.
-     */
-    public static function updatePassword(int $userId, string $newPassword): void
-    {
-        static::updateWhere(
-            ['password' => password_hash($newPassword, PASSWORD_BCRYPT)],
-            ['id' => $userId]
-        );
+        $this->update(['otp' => null, 'otp_expires_at' => null]);
     }
 }
