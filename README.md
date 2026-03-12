@@ -8,7 +8,7 @@ PATS is a comprehensive Laravel 11 application designed to manage the entire lif
 - **Candidate Profiles**: Enforces 100% profile completion including photo, CNIC, domicile, education history, and work experience.
 - **Dynamic Eligibility Engine**: Automatically checks age limits, required degree levels, specific subjects, minimum experience, and domicile constraints before allowing application submission.
 - **Smart Batch Allocation**: Ensures test centers never exceed capacity and seamlessly groups candidates by job titles.
-- **Collision-free Roll Numbers**: Sequentially generates 9-digit alphanumeric roll numbers within specific test centers (e.g., `LHE010001`).
+- **Collision-free Roll Numbers**: Sequentially generates collision-free roll numbers within specific test centers.
 - **PDF Generation**: Generates automated Fee Challans and standardized NTS-style Roll Number Slips.
 - **End-to-End Post-Test Processing**: Allows admin to upload attendance scans, upload CSV exam results, and automatically calculates candidate percentiles and percentages.
 
@@ -51,9 +51,9 @@ After running the seeders, the following accounts are available for testing:
 
 | Role | Email Address | Password | Notes |
 |---|---|---|---|
-| **Super Admin** | `super@pats.test` | `password` | Can manage other admin users, assign roles, and access all features. |
-| **Admin** | `admin@pats.test` | `password` | Can manage projects, jobs, centers, batches, and results. |
-| **Candidate** | *Register a new account* | *Any* | Register a new account via the frontend. The seeder also generates 5 random candidate accounts (check the `users` table where `role=candidate`). |
+| **Super Admin** | `admin@pats.test` | `Admin@1234` | Can manage other admin users, assign roles, and access all features. |
+| **Examiner** | `examiner@pats.test` | `password` | Can view assigned sessions and print logistics. |
+| **Candidate** | `testcand@pats.test` | `password` | Sample candidate with a partially completed profile. |
 
 ---
 
@@ -77,21 +77,62 @@ php artisan queue:work
 
 ---
 
-## 🧪 Automated End-to-End (E2E) Testing
+## 📖 User Role Instruction Manual
 
-To verify the core logic works perfectly without navigating the UI, the repository includes two backend simulation scripts. You can run these using Laravel Tinker:
+Below are the step-by-step workflows for each user role in the PATS system.
 
-**1. Test the Candidate Application Flow:**
-Simulates a candidate finishing their profile, applying, getting batch capacity allocated, paying the fee, and generating a roll number.
-```bash
-php artisan tinker e2e_test.php
-```
+---
 
-**2. Test the Admin Post-Test Flow:**
-Simulates an admin marking candidate attendance, uploading a simulated CSV test result sheet, and publishing percentiles.
-```bash
-php artisan tinker e2e_admin_test.php
-```
+### 👤 1. For Candidates (The Applicant)
+*The platform for individuals applying for jobs.*
+
+1.  **Registration & Login**: Create an account and verify your identity.
+2.  **Profile Completion (Essential)**: 
+    - Navigate to **"My Profile"**.
+    - You MUST reach **100% profile status** to apply for any job.
+    - This includes: Personal Info, Education history (at least one degree), and uploading a Photo/CNIC scan.
+3.  **Job Application**: 
+    - Browse **"Open Projects"** and select a job.
+    - Choose your **Desired Test City**.
+    - The system will immediately check if you are eligible based on age, education, and experience.
+4.  **Payment**: 
+    - After applying, download the **Fee Challan** from "My Applications".
+    - Visit the designated bank to pay and upload a scan/photo of the paid receipt for verification.
+5.  **Roll Number Slip**: 
+    - Once the Admin publishes slips, a download button will appear in your dashboard. Print this for the test day.
+6.  **Results**: 
+    - After the test, view your result card and **Scanned Answer Sheet** in the "My Applications" section.
+
+---
+
+### 🛡️ 2. For Admins (The Agency)
+*The central authority managing the recruitment process.*
+
+1.  **Project Management**: Create a recruitment project (e.g., "MofIT 2026") and add specific jobs with their unique eligibility criteria.
+2.  **Center Verification**: Manage the list of cities and test centers (each with their seating capacity).
+3.  **Payment Verification**: In the **"Payments"** module, review uploaded candidate receipts and mark them as "Verified".
+4.  **Batch Scheduling**:
+    - Go to **"Batches"** -> **"Create New Batch"**.
+    - Select a Project, Jobs, and one or more Centers.
+    - Set the Test Date and Time.
+    - The system will automatically allocate all "Verified & Paid" candidates to these centers until capacity is reached.
+5.  **Roll Number Issuance**: After scheduling, click **"Mark Ready / Notify"** at the batch level. This generates roll numbers and notifies candidates via SMS/Email.
+6.  **Attendance & Results**:
+    - Print **Attendance Sheets** and **Answer Sheets** for the examiners.
+    - After the test, use **"Upload Results"** to import a CSV file.
+    - Once reviewed, click **"Publish Results"** to make them live for candidates.
+
+---
+
+### 📋 3. For Examiners (The Field Staff)
+*Staff assigned to monitor a specific test session.*
+
+1.  **Session Dashboard**: Log in to see only the sessions assigned to you for the day.
+2.  **Logistics Processing**:
+    - Open the **"Session Portal"**.
+    - Download and print the **Attendance Sheet** (with candidate photos).
+    - Print the pre-filled **Answer Sheets** to distribute in the exam hall.
+3.  **Reporting**: After the test, the examiner or data entry operator can upload scanned attendance sheets and mark individual candidate attendance (Appeared/Absent).
 
 ---
 
@@ -100,7 +141,7 @@ php artisan tinker e2e_admin_test.php
 ### Result Upload Format (CSV or Excel)
 When an admin uploads the results for a project, the system expects a file (`.csv`, `.xlsx`, or `.xls`) with the following precise header names (case-insensitive):
 
-| roll_number | score | total_marks | status |
+| roll_no | score | total_marks | result_status |
 |---|---|---|---|
 | LHE010001 | 85.5 | 100 | pass |
 | LHE010002 | 40.0 | 100 | fail |
