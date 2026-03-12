@@ -1,0 +1,91 @@
+/* PATS Core Styles - Consolidated from public templates */
+
+:root {
+    --tblr-font-sans-serif: 'Inter Var', -apple-system, BlinkMacSystemFont, San Francisco, Segoe UI, Roboto, Helvetica Neue, sans-serif;
+    --pats-dark: #0f172a;
+    --pats-teal: #0d9488;
+}
+
+body { 
+    font-feature-settings: "cv03", "cv04", "cv11"; 
+    background: #f8fafc; 
+}
+
+/* Header & Top Bar */
+.top-bar {
+    background: var(--pats-dark);
+    color: rgba(255,255,255,0.8);
+    font-size: 0.85rem;
+    padding: 8px 0;
+}
+
+.main-nav {
+    background: white;
+    box-shadow: 0 4px 6px -1px rgba(0,0,0,0.05);
+    padding: 15px 0;
+}
+
+/* Sections */
+.hero {
+    background: linear-gradient(135deg, rgba(15, 23, 42, 0.85) 0%, rgba(13, 148, 136, 0.85) 100%), url('/hero.png') center/cover no-repeat;
+    color: white;
+    padding: 80px 0;
+    margin-bottom: 0;
+}
+
+.page-header-nts {
+    background: linear-gradient(135deg, var(--pats-dark) 0%, var(--pats-teal) 100%);
+    color: white;
+    padding: 60px 0;
+}
+
+.section-header {
+    border-left: 5px solid var(--pats-teal);
+    padding-left: 15px;
+    margin-bottom: 30px;
+    font-weight: 800;
+    color: var(--pats-dark);
+}
+
+/* Components */
+.card-nts {
+    border: none;
+    border-top: 4px solid var(--pats-teal);
+    box-shadow: 0 10px 15px -3px rgba(0,0,0,0.1);
+    transition: transform 0.2s;
+}
+.card-nts:hover { transform: translateY(-5px); }
+
+.notice-board {
+    background: white;
+    border-bottom: 2px solid var(--pats-teal);
+    padding: 12px 0;
+}
+
+/* Marquee */
+.marquee-container {
+    overflow: hidden;
+    white-space: nowrap;
+}
+.marquee-content {
+    display: inline-block;
+    animation: marquee 30s linear infinite;
+    font-weight: 500;
+}
+@keyframes marquee {
+    0% { transform: translateX(100%); }
+    100% { transform: translateX(-100%); }
+}
+
+/* Footer */
+.footer-nts {
+    background: var(--pats-dark);
+    color: white;
+    padding: 60px 0 30px 0;
+}
+
+/* Theme Utilities */
+[data-bs-theme="dark"] .main-nav { background: #1e293b; color: white; }
+[data-bs-theme="dark"] .main-nav .nav-link { color: white !important; }
+[data-bs-theme="dark"] .notice-board { background: #1e293b; border-bottom-color: #0ea5e9; }
+[data-bs-theme="dark"] .card-nts { background: #1e293b; color: white; }

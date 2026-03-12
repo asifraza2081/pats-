@@ -61,6 +61,15 @@ class ApplicationController extends Controller
 
         abort_if(!$project->isRegistrationOpen(), 403);
 
+        // EXTRA GUARD: Atomic check for existing application to prevent race conditions during concurrent POST
+        $existing = Application::where('candidate_id', $candidate->id)
+            ->where('job_id', $job->id)
+            ->first();
+            
+        if ($existing) {
+            return redirect()->route('candidate.applications')->with('info', 'You have already applied for this position.');
+        }
+
         $data = $request->validate([
             'desired_test_city_id' => 'required|exists:cities,id',
             'age_relaxation_type'  => 'nullable|string|max:80',

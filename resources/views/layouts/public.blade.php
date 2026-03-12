@@ -8,48 +8,8 @@
     <!-- Tabler Core -->
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@tabler/core@1.0.0-beta20/dist/css/tabler.min.css">
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@tabler/icons-webfont@latest/tabler-icons.min.css">
-    <style>
-        @import url('https://rsms.me/inter/inter.css');
-        :root {
-            --tblr-font-sans-serif: 'Inter Var', -apple-system, BlinkMacSystemFont, San Francisco, Segoe UI, Roboto, Helvetica Neue, sans-serif;
-            --pats-dark: #0f172a;
-            --pats-teal: #0d9488;
-        }
-        body { font-feature-settings: "cv03", "cv04", "cv11"; background: #f8fafc; }
-        
-        .top-bar {
-            background: var(--pats-dark);
-            color: rgba(255,255,255,0.8);
-            font-size: 0.85rem;
-            padding: 8px 0;
-        }
-        
-        .main-nav {
-            background: white;
-            box-shadow: 0 4px 6px -1px rgba(0,0,0,0.05);
-            padding: 15px 0;
-        }
-
-        .page-header-nts {
-            background: linear-gradient(135deg, var(--pats-dark) 0%, var(--pats-teal) 100%);
-            color: white;
-            padding: 60px 0;
-        }
-
-        .section-header {
-            border-left: 5px solid var(--pats-teal);
-            padding-left: 15px;
-            margin-bottom: 30px;
-            font-weight: 800;
-            color: var(--pats-dark);
-        }
-
-        .footer-nts {
-            background: var(--pats-dark);
-            color: white;
-            padding: 60px 0 30px 0;
-        }
-    </style>
+    <!-- Core Styles -->
+    <link rel="stylesheet" href="{{ asset('assets/css/pats-core.css') }}">
 </head>
 <body class="layout-fluid">
     <div class="page">
@@ -69,8 +29,8 @@
                             <a href="{{ route('auth.register') }}" class="text-white text-decoration-none">Register</a>
                         @else
                             <span class="text-white-50 small me-3">Signed in as <strong>{{ auth()->user()->full_name }}</strong></span>
-                            <a href="{{ route('logout') }}" class="text-white text-decoration-none small" onclick="event.preventDefault(); document.getElementById('logout-form').submit();">Logout</a>
-                            <form id="logout-form" action="{{ route('logout') }}" method="POST" class="d-none">@csrf</form>
+                            <a href="{{ route('auth.logout') }}" class="text-white text-decoration-none small" onclick="event.preventDefault(); document.getElementById('logout-form').submit();">Logout</a>
+                            <form id="logout-form" action="{{ route('auth.logout') }}" method="POST" class="d-none">@csrf</form>
                         @endguest
                     </div>
                 </div>

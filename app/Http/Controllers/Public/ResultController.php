@@ -21,9 +21,12 @@ class ResultController extends Controller
         $result = null;
         if ($query) {
             $result = Result::with(['application.candidate.user', 'application.job.project'])
-                ->where('roll_no', $query)
-                ->orWhereHas('application.candidate.user', function($q) use ($query) {
-                    $q->where('cnic', $query);
+                ->whereNotNull('published_at') // ONLY SHOW PUBLISHED RESULTS
+                ->where(function($q) use ($query) {
+                    $q->where('roll_no', $query)
+                      ->orWhereHas('application.candidate.user', function($sq) use ($query) {
+                          $sq->where('cnic', $query);
+                      });
                 })
                 ->first();
         }
@@ -35,6 +38,7 @@ class ResultController extends Controller
     {
         $result = Result::with(['application.candidate.user', 'application.job.project'])
             ->where('roll_no', $roll)
+            ->whereNotNull('published_at') // ONLY SHOW PUBLISHED RESULTS
             ->firstOrFail();
 
         // Used by QR Code scans on result cards
