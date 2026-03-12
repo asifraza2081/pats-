@@ -74,6 +74,7 @@ class ApplicationController extends Controller
             $application = Application::create([
                 'candidate_id'          => $candidate->id,
                 'job_id'                => $job->id,
+                'project_id'            => $job->project_id,
                 'desired_test_city_id'  => $data['desired_test_city_id'],
                 'age_relaxation_type'   => $data['age_relaxation_type'] ?? null,
                 'age_relaxation_years'  => $data['age_relaxation_years'] ?? null,

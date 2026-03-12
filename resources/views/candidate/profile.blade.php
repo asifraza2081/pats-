@@ -170,14 +170,28 @@
                         </div>
                         <div class="col-12">
                             <label class="form-check mt-2">
-                                <input class="form-check-input" type="checkbox" name="same_postal_address" value="1" id="samePostal" onchange="document.getElementById('postalField').style.display = this.checked ? 'none' : 'block'">
+                                <input class="form-check-input" type="checkbox" name="same_postal_address" value="1" id="samePostal" {{ old('same_postal_address', $candidate->same_postal_address) ? 'checked' : '' }} onchange="togglePostal(this.checked)">
                                 <span class="form-check-label">Postal address is exactly the same as Permanent Address</span>
                             </label>
                         </div>
-                        <div class="col-12" id="postalField">
+                        <div class="col-12" id="postalField" style="display: {{ old('same_postal_address', $candidate->same_postal_address) ? 'none' : 'block' }}">
                             <label class="form-label required">Postal Address</label>
-                            <textarea name="postal_address" class="form-control" rows="2" required>{{ old('postal_address', $candidate->postal_address) }}</textarea>
+                            <textarea name="postal_address" id="postal_address_input" class="form-control" rows="2" {{ old('same_postal_address', $candidate->same_postal_address) ? '' : 'required' }}>{{ old('postal_address', $candidate->postal_address) }}</textarea>
                         </div>
+
+                        <script>
+                            function togglePostal(isSame) {
+                                const field = document.getElementById('postalField');
+                                const input = document.getElementById('postal_address_input');
+                                if (isSame) {
+                                    field.style.display = 'none';
+                                    input.removeAttribute('required');
+                                } else {
+                                    field.style.display = 'block';
+                                    input.setAttribute('required', 'required');
+                                }
+                            }
+                        </script>
                     </div>
                 </div>
             </div>

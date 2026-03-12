@@ -88,6 +88,12 @@ class Candidate extends Model
         $filled = 0;
         $total  = count($fields) + 1; // +1 for education only
         foreach ($fields as $f) {
+            if ($f === 'postal_address' && $this->same_postal_address) {
+                if (!empty($this->permanent_address)) {
+                    $filled++;
+                }
+                continue;
+            }
             if (!empty($this->$f)) $filled++;
         }
         if ($this->education()->exists())  $filled++;

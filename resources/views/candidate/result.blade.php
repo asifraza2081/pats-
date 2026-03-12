@@ -109,6 +109,23 @@
                     @endif
                 </div>
 
+                <!-- Scanned Answer Sheet -->
+                @if($result->scanned_sheet_path)
+                <div class="mt-5 pt-4 border-top">
+                    <h3 class="h3 fw-bold mb-3"><i class="ti ti-file-scan text-primary me-2"></i> Scanned Answer Sheet</h3>
+                    <div class="card border-0 bg-dark-lt overflow-hidden">
+                        <div class="card-body p-0 text-center">
+                            <img src="{{ asset('storage/'.$result->scanned_sheet_path) }}" class="img-fluid rounded" alt="Scanned Answer Sheet" style="max-height: 800px;">
+                        </div>
+                    </div>
+                    <div class="text-center mt-3 d-print-none">
+                        <a href="{{ asset('storage/'.$result->scanned_sheet_path) }}" target="_blank" class="btn btn-outline-primary btn-sm">
+                            <i class="ti ti-external-link me-1"></i> Open in New Tab / Zoom
+                        </a>
+                    </div>
+                </div>
+                @endif
+
                 <!-- Footer Note -->
                 <div class="text-center text-muted small mt-4 pt-4 border-top">
                     <i class="ti ti-info-circle text-primary me-1"></i>

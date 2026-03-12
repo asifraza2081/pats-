@@ -7,15 +7,14 @@ use Illuminate\Database\Eloquent\Model;
 class Result extends Model
 {
     protected $fillable = [
-        'application_id', 'roll_number', 'score', 'total_marks',
-        'percentage', 'percentile', 'result_status', 'is_published',
-        'published_at', 'published_by', 'scanned_sheet_path',
+        'application_id', 'roll_no', 'score', 'total_marks',
+        'percentage', 'percentile', 'result_status',
+        'published_at', 'uploaded_by', 'scanned_sheet_path', 'remarks',
     ];
 
     protected function casts(): array
     {
         return [
-            'is_published' => 'boolean',
             'published_at' => 'datetime',
             'score'        => 'decimal:2',
             'total_marks'  => 'decimal:2',
@@ -36,6 +35,6 @@ class Result extends Model
 
     public function isPublished(): bool
     {
-        return $this->is_published === true;
+        return !is_null($this->published_at);
     }
 }

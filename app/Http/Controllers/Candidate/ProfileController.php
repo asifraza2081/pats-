@@ -54,7 +54,7 @@ class ProfileController extends Controller
             'domicile_city_id'      => 'required|exists:cities,id',
             'address_city_id'       => 'required|exists:cities,id',
             'permanent_address'     => 'required|string',
-            'postal_address'        => 'required|string',
+            'postal_address'        => 'required_without:same_postal_address|nullable|string',
             'same_postal_address'   => 'nullable|boolean',
             'alternate_phone'       => 'nullable|string|max:15',
         ]);
