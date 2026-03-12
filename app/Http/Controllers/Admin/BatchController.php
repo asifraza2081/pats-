@@ -56,24 +56,39 @@ class BatchController extends Controller
         $batchIds = [];
 
         foreach ($data['center_ids'] as $centerId) {
-            // Create a distinct batch for each center
             $batchData = $request->except(['job_ids', 'count_to_allocate', 'center_ids']);
             $batchData['center_id'] = $centerId;
             $batchData['created_by'] = Auth::id();
             
+            // Dumbproof check: Are there any eligible candidates for THIS specific center's city?
+            $cityId = TestCenter::find($centerId)->city_id;
+            $eligibleCount = Application::where('project_id', $batchData['project_id'])
+                ->where('status', 'fee_paid')
+                ->where('desired_test_city_id', $cityId)
+                ->whereDoesntHave('examRollno')
+                ->whereIn('job_id', $data['job_ids'])
+                ->count();
+
+            if ($eligibleCount === 0) {
+                continue; // Skip centers where no work needs to be done
+            }
+
             $batch = Batch::create($batchData);
             $batchIds[] = $batch->id;
 
-            // Run seat allocation for this specific center
-            // Note: We allocate the *same* count per center or we could divide. 
-            // User likely wants 'total seats' per center.
-            $allocated = $this->rollNumbers->allocateBatch($batch, $data['count_to_allocate'], $data['job_ids']);
+            // Allocate up to the requested count or available eligible count
+            $allocCount = min($data['count_to_allocate'], $eligibleCount);
+            $allocated = $this->rollNumbers->allocateBatch($batch, $allocCount, $data['job_ids']);
             $totalAllocated += $allocated;
 
             \App\Models\ActivityLog::log('allocate_seats', $batch, [
                 'count' => $allocated,
                 'job_ids' => $data['job_ids']
             ]);
+        }
+
+        if (empty($batchIds)) {
+            return back()->with('error', 'No eligible candidates matching the criteria were found for the selected centers. No batches created.')->withInput();
         }
 
         return redirect()->route('admin.batches.index')
@@ -161,6 +176,9 @@ class BatchController extends Controller
     /** Printable attendance sheet for this batch (Image 2 equivalent) */
     public function attendanceSheet(Batch $batch)
     {
+        if ($batch->booked_seats == 0) {
+            return back()->with('error', 'Cannot generate Attendance Sheet for an empty batch.');
+        }
         $batch->load(['project', 'center.city']);
         // Flatten roster for attendance sheet
         $roster = $this->rollNumbers->batchRoster($batch);
@@ -171,6 +189,9 @@ class BatchController extends Controller
     /** NTS-style printable Answer Sheets for all candidates in batch */
     public function answerSheets(Batch $batch)
     {
+        if ($batch->booked_seats == 0) {
+            return back()->with('error', 'Cannot generate Answer Sheets for an empty batch.');
+        }
         $batch->load(['project.jobs', 'center.city']);
         // Get all roll numbers in one flat list for bulk PDF
         $roster = ExamRollno::where('batch_id', $batch->id)

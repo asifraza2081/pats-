@@ -35,8 +35,7 @@
 </head>
 <body>
 @php
-    use Picqer\Barcode\BarcodeGeneratorSVG;
-    $generator = new BarcodeGeneratorSVG();
+    // No generator needed, using pre-stored base64 barcodes
 @endphp
 
 @foreach($roster as $roll)
@@ -44,7 +43,6 @@
         $app = $roll->application;
         $candidate = $app->candidate;
         $user = $candidate->user;
-        $barcodeSvg = $generator->getBarcode($roll->roll_no, $generator::TYPE_CODE_128, 1.5, 40);
     @endphp
     <div class="sheet">
         <div style="float: left; width: 80%;">
@@ -62,7 +60,7 @@
         <div style="clear: both;"></div>
 
         <div class="barcode-area">
-            <div>{!! $barcodeSvg !!}</div>
+            <div><img src="data:image/png;base64,{{ $roll->barcode }}" style="width: 200px; height: 50px;"></div>
             <div style="font-size: 12px; font-weight: bold; margin-top: 5px; letter-spacing: 2px;">{{ $roll->roll_no }}</div>
         </div>
 

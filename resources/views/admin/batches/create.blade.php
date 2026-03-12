@@ -83,7 +83,7 @@
                         <select name="center_ids[]" id="center_id" class="form-select" multiple required>
                             <option value="">Select center...</option>
                             @foreach($centers as $c)
-                            <option value="{{ $c->id }}" data-city="{{ $c->city_id }}">{{ $c->name }} ({{ $c->city->name }})</option>
+                            <option value="{{ $c->id }}" data-city="{{ $c->city_id }}" data-capacity="{{ $c->seating_capacity }}">{{ $c->name }} ({{ $c->city->name }})</option>
                             @endforeach
                         </select>
                     </div>
@@ -257,6 +257,36 @@ document.addEventListener('DOMContentLoaded', () => {
     let tsCenter = new TomSelect(centerSelect, {
         plugins: ['remove_button'],
         placeholder: "Select test centers...",
+        onChange: function(values) {
+            let totalCapacity = 0;
+            const centerArray = typeof values === 'string' ? (values ? [values] : []) : values;
+            
+            // Get original options to read data-capacity
+            const tempDiv = document.createElement('div');
+            tempDiv.innerHTML = `<select>${originalCentersHTML}</select>`;
+            const options = Array.from(tempDiv.querySelectorAll('option'));
+            
+            centerArray.forEach(id => {
+                const opt = options.find(o => o.value == id);
+                if (opt && opt.dataset.capacity) {
+                    totalCapacity += parseInt(opt.dataset.capacity);
+                }
+            });
+
+            // Update UI fields
+            const totalSeatsInput = document.querySelector('input[name="total_seats"]');
+            const countToAllocateInput = document.querySelector('input[name="count_to_allocate"]');
+            
+            if (totalSeatsInput) {
+                totalSeatsInput.value = totalCapacity;
+                // Trigger change event if needed
+                totalSeatsInput.dispatchEvent(new Event('change'));
+            }
+            
+            if (countToAllocateInput && (!countToAllocateInput.value || countToAllocateInput.value == 0)) {
+                countToAllocateInput.value = totalCapacity;
+            }
+        }
     });
 
     let tsProject = new TomSelect(projectSelect, {

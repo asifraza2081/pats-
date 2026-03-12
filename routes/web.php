@@ -13,6 +13,13 @@ use Illuminate\Support\Facades\Route;
 // PUBLIC ROUTES
 // ═══════════════════════════════════════════════════
 Route::get('/', [HomeController::class, 'index'])->name('home');
+Route::get('/about', [HomeController::class, 'about'])->name('about');
+Route::get('/contact', [HomeController::class, 'contact'])->name('contact');
+Route::get('/downloads', [HomeController::class, 'downloads'])->name('downloads');
+Route::get('/procurement', [HomeController::class, 'procurement'])->name('procurement');
+Route::get('/csr', [HomeController::class, 'csr'])->name('csr');
+Route::get('/instructions', [HomeController::class, 'instructions'])->name('instructions');
+
 Route::get('/projects', [HomeController::class, 'projects'])->name('projects');
 Route::get('/projects/{project}', [HomeController::class, 'project'])->name('projects.show');
 Route::get('/projects/{project}/jobs/{job}', [HomeController::class, 'job'])->name('jobs.show');

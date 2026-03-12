@@ -11,8 +11,16 @@ class HomeController extends Controller
     public function index()
     {
         $projects = Project::where('status', 'open')->latest()->take(6)->get();
-        return view('welcome', compact('projects'));
+        $results = Project::where('status', 'closed')->latest()->take(6)->get(); // For "Latest Results" section
+        return view('welcome', compact('projects', 'results'));
     }
+
+    public function about() { return view('public.about'); }
+    public function contact() { return view('public.contact'); }
+    public function downloads() { return view('public.downloads'); }
+    public function procurement() { return view('public.procurement'); }
+    public function csr() { return view('public.csr'); }
+    public function instructions() { return view('public.instructions'); }
 
     public function projects()
     {

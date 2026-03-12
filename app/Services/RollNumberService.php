@@ -6,7 +6,7 @@ use App\Models\Application;
 use App\Models\Batch;
 use App\Models\ExamRollno;
 use Illuminate\Support\Facades\DB;
-use Picqer\Barcode\BarcodeGeneratorSVG;
+use Picqer\Barcode\BarcodeGeneratorPNG;
 
 class RollNumberService
 {
@@ -43,7 +43,7 @@ class RollNumberService
             }
 
             $allocated = 0;
-            $generator = new BarcodeGeneratorSVG();
+            $generator = new BarcodeGeneratorPNG();
 
             foreach ($candidates as $app) {
                 // Get the last serial for this project/job/city/center to increment
@@ -55,10 +55,10 @@ class RollNumberService
 
                 $serial = $lastSerial + 1;
                 
-                // Roll No Format: [ProjID][JobID][CityID][CenterTCID]-[Serial]
-                // Example: 11023001-001
+                // Roll No Format: [ProjID][JobID][CityID][CenterTCID][Serial] (NUMBERS ONLY)
+                // Example: 110230010001
                 $rollNo = sprintf(
-                    '%d%d%02d%s-%04d',
+                    '%d%d%02d%s%04d',
                     $app->project_id % 10, // Single digit for project
                     $app->job->job_code % 100, // Up to 2 digits for job
                     $app->desired_test_city_id % 100, // 2 digits for city
@@ -75,7 +75,7 @@ class RollNumberService
                     'center_id'      => $batch->center_id,
                     'batch_id'       => $batch->id,
                     'roll_no'        => $rollNo,
-                    'barcode'        => $rollNo, // Using Roll No as barcode content
+                    'barcode'        => base64_encode($generator->getBarcode($rollNo, $generator::TYPE_CODE_128, 2, 50)), 
                     'batch_no'       => (string)$batch->batch_number,
                     'test_date'      => $batch->test_date,
                     'reporting_time' => $batch->reporting_time,
@@ -108,6 +108,14 @@ class RollNumberService
     /**
      * Get a summary of allocations in a batch by Job Post.
      */
+    public function batchSummary(Batch $batch)
+    {
+        return ExamRollno::where('batch_id', $batch->id)
+            ->join('pats_jobs', 'exam_rollnos.job_id', '=', 'pats_jobs.id')
+            ->selectRaw('pats_jobs.title as job_title, count(*) as allocated')
+            ->groupBy('pats_jobs.title')
+            ->get();
+    }
     /**
      * Get full list of candidates in a batch grouped by Job Post.
      */
