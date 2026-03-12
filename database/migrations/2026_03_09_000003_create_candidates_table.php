@@ -22,8 +22,10 @@ return new class extends Migration {
             $table->boolean('disability')->default(false);
             $table->string('disability_type', 120)->nullable();
             // Domicile & Address
-            $table->string('province_of_domicile', 80)->nullable();
-            $table->string('district_of_domicile', 80)->nullable();
+            $table->foreignId('domicile_city_id')->nullable()->constrained('cities')->nullOnDelete();
+            $table->string('province_of_domicile', 50)->nullable();
+            $table->string('district_of_domicile', 50)->nullable();
+            $table->foreignId('address_city_id')->nullable()->constrained('cities')->nullOnDelete();
             $table->text('permanent_address')->nullable();
             $table->text('postal_address')->nullable();
             $table->boolean('same_postal_address')->default(false);

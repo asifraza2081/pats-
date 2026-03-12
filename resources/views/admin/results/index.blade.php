@@ -1,43 +1,85 @@
-@extends('layouts.admin')
-@section('title', 'Results')
-@section('page-title', 'Results Management')
+@extends('layouts.dashboard')
+@section('title', 'Test Results Management')
+@section('page-title', 'Performance & Scoring')
+
+@section('page-actions')
+<a href="{{ route('admin.results.upload') }}" class="btn btn-primary">
+    <i class="ti ti-upload me-2"></i> Import New Results
+</a>
+@endsection
 
 @section('content')
-<div class="d-flex gap-2 mb-3">
-    <a href="{{ route('admin.results.upload') }}" class="btn btn-pats"><i class="bi bi-cloud-upload me-1"></i>Upload Results</a>
-</div>
-<div class="card border-0 shadow-sm rounded-4">
+<div class="card shadow-sm border-0">
+    <div class="card-header border-0 pb-1 pt-3">
+        <h3 class="card-title fw-bold text-primary">Published Results Directory</h3>
+    </div>
     <div class="table-responsive">
-        <table class="table table-hover align-middle mb-0">
-            <thead class="table-light">
-                <tr class="small text-muted">
-                    <th class="px-4 py-3">Roll No.</th><th>Candidate</th><th>Post</th><th>Score</th><th>%age</th><th>Percentile</th><th>Status</th><th></th>
+        <table class="table card-table table-vcenter text-nowrap datatable table-hover">
+            <thead>
+                <tr>
+                    <th>Candidate</th>
+                    <th>Roll Number</th>
+                    <th>Project / Post</th>
+                    <th>Score</th>
+                    <th>Percentile</th>
+                    <th>Status</th>
+                    <th class="w-1"></th>
                 </tr>
             </thead>
             <tbody>
                 @forelse($results as $result)
                 <tr>
-                    <td class="px-4 fw-bold text-primary">{{ $result->roll_number }}</td>
                     <td>
-                        <div class="small fw-semibold">{{ $result->application->candidate->user->full_name }}</div>
-                        <div class="text-muted" style="font-size:.75rem">{{ $result->application->candidate->user->cnic }}</div>
+                        <div class="font-weight-medium fw-bold text-body">{{ $result->application->candidate->user->full_name }}</div>
+                        <div class="text-secondary small">{{ $result->application->candidate->user->cnic }}</div>
                     </td>
-                    <td class="small">{{ Str::limit($result->application->job->title,25) }}</td>
-                    <td class="small">{{ $result->score }}/{{ $result->total_marks }}</td>
-                    <td class="small fw-semibold {{ $result->percentage >= 50 ? 'text-success':'text-danger' }}">{{ $result->percentage }}%</td>
-                    <td class="small">{{ $result->percentile ? number_format($result->percentile,1).'th' : '—' }}</td>
+                    <td><span class="text-primary fw-bold">{{ $result->roll_no }}</span></td>
                     <td>
-                        @php $rc=['pass'=>'success','fail'=>'danger','absent'=>'secondary','withheld'=>'warning']; @endphp
-                        <span class="badge bg-{{ $rc[$result->result_status] ?? 'secondary' }} text-capitalize">{{ $result->result_status }}</span>
+                        <div class="font-weight-medium text-body">{{ Str::limit($result->application->job->title, 25) }}</div>
+                        <div class="text-secondary small">{{ $result->application->job->project->name }}</div>
                     </td>
-                    <td><a href="{{ route('admin.results.show',$result->application) }}" class="btn btn-sm btn-outline-primary"><i class="bi bi-eye"></i></a></td>
+                    <td>
+                        <div class="h4 mb-0 fw-bold">{{ number_format($result->score, 1) }} / {{ number_format($result->total_marks, 0) }}</div>
+                        <div class="text-secondary small">{{ $result->percentage }}%</div>
+                    </td>
+                    <td>
+                        <div class="fw-bold text-blue">{{ $result->percentile }}<sup>th</sup></div>
+                    </td>
+                    <td>
+                        @php
+                            $st = match($result->result_status) {
+                                'pass' => ['c'=>'success', 'l'=>'Pass'],
+                                'fail' => ['c'=>'danger', 'l'=>'Fail'],
+                                'absent' => ['c'=>'secondary', 'l'=>'Absent'],
+                                'withheld' => ['c'=>'warning', 'l'=>'Withheld'],
+                                default => ['c'=>'dark', 'l'=>strtoupper($result->result_status)]
+                            };
+                        @endphp
+                        <span class="badge bg-{{ $st['c'] }}-lt text-{{ $st['c'] }}">{{ $st['l'] }}</span>
+                    </td>
+                    <td>
+                        <a href="{{ route('admin.results.show', $result->application_id) }}" class="btn btn-icon btn-outline-primary btn-sm" title="View Result Card">
+                            <i class="ti ti-id"></i>
+                        </a>
+                    </td>
                 </tr>
                 @empty
-                <tr><td colspan="8" class="text-center text-muted py-5">No results published yet.</td></tr>
+                <tr>
+                    <td colspan="7" class="text-center text-secondary py-5">
+                        <div class="empty">
+                            <div class="empty-icon text-secondary"><i class="ti ti-award-off fs-1"></i></div>
+                            <p class="empty-title">No results have been published yet.</p>
+                        </div>
+                    </td>
+                </tr>
                 @endforelse
             </tbody>
         </table>
     </div>
-    @if($results->hasPages())<div class="card-footer bg-white border-0 px-4 pb-3">{{ $results->links() }}</div>@endif
+    @if($results->hasPages())
+    <div class="card-footer d-flex align-items-center">
+        {{ $results->links('pagination::bootstrap-5') }}
+    </div>
+    @endif
 </div>
 @endsection

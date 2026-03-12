@@ -5,8 +5,8 @@ namespace App\Http\Controllers\Candidate;
 use App\Http\Controllers\Controller;
 use App\Models\Application;
 use App\Models\PatsJob;
+use App\Models\City;
 use App\Models\Payment;
-use App\Services\BatchAssignmentService;
 use App\Services\EligibilityService;
 use Barryvdh\DomPDF\Facade\Pdf;
 use Illuminate\Http\Request;
@@ -16,15 +16,14 @@ use Illuminate\Support\Facades\DB;
 class ApplicationController extends Controller
 {
     public function __construct(
-        private EligibilityService      $eligibility,
-        private BatchAssignmentService  $batcher,
+        private EligibilityService $eligibility,
     ) {}
 
     public function index()
     {
         $candidate    = Auth::user()->candidate;
         $applications = Application::where('candidate_id', $candidate->id)
-            ->with(['job.project', 'batch.center', 'payment', 'rollNumber', 'result'])
+            ->with(['job.project', 'batch.center', 'payment', 'examRollno', 'result'])
             ->latest('applied_at')->paginate(10);
         return view('candidate.applications', compact('applications'));
     }
@@ -50,8 +49,9 @@ class ApplicationController extends Controller
 
         // Run eligibility check
         $eligibilityResult = $this->eligibility->check($candidate, $job);
+        $cities = City::orderBy('name')->get();
 
-        return view('candidate.apply', compact('job', 'project', 'candidate', 'eligibilityResult'));
+        return view('candidate.apply', compact('job', 'project', 'candidate', 'eligibilityResult', 'cities'));
     }
 
     public function store(Request $request, PatsJob $job)
@@ -62,8 +62,7 @@ class ApplicationController extends Controller
         abort_if(!$project->isRegistrationOpen(), 403);
 
         $data = $request->validate([
-            'test_city_priority_1' => 'required|string|max:80',
-            'test_city_priority_2' => 'nullable|string|max:80',
+            'desired_test_city_id' => 'required|exists:cities,id',
             'age_relaxation_type'  => 'nullable|string|max:80',
             'age_relaxation_years' => 'nullable|integer|min:1|max:10',
         ]);
@@ -71,24 +70,11 @@ class ApplicationController extends Controller
         // Re-run eligibility
         $eligResult = $this->eligibility->check($candidate, $job);
 
-        // Find available batch
-        $batch = $this->batcher->findBatch(
-            $project->id,
-            $data['test_city_priority_1'],
-            $data['test_city_priority_2'] ?? null
-        );
-
-        if (!$batch) {
-            return back()->with('error', 'No available test batches at this time. Please try again later or contact PATS.');
-        }
-
-        DB::transaction(function () use ($candidate, $job, $batch, $data, $eligResult) {
+        DB::transaction(function () use ($candidate, $job, $data, $eligResult) {
             $application = Application::create([
                 'candidate_id'          => $candidate->id,
                 'job_id'                => $job->id,
-                'batch_id'              => $batch->id,
-                'test_city_priority_1'  => $data['test_city_priority_1'],
-                'test_city_priority_2'  => $data['test_city_priority_2'] ?? null,
+                'desired_test_city_id'  => $data['desired_test_city_id'],
                 'age_relaxation_type'   => $data['age_relaxation_type'] ?? null,
                 'age_relaxation_years'  => $data['age_relaxation_years'] ?? null,
                 'status'                => 'submitted',
@@ -103,9 +89,6 @@ class ApplicationController extends Controller
                 'status'         => 'pending',
             ]);
 
-            // Book seat
-            $this->batcher->bookSeat($batch);
-
             // Lock profile
             $candidate->update(['profile_locked' => true]);
         });
@@ -116,7 +99,7 @@ class ApplicationController extends Controller
     public function show(Application $app)
     {
         abort_if($app->candidate_id !== Auth::user()->candidate->id, 403);
-        $app->load(['job.project', 'batch.center', 'payment', 'rollNumber', 'result']);
+        $app->load(['job.project', 'batch.center', 'payment', 'examRollno', 'result']);
         return view('candidate.application-show', compact('app'));
     }
 
@@ -136,15 +119,16 @@ class ApplicationController extends Controller
     public function slip(Application $app)
     {
         abort_if($app->candidate_id !== Auth::user()->candidate->id, 403);
-        $app->load(['job.project', 'batch.center', 'rollNumber']);
-        $roll = $app->rollNumber;
+        $app->load(['job.project', 'examRollno.testCenter', 'examRollno.city']);
+        $examRollno = $app->examRollno;
 
-        abort_if(!$roll || !$roll->slip_ready, 403, 'Roll number slip is not yet available.');
-        abort_if($app->batch->hasStarted(), 403, 'Slip download is disabled after the test has started.');
+        abort_if(!$examRollno || !$examRollno->roll_no, 403, 'Roll number slip is not yet generated.');
+        abort_if(!$examRollno->slip_ready, 403, 'Roll number slip is not yet available for download. Please check back later.');
+        abort_if($examRollno->test_date && now()->isAfter(\Carbon\Carbon::parse($examRollno->test_date->format('Y-m-d') . ' ' . $examRollno->start_time)), 403, 'Slip download is disabled after the test has started.');
 
         $candidate = Auth::user()->candidate;
-        $pdf = Pdf::loadView('pdf.slip', compact('app', 'roll', 'candidate'));
-        return $pdf->download("Slip_{$roll->roll_number}.pdf");
+        $pdf = Pdf::loadView('pdf.slip', compact('app', 'candidate'));
+        return $pdf->download("Slip_{$examRollno->roll_no}.pdf");
     }
 
     /** View result card */
@@ -153,7 +137,7 @@ class ApplicationController extends Controller
         abort_if($app->candidate_id !== Auth::user()->candidate->id, 403);
         $result = $app->result;
         abort_if(!$result || !$result->isPublished(), 404, 'Results are not yet published.');
-        $app->load(['job.project', 'batch.center', 'rollNumber']);
+        $app->load(['job.project', 'examRollno.center']);
         return view('candidate.result', compact('app', 'result'));
     }
 }

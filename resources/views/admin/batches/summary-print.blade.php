@@ -1,106 +1,128 @@
 <!DOCTYPE html>
-<html>
+<html lang="en">
 <head>
-<meta charset="UTF-8">
-<title>Batch Summary — BATCH-{{ $batch->batch_number }}</title>
-<style>
-  body { font-family: DejaVu Sans, Arial, sans-serif; font-size: 11px; color: #111; margin: 0; padding: 20px; }
-  @media print { body { padding: 8px; } .no-print { display:none; } }
-  h1 { font-size: 16px; color: #0a3d62; margin: 0 0 2px; }
-  h2 { font-size: 12px; color: #444; margin: 0 0 8px; font-weight: normal; }
-  .header { border-bottom: 2px solid #0a3d62; padding-bottom: 8px; margin-bottom: 12px; }
-  .meta { display: flex; gap: 30px; flex-wrap: wrap; margin-bottom: 12px; }
-  .meta-item { }
-  .meta-item .lbl { color: #888; font-size: 9px; text-transform: uppercase; }
-  .meta-item .val { font-weight: bold; font-size: 12px; color: #0a3d62; }
-  table { width: 100%; border-collapse: collapse; margin-top: 10px; }
-  th { background: #0a3d62; color: #fff; padding: 6px 10px; text-align: left; font-size: 10px; }
-  td { padding: 5px 10px; border-bottom: 1px solid #eee; font-size: 10px; }
-  tr:nth-child(even) { background: #f9f9f9; }
-  .env-row td { background: #eef4fb; font-weight: bold; color: #0a3d62; }
-  .total-row td { background: #0a3d62; color: #fff; font-weight: bold; }
-  .footer { margin-top: 20px; border-top: 1px solid #ccc; padding-top: 8px; font-size: 9px; color: #666; display: flex; justify-content: space-between; }
-  .btn-print { background:#0a3d62;color:#fff;border:none;padding:8px 20px;border-radius:6px;cursor:pointer;font-size:12px;margin-bottom:15px; }
-</style>
+    <meta charset="UTF-8">
+    <title>Session Summary — #{{ $batch->id }}</title>
+    <style>
+        body { font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif; font-size: 11px; line-height: 1.5; color: #1e293b; margin: 0; padding: 40px; }
+        @media print { body { padding: 0; } .no-print { display: none; } }
+        
+        .header { display: flex; justify-content: space-between; align-items: flex-start; border-bottom: 2px solid #066fd1; padding-bottom: 20px; margin-bottom: 30px; }
+        .logo-text { font-size: 24px; font-weight: 800; color: #066fd1; letter-spacing: -0.5px; }
+        .document-type { font-size: 14px; font-weight: 600; color: #64748b; text-transform: uppercase; margin-top: 4px; }
+        
+        .meta-grid { display: grid; grid-template-columns: repeat(4, 1fr); gap: 20px; margin-bottom: 40px; background: #f8fafc; padding: 20px; border-radius: 8px; border: 1px solid #e2e8f0; }
+        .meta-item { }
+        .meta-label { font-size: 9px; font-weight: 700; color: #94a3b8; text-transform: uppercase; margin-bottom: 4px; }
+        .meta-value { font-size: 12px; font-weight: 600; color: #1e293b; }
+        
+        table { width: 100%; border-collapse: collapse; margin-bottom: 40px; }
+        th { background: #f1f5f9; color: #475569; font-weight: 700; text-transform: uppercase; font-size: 9px; text-align: left; padding: 12px 15px; border-bottom: 2px solid #e2e8f0; }
+        td { padding: 12px 15px; border-bottom: 1px solid #f1f5f9; font-size: 11px; }
+        .fw-bold { font-weight: 700; }
+        .text-blue { color: #066fd1; }
+        
+        .footer-signatures { display: grid; grid-template-columns: repeat(3, 1fr); gap: 60px; margin-top: 60px; }
+        .sig-box { border-top: 1px solid #cbd5e1; padding-top: 10px; text-align: center; font-size: 10px; font-weight: 600; color: #64748b; }
+        
+        .print-footer { margin-top:100px; font-size: 8px; color: #94a3b8; display: flex; justify-content: space-between; border-top: 1px solid #f1f5f9; padding-top: 10px; }
+        .btn-print { background: #066fd1; color: #fff; border: none; padding: 10px 24px; border-radius: 6px; font-weight: 600; cursor: pointer; margin-bottom: 20px; transition: background 0.2s; }
+        .btn-print:hover { background: #0559a8; }
+    </style>
 </head>
 <body>
-<button class="btn-print no-print" onclick="window.print()">🖨 Print / Save PDF</button>
-<div class="header">
-  <h1>PRIME ASSESSMENT &amp; TESTING SERVICES</h1>
-  <h2>Batch Summary Sheet — {{ $batch->project->org_name }}</h2>
-</div>
-<div class="meta">
-  <div class="meta-item"><div class="lbl">Project</div><div class="val">{{ $batch->project->name }}</div></div>
-  <div class="meta-item"><div class="lbl">Batch No.</div><div class="val">BATCH-{{ $batch->batch_number }}</div></div>
-  <div class="meta-item"><div class="lbl">Test Center</div><div class="val">{{ $batch->center->name }}</div></div>
-  <div class="meta-item"><div class="lbl">TCID</div><div class="val">{{ $batch->center->tcid }}</div></div>
-  <div class="meta-item"><div class="lbl">City</div><div class="val">{{ $batch->center->city }}</div></div>
-  <div class="meta-item"><div class="lbl">Test Date</div><div class="val">{{ $batch->test_date->format('d M Y') }}</div></div>
-  <div class="meta-item"><div class="lbl">Reporting Time</div><div class="val">{{ \Carbon\Carbon::parse($batch->reporting_time)->format('h:i A') }}</div></div>
-  <div class="meta-item"><div class="lbl">Start Time</div><div class="val">{{ \Carbon\Carbon::parse($batch->start_time)->format('h:i A') }}</div></div>
-  <div class="meta-item"><div class="lbl">Envelope Size</div><div class="val">{{ $batch->envelope_size }}</div></div>
-</div>
+    <div class="no-print" style="text-align: right;">
+        <button class="btn-print" onclick="window.print()">Print Summary Report</button>
+    </div>
 
-<table>
-  <thead>
-    <tr>
-      <th>Env#</th>
-      <th>Job Type / Post</th>
-      <th>Roll No. From</th>
-      <th>Roll No. To</th>
-      <th>Count</th>
-    </tr>
-  </thead>
-  <tbody>
-    @php $envNum = 1; $grandTotal = 0; @endphp
-    @foreach($summary as $jobId => $data)
-      @php
-        $totalInJob = $data['count'];
-        $envSize = $batch->envelope_size;
-        $fullEnvelopes = intdiv($totalInJob, $envSize);
-        $remainder = $totalInJob % $envSize;
-        $items = $data['items'];
-        $cursor = 0;
-        $grandTotal += $totalInJob;
-      @endphp
-      @for($e = 0; $e < ($fullEnvelopes + ($remainder > 0 ? 1 : 0)); $e++)
-        @php
-          $count = ($e < $fullEnvelopes) ? $envSize : $remainder;
-          $from = $items[$cursor]->roll_number;
-          $to   = $items[$cursor + $count - 1]->roll_number;
-          $cursor += $count;
-        @endphp
-        <tr class="env-row">
-          <td>ENV-{{ str_pad($envNum++, 3, '0', STR_PAD_LEFT) }}</td>
-          <td>{{ $data['job']->title }}{{ $data['job']->bps_grade ? ' ('..$data['job']->bps_grade.')' : '' }}</td>
-          <td>{{ $from }}</td>
-          <td>{{ $to }}</td>
-          <td>{{ $count }}</td>
-        </tr>
-      @endfor
-    @endforeach
-    <tr class="total-row">
-      <td colspan="4">TOTAL CANDIDATES IN BATCH</td>
-      <td>{{ $grandTotal }}</td>
-    </tr>
-  </tbody>
-</table>
+    <div class="header">
+        <div>
+            <div class="logo-text">PATS</div>
+            <div class="document-type">Session Summary Sheet</div>
+        </div>
+        <div style="text-align: right;">
+            <div style="font-weight: 800; font-size: 18px; color: #1e293b;">#{{ $batch->id }}</div>
+            <div style="font-size: 11px; color: #64748b;">Session No: {{ $batch->batch_number }}</div>
+        </div>
+    </div>
 
-<div style="margin-top:30px; display:flex; gap:40px;">
-  <div style="text-align:center;min-width:150px">
-    <div style="border-top:1px solid #000;padding-top:4px;font-size:10px">Center In-Charge</div>
-  </div>
-  <div style="text-align:center;min-width:150px">
-    <div style="border-top:1px solid #000;padding-top:4px;font-size:10px">PATS Representative</div>
-  </div>
-  <div style="text-align:center;min-width:150px">
-    <div style="border-top:1px solid #000;padding-top:4px;font-size:10px">Date</div>
-  </div>
-</div>
+    <div class="meta-grid">
+        <div class="meta-item">
+            <div class="meta-label">Project</div>
+            <div class="meta-value">{{ $batch->project->name }}</div>
+        </div>
+        <div class="meta-item">
+            <div class="meta-label">Test Center</div>
+            <div class="meta-value">{{ $batch->center->name }}</div>
+        </div>
+        <div class="meta-item">
+            <div class="meta-label">City</div>
+            <div class="meta-value">{{ $batch->center->city->name }}</div>
+        </div>
+        <div class="meta-item">
+            <div class="meta-label">Test Date</div>
+            <div class="meta-value">{{ $batch->test_date->format('l, d M Y') }}</div>
+        </div>
+        <div class="meta-item">
+            <div class="meta-label">Reporting Time</div>
+            <div class="meta-value">{{ date('h:i A', strtotime($batch->reporting_time)) }}</div>
+        </div>
+        <div class="meta-item">
+            <div class="meta-label">Start Time</div>
+            <div class="meta-value">{{ date('h:i A', strtotime($batch->start_time)) }}</div>
+        </div>
+        <div class="meta-item">
+            <div class="meta-label">Total Allocated</div>
+            <div class="meta-value text-blue">{{ $batch->booked_seats }} Candidates</div>
+        </div>
+        <div class="meta-item">
+            <div class="meta-label">Envelope Size</div>
+            <div class="meta-value">{{ $batch->envelope_size }} / Env</div>
+        </div>
+    </div>
 
-<div class="footer">
-  <span>Generated: {{ now()->format('d M Y H:i') }}</span>
-  <span>PATS — Confidential</span>
-</div>
+    <table>
+        <thead>
+            <tr>
+                <th>Job Post / Category</th>
+                <th>Roll Number From</th>
+                <th>Roll Number To</th>
+                <th style="text-align: center;">Total Count</th>
+                <th style="text-align: center;">Est. Envelopes</th>
+            </tr>
+        </thead>
+        <tbody>
+            @php $grandTotal = 0; @endphp
+            @foreach($summary as $row)
+            @php 
+                $grandTotal += $row->count; 
+                $envs = ceil($row->count / $batch->envelope_size);
+            @endphp
+            <tr>
+                <td class="fw-bold">{{ $row->job->title }}</td>
+                <td class="text-blue fw-bold">{{ $row->roll_from }}</td>
+                <td class="text-blue fw-bold">{{ $row->roll_to }}</td>
+                <td style="text-align: center;">{{ $row->count }}</td>
+                <td style="text-align: center;">{{ $envs }}</td>
+            </tr>
+            @endforeach
+            <tr style="background: #f8fafc;">
+                <td colspan="3" class="fw-bold" style="text-align: right; padding-right: 30px;">GRAND TOTAL</td>
+                <td style="text-align: center;" class="fw-bold text-blue">{{ $grandTotal }}</td>
+                <td style="text-align: center;" class="fw-bold">{{ ceil($grandTotal / $batch->envelope_size) }}</td>
+            </tr>
+        </tbody>
+    </table>
+
+    <div class="footer-signatures">
+        <div class="sig-box">Center Superintendent</div>
+        <div class="sig-box">PATS Representative</div>
+        <div class="sig-box">Date & Official Stamp</div>
+    </div>
+
+    <div class="print-footer">
+        <div>Generated by PATS Management System on {{ now()->format('d M Y, H:i') }}</div>
+        <div>Page 1 of 1</div>
+    </div>
 </body>
 </html>

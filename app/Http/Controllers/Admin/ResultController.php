@@ -35,10 +35,22 @@ class ResultController extends Controller
         $request->validate([
             'project_id' => 'required|exists:projects,id',
             'file'       => 'required|file|mimes:csv,xlsx,xls|max:10240',
+            'scans.*'    => 'nullable|file|mimes:jpg,jpeg,png,pdf|max:10240',
         ]);
 
         $projectId = $request->project_id;
         $rows = $this->parseFile($request->file('file'));
+
+        // Store scans in temporary storage for preview matching
+        $scanPaths = [];
+        if ($request->hasFile('scans')) {
+            foreach ($request->file('scans') as $scan) {
+                // Filename should be roll_number.ext
+                $name = pathinfo($scan->getClientOriginalName(), PATHINFO_FILENAME);
+                $path = $scan->store('temp_scans', 'public');
+                $scanPaths[$name] = $path;
+            }
+        }
 
         $preview  = [];
         $warnings = [];
@@ -47,9 +59,9 @@ class ResultController extends Controller
             $roll = trim($row['roll_number'] ?? $row[0] ?? '');
             if (!$roll) continue;
 
-            $application = Application::whereHas('rollNumber', fn($q) => $q->where('roll_number', $roll))
-                ->whereHas('batch', fn($q) => $q->where('project_id', $projectId))
-                ->with(['candidate.user', 'job'])
+            $application = Application::whereHas('examRollno', fn($q) => $q->where('roll_no', $roll))
+                ->where('project_id', $projectId)
+                ->with(['candidate.user', 'job', 'examRollno'])
                 ->first();
 
             if (!$application) {
@@ -63,6 +75,7 @@ class ResultController extends Controller
                 'score'         => floatval($row['score'] ?? $row[1] ?? 0),
                 'total_marks'   => floatval($row['total_marks'] ?? $row[2] ?? 100),
                 'result_status' => strtolower(trim($row['status'] ?? $row[3] ?? 'fail')),
+                'scan_path'     => $scanPaths[$roll] ?? null,
             ];
         }
 
@@ -90,13 +103,14 @@ class ResultController extends Controller
                 Result::updateOrCreate(
                     ['application_id' => $application->id],
                     [
-                        'roll_number'    => $row['roll_number'],
-                        'score'          => $score,
-                        'total_marks'    => $totalMarks,
-                        'percentage'     => $percentage,
-                        'result_status'  => $resultStatus,
-                        'uploaded_by'    => Auth::id(),
-                        'published_at'   => now(),
+                        'roll_number'         => $row['roll_number'],
+                        'score'               => $score,
+                        'total_marks'         => $totalMarks,
+                        'percentage'          => $percentage,
+                        'result_status'       => $resultStatus,
+                        'uploaded_by'         => Auth::id(),
+                        'published_at'        => now(),
+                        'scanned_sheet_path'  => $row['scan_path'],
                     ]
                 );
 
@@ -115,11 +129,16 @@ class ResultController extends Controller
             }
 
             $project->update(['status' => 'result_declared']);
+
+            \App\Models\ActivityLog::log('publish_results', $project, [
+                'count' => count($preview),
+                'job_ids' => array_keys($jobAppeared)
+            ]);
         });
 
         // Notify candidates
         $applications = Application::where('status', 'result_declared')
-            ->whereHas('batch', fn($q) => $q->where('project_id', $project->id))
+            ->where('project_id', $project->id)
             ->with(['candidate.user', 'job'])
             ->get();
 
@@ -136,7 +155,7 @@ class ResultController extends Controller
     {
         $result = $app->result;
         abort_if(!$result, 404);
-        $app->load(['candidate.user', 'job.project', 'batch.center', 'rollNumber']);
+        $app->load(['candidate.user', 'job.project', 'examRollno.center']);
         return view('admin.results.show', compact('app', 'result'));
     }
 

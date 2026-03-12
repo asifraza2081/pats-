@@ -2,80 +2,138 @@
 @section('title', $project->name . ' — PATS')
 
 @section('content')
-<div class="container py-5">
-    {{-- Project Header --}}
-    <div class="card border-0 shadow-sm rounded-4 mb-4 overflow-hidden">
-        <div class="row g-0">
-            <div class="col-md-9 p-4">
-                <div class="small text-muted mb-1">{{ $project->org_name }}</div>
-                <h2 class="fw-bold mb-2" style="color:var(--pats-primary)">{{ $project->name }}</h2>
-                <div class="d-flex flex-wrap gap-2 mb-3">
-                    <span class="badge bg-success">{{ ucfirst($project->status) }}</span>
-                    @if($project->close_date)
-                    <span class="badge bg-warning text-dark"><i class="bi bi-calendar me-1"></i>Closes: {{ $project->close_date->format('d M Y') }}</span>
-                    @endif
-                    @if($project->test_date)
-                    <span class="badge bg-info text-dark"><i class="bi bi-calendar-check me-1"></i>Test: {{ $project->test_date->format('d M Y') }}</span>
-                    @endif
+<div class="container-xl py-5">
+    
+    <!-- Page Header -->
+    <div class="page-header d-print-none mb-4">
+        <div class="row align-items-center">
+            <div class="col">
+                <!-- Page pre-title -->
+                <div class="page-pretitle text-muted fw-bold tracking-wide text-uppercase">
+                    {{ $project->org_name }}
                 </div>
-                @if($project->description)
-                <p class="text-muted">{{ $project->description }}</p>
-                @endif
+                <h2 class="page-title text-pats-primary fw-bold fs-1 mt-1">
+                    {{ $project->name }}
+                </h2>
             </div>
-            @if($project->logo_path)
-            <div class="col-md-3 d-flex align-items-center justify-content-center p-3 bg-light">
-                <img src="{{ asset('storage/'.$project->logo_path) }}" style="max-height:100px;max-width:150px">
+            <!-- Page title actions -->
+            <div class="col-auto ms-auto d-print-none">
+                <div class="btn-list">
+                    <a href="{{ route('projects') }}" class="btn btn-outline-secondary d-none d-sm-inline-block">
+                        <i class="ti ti-arrow-left me-2"></i> Back to Projects
+                    </a>
+                </div>
             </div>
-            @endif
         </div>
     </div>
 
-    {{-- Job Posts --}}
-    <h4 class="fw-bold mb-3"><i class="bi bi-briefcase me-2 text-primary"></i>Available Posts</h4>
-    @if($project->jobs->isEmpty())
-    <p class="text-muted">No posts available for this project yet.</p>
-    @else
-    <div class="row g-3">
-        @foreach($project->jobs as $job)
-        <div class="col-12">
-            <div class="card border-0 shadow-sm rounded-4">
-                <div class="card-body p-4">
-                    <div class="row align-items-center g-3">
-                        <div class="col-md-6">
-                            <div class="d-flex align-items-center gap-2 mb-1">
-                                <span class="badge bg-secondary">{{ str_pad($job->job_code,2,'0',STR_PAD_LEFT) }}</span>
-                                <h6 class="mb-0 fw-bold">{{ $job->title }}</h6>
-                            </div>
-                            @if($job->department)<div class="text-muted small">{{ $job->department }}</div>@endif
-                            @if($job->bps_grade)<div class="text-muted small"><i class="bi bi-tag me-1"></i>{{ $job->bps_grade }}</div>@endif
+    <!-- Project Details Card -->
+    <div class="card mb-4 shadow-sm border-0">
+        <div class="card-body">
+            <div class="row align-items-center">
+                <div class="col-12 col-md-9">
+                    <div class="d-flex flex-wrap gap-2 mb-3">
+                        <span class="badge bg-success text-success-fg">Status: {{ ucfirst($project->status) }}</span>
+                        
+                        @if($project->close_date)
+                            <span class="badge {{ $project->close_date->isPast() ? 'bg-danger text-danger-fg' : 'bg-warning text-dark' }}">
+                                <i class="ti ti-calendar-time me-1"></i> Application Deadline: {{ $project->close_date->format('d M Y') }}
+                            </span>
+                        @endif
+                        
+                        @if($project->test_date)
+                            <span class="badge bg-info text-info-fg">
+                                <i class="ti ti-calendar-event me-1"></i> Tentative Test: {{ $project->test_date->format('d M Y') }}
+                            </span>
+                        @endif
+                    </div>
+                    
+                    @if($project->description)
+                        <div class="text-secondary markdown">
+                            <p>{{ $project->description }}</p>
                         </div>
-                        <div class="col-md-4">
-                            <div class="d-flex flex-wrap gap-2 small text-muted">
-                                <span><i class="bi bi-people me-1"></i>{{ $job->total_seats }} seats</span>
+                    @endif
+                </div>
+                
+                @if($project->logo_path)
+                <div class="col-12 col-md-3 mt-3 mt-md-0 border-start-md px-md-4 d-flex justify-content-center align-items-center">
+                    <img src="{{ asset('storage/'.$project->logo_path) }}" alt="{{ $project->org_name }} Logo" class="img-fluid rounded shadow-sm" style="max-height: 120px;">
+                </div>
+                @endif
+            </div>
+        </div>
+    </div>
+
+    <!-- Job Posts -->
+    <div class="d-flex align-items-center mb-3 mt-5">
+        <h3 class="m-0 fw-bold"><i class="ti ti-briefcase text-pats-primary me-2"></i> Available Positions</h3>
+        <span class="badge bg-secondary ms-2 rounded-pill">{{ $project->jobs->count() }}</span>
+    </div>
+
+    @if($project->jobs->isEmpty())
+        <div class="empty bg-white rounded border">
+            <div class="empty-icon">
+                <i class="ti ti-search text-muted"></i>
+            </div>
+            <p class="empty-title">No positions currently open</p>
+            <p class="empty-subtitle text-muted">
+                There are no open job positions available for this project at the moment. Please check back later.
+            </p>
+        </div>
+    @else
+        <div class="card border-0 shadow-sm">
+            <div class="list-group list-group-flush list-group-hoverable">
+                @foreach($project->jobs as $job)
+                <div class="list-group-item py-4">
+                    <div class="row align-items-center">
+                        <div class="col-12 col-md-6 mb-3 mb-md-0">
+                            <div class="d-flex align-items-center mb-2">
+                                <span class="badge bg-secondary-lt me-2 tracking-wide fw-bold">POST-{{ str_pad($job->job_code, 2, '0', STR_PAD_LEFT) }}</span>
+                                <h4 class="m-0 fw-bold text-dark fs-3">{{ $job->title }}</h4>
+                            </div>
+                            <div class="text-secondary small d-flex flex-wrap gap-3">
+                                @if($job->department)
+                                    <span><i class="ti ti-building me-1"></i> {{ $job->department }}</span>
+                                @endif
+                                @if($job->bps_grade)
+                                    <span><i class="ti ti-rosette me-1"></i> BPS-{{ $job->bps_grade }}</span>
+                                @endif
+                            </div>
+                        </div>
+                        
+                        <div class="col-6 col-md-3">
+                            <div class="d-flex flex-column gap-2 text-secondary small">
+                                <span><i class="ti ti-users me-2 text-muted"></i> <strong>{{ $job->total_seats }}</strong> alloc. seats</span>
                                 @if($job->age_min || $job->age_max)
-                                <span><i class="bi bi-person me-1"></i>{{ $job->age_min }}–{{ $job->age_max }} yrs</span>
+                                    <span><i class="ti ti-calendar-user me-2 text-muted"></i> <strong>{{ $job->age_min }} &ndash; {{ $job->age_max }}</strong> years limit</span>
                                 @endif
                                 @if($job->min_degree_level)
-                                <span><i class="bi bi-mortarboard me-1"></i>{{ \App\Models\EducationHistory::$levelLabels[$job->min_degree_level] ?? '' }}</span>
+                                    <span><i class="ti ti-certificate me-2 text-muted"></i> <strong>{{ \App\Models\EducationHistory::$levelLabels[$job->min_degree_level] ?? '' }}</strong> min. req.</span>
                                 @endif
                             </div>
                         </div>
-                        <div class="col-md-2 text-md-end d-flex flex-column gap-2">
-                            <span class="fw-bold text-primary">PKR {{ number_format($job->fee) }}</span>
+                        
+                        <div class="col-6 col-md-3 text-end d-flex flex-column align-items-end justify-content-center border-start ps-3">
+                            <div class="text-muted small mb-1">Application Fee (PKR)</div>
+                            <div class="fs-2 fw-bold text-dark mb-3">Rs. {{ number_format($job->fee) }}</div>
+                            
                             @auth
-                            @if(auth()->user()->hasRole('candidate'))
-                            <a href="{{ route('candidate.apply',$job) }}" class="btn btn-pats btn-sm fw-semibold">Apply Now</a>
-                            @endif
+                                @if(auth()->user()->hasRole('candidate'))
+                                    <a href="{{ route('candidate.apply', $job) }}" class="btn btn-primary fw-bold px-4">
+                                        <i class="ti ti-send me-2"></i> Apply Now
+                                    </a>
+                                @endif
                             @else
-                            <a href="{{ route('login') }}" class="btn btn-outline-primary btn-sm">Login to Apply</a>
+                                <a href="{{ route('login') }}" class="btn btn-outline-primary fw-bold">
+                                    Login to Apply
+                                </a>
                             @endauth
                         </div>
                     </div>
                 </div>
+                @endforeach
             </div>
         </div>
-        @endforeach
-    </div>
     @endif
 </div>
 @endsection

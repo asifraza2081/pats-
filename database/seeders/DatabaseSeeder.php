@@ -7,13 +7,14 @@ use Illuminate\Database\Seeder;
 use Illuminate\Support\Facades\Hash;
 use Spatie\Permission\Models\Permission;
 use Spatie\Permission\Models\Role;
+use App\Models\City;
 
 class DatabaseSeeder extends Seeder
 {
     public function run(): void
     {
         // ── Roles ─────────────────────────────────────────
-        $roles = ['super_admin', 'admin', 'data_entry', 'candidate'];
+        $roles = ['super_admin', 'admin', 'data_entry', 'candidate', 'examiner'];
         foreach ($roles as $r) {
             Role::firstOrCreate(['name' => $r, 'guard_name' => 'web']);
         }
@@ -27,23 +28,27 @@ class DatabaseSeeder extends Seeder
             'upload results',  'publish results',
             'mark attendance',
             'view reports',
+            'view assigned sessions',
         ];
+
         foreach ($permissions as $p) {
             Permission::firstOrCreate(['name' => $p, 'guard_name' => 'web']);
         }
 
-        // Super admin gets all permissions
         $superAdmin = Role::findByName('super_admin');
         $superAdmin->syncPermissions(Permission::all());
 
-        // Admin gets most permissions (not manage users)
         $admin = Role::findByName('admin');
         $admin->syncPermissions(Permission::whereNot('name', 'manage users')->get());
 
-        // Data entry limited
         $dataEntry = Role::findByName('data_entry');
         $dataEntry->syncPermissions(
             Permission::whereIn('name', ['verify payments', 'mark attendance', 'view reports'])->get()
+        );
+
+        $examiner = Role::findByName('examiner');
+        $examiner->syncPermissions(
+            Permission::whereIn('name', ['view assigned sessions', 'mark attendance', 'view reports'])->get()
         );
 
         // ── Super Admin User ──────────────────────────────
@@ -61,8 +66,31 @@ class DatabaseSeeder extends Seeder
             ]
         );
         $superUser->assignRole('super_admin');
+        
+        // ── Examiner User ──────────────────────────────
+        $examinerUser = User::updateOrCreate(
+            ['email' => 'examiner@pats.test'],
+            [
+                'first_name'        => 'Test',
+                'last_name'         => 'Examiner',
+                'cnic'              => '1111111111111',
+                'phone'             => '03111111111',
+                'nationality'       => 'Pakistani',
+                'password'          => Hash::make('password'),
+                'phone_verified_at' => now(),
+                'email_verified_at' => now(),
+            ]
+        );
+        $examinerUser->assignRole('examiner');
 
-        // ── Dummy Data for End-to-End Testing ─────────────────────
+        // ── Cities ────────────────────────────────────────
+        $cityLhe = City::create(['name' => 'Lahore', 'province' => 'Punjab', 'is_test_center' => true]);
+        $cityIsb = City::create(['name' => 'Islamabad', 'province' => 'Federal', 'is_test_center' => true]);
+        $cityKhi = City::create(['name' => 'Karachi', 'province' => 'Sindh', 'is_test_center' => true]);
+        $cityPew = City::create(['name' => 'Peshawar', 'province' => 'KPK', 'is_test_center' => true]);
+        $cityQta = City::create(['name' => 'Quetta', 'province' => 'Balochistan', 'is_test_center' => true]);
+
+        // ── Dummy Data ─────────────────────
         $project1 = \App\Models\Project::create([
             'name'        => 'Ministry of IT Recruitment 2026',
             'org_name'    => 'Ministry of Information Technology',
@@ -91,7 +119,7 @@ class DatabaseSeeder extends Seeder
             'bps_grade'        => 'BPS-17',
             'total_seats'      => 10,
             'fee'              => 1000,
-            'min_degree_level' => 3, // Bachelor
+            'min_degree_level' => 3, 
             'age_min'          => 18,
             'age_max'          => 45,
         ]);
@@ -123,50 +151,24 @@ class DatabaseSeeder extends Seeder
         ]);
 
         $center1 = \App\Models\TestCenter::create([
-            'tcid'           => 'LHE',
-            'name'           => 'Expo Center Lahore',
-            'city'           => 'Lahore',
-            'province'       => 'Punjab',
-            'address'        => 'Johar Town, Lahore',
-            'total_capacity' => 500,
-            'is_active'      => true,
+            'tcid'             => 'LHE',
+            'name'             => 'Expo Center Lahore',
+            'city_id'          => $cityLhe->id,
+            'address'          => 'Johar Town, Lahore',
+            'seating_capacity' => 500,
+            'is_active'        => true,
         ]);
         $center1->projects()->attach([$project1->id, $project2->id]);
 
         $center2 = \App\Models\TestCenter::create([
-            'tcid'           => 'ISB',
-            'name'           => 'Pak-China Friendship Center',
-            'city'           => 'Islamabad',
-            'province'       => 'Federal',
-            'address'        => 'Garden Avenue, Shakarparian',
-            'total_capacity' => 800,
-            'is_active'      => true,
+            'tcid'             => 'ISB',
+            'name'             => 'Pak-China Friendship Center',
+            'city_id'          => $cityIsb->id,
+            'address'          => 'Garden Avenue, Shakarparian',
+            'seating_capacity' => 800,
+            'is_active'        => true,
         ]);
         $center2->projects()->attach([$project1->id, $project2->id]);
-
-        $batch1 = \App\Models\Batch::create([
-            'project_id'    => $project1->id,
-            'center_id'     => $center1->id,
-            'batch_number'  => 1,
-            'test_date'     => now()->addDays(15),
-            'reporting_time'=> '08:00:00',
-            'start_time'    => '09:00:00',
-            'total_seats'   => 100,
-            'booked_seats'  => 0,
-            'envelope_size' => 20,
-        ]);
-
-        $batch2 = \App\Models\Batch::create([
-            'project_id'    => $project2->id,
-            'center_id'     => $center2->id,
-            'batch_number'  => 1,
-            'test_date'     => now()->addDays(20),
-            'reporting_time'=> '09:00:00',
-            'start_time'    => '10:00:00',
-            'total_seats'   => 200,
-            'booked_seats'  => 0,
-            'envelope_size' => 20,
-        ]);
 
         // Create 20 Dummy Candidates
         for ($i = 1; $i <= 20; $i++) {
@@ -184,51 +186,68 @@ class DatabaseSeeder extends Seeder
 
             $candidateInfo = \App\Models\Candidate::create([
                 'user_id'              => $user->id,
-                'father_name'          => 'John Doe Sr.',
+                'father_name'          => 'Father of Candidate ' . $i,
                 'gender'               => $i % 2 === 0 ? 'Female' : 'Male',
-                'dob'                  => now()->subYears(25)->format('Y-m-d'),
+                'dob'                  => now()->subYears(20 + ($i % 10))->format('Y-m-d'),
+                'domicile_city_id'     => ($i % 3 === 0) ? $cityKhi->id : (($i % 2 === 0) ? $cityLhe->id : $cityIsb->id),
+                'address_city_id'      => $cityLhe->id,
+                'postal_address'       => $i . ' Main Blvd, Sector ' . chr(65 + ($i % 5)),
+                'profile_locked'       => $i <= 15, // Most are locked
+                'photo_path'           => null,
+                'religion'             => 'Islam',
                 'province_of_domicile' => 'Punjab',
                 'district_of_domicile' => 'Lahore',
-                'postal_address'       => '123 Fake Street, Lahore',
-                'profile_locked'       => true,
-                'photo_path'           => null,
             ]);
 
+            // Education
             \App\Models\EducationHistory::create([
                 'candidate_id'    => $candidateInfo->id,
-                'degree_level'    => 3, // Bachelor
-                'degree_name'     => 'BS Computer Science',
-                'subject_major'   => 'Computer Science',
-                'institution'     => 'PU Lahore',
-                'passing_year'    => 2020,
-                'marks_type'      => 'CGPA',
-                'total_marks'     => 4.00,
-                'obtained_marks'  => 3.50,
+                'degree_level'    => 3, 
+                'degree_name'     => ($i % 2 === 0) ? 'BS Computer Science' : 'BS Electrical Engineering',
+                'subject_major'   => ($i % 2 === 0) ? 'Computer Science' : 'Engineering',
+                'institution'     => 'University of ' . (($i % 2 === 0) ? 'Lahore' : 'Islamabad'),
+                'passing_year'    => 2018 + ($i % 5),
+                'marks_type'      => ($i % 3 === 0) ? 'CGPA' : 'Marks',
+                'obtained_marks'  => ($i % 3 === 0) ? 3.50 : 850,
+                'total_marks'     => ($i % 3 === 0) ? 4.00 : 1100,
             ]);
 
-            // Automatically apply them to jobs
-            if ($i <= 10) {
-                // Apply half to job 1
-                \App\Models\Application::create([
-                    'candidate_id' => $candidateInfo->id,
-                    'job_id'       => $job1->id,
-                    'batch_id'     => $batch1->id,
-                    'status'       => 'submitted',
+            // Work Experience (for even candidates)
+            if ($i % 2 === 0) {
+                \App\Models\WorkExperience::create([
+                    'candidate_id'      => $candidateInfo->id,
+                    'organization_name' => 'Tech Corp ' . $i,
+                    'designation'       => 'Junior Developer',
+                    'job_type'          => 'Private',
+                    'from_date'         => now()->subYears(2),
+                    'is_current'        => true,
                 ]);
-                $batch1->increment('booked_seats');
-            } else {
-                // Apply half to job 3
-                \App\Models\Application::create([
-                    'candidate_id' => $candidateInfo->id,
-                    'job_id'       => $job3->id,
-                    'batch_id'     => $batch2->id,
-                    'status'       => 'submitted',
-                ]);
-                $batch2->increment('booked_seats');
             }
+
+            // Varied Applications
+            if ($i <= 8) {
+                \App\Models\Application::create([
+                    'candidate_id'         => $candidateInfo->id,
+                    'job_id'               => $job1->id,
+                    'project_id'           => $project1->id,
+                    'desired_test_city_id' => $cityLhe->id,
+                    'status'               => 'fee_paid',
+                    'applied_at'           => now()->subDays($i),
+                ]);
+            } elseif ($i <= 14) {
+                \App\Models\Application::create([
+                    'candidate_id'         => $candidateInfo->id,
+                    'job_id'               => $job3->id,
+                    'project_id'           => $project2->id,
+                    'desired_test_city_id' => $cityIsb->id,
+                    'status'               => 'submitted',
+                    'applied_at'           => now()->subHours($i),
+                ]);
+            }
+            // Candidates 15-20 have NO applications (Testing Archive view)
         }
 
-        echo "\n✅ PATS Seeder Complete with Rich Dummy Data!\n";
+        echo "\n✅ PATS Phase 2 Seeder Complete with City Architecture!\n";
         echo "   Super Admin: admin@pats.test / Admin@1234 / CNIC: 0000000000001\n";
     }
 }

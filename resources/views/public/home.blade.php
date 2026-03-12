@@ -66,7 +66,7 @@
 <div class="nts-marquee-wrapper">
     <div class="container d-flex align-items-center">
         <div class="fw-bold pe-3 border-end border-white me-3 text-uppercase" style="white-space:nowrap;">
-            <i class="bi bi-bell-fill me-1"></i> Alerts
+            <i class="ti ti-bell-ringing me-1"></i> Alerts
         </div>
         <marquee behavior="scroll" direction="left" onmouseover="this.stop();" onmouseout="this.start();">
             Welcome to the new Prime Assessment & Testing Services (PATS) Portal. Please register and complete your profile before applying for any available positions. For assistance, contact our support desk. 
@@ -90,10 +90,10 @@
                 <div class="bg-white p-4 rounded-3 shadow text-dark d-inline-block text-start w-100" style="max-width: 300px;">
                     <h5 class="fw-bold mb-3 border-bottom pb-2">Candidate Login</h5>
                     <a href="{{ route('login') }}" class="btn btn-pats w-100 mb-2 fw-semibold">
-                        <i class="bi bi-box-arrow-in-right me-2"></i>Sign In
+                        <i class="ti ti-login me-2"></i>Sign In
                     </a>
                     <a href="{{ route('auth.register') }}" class="btn btn-outline-secondary w-100 fw-semibold">
-                        <i class="bi bi-person-plus me-2"></i>Create Profile
+                        <i class="ti ti-user-plus me-2"></i>Create Profile
                     </a>
                 </div>
             </div>
@@ -107,25 +107,25 @@
         <div class="row g-4 text-center">
             <div class="col-6 col-md-3">
                 <a href="{{ route('projects') }}" class="nts-quick-btn h-100" style="border-left-color: #0d6efd;">
-                    <i class="bi bi-megaphone-fill" style="color: #0d6efd;"></i>
+                    <i class="ti ti-speakerphone" style="color: #0d6efd;"></i>
                     Open Applications
                 </a>
             </div>
             <div class="col-6 col-md-3">
                 <a href="{{ route('login') }}" class="nts-quick-btn h-100" style="border-left-color: #198754;">
-                    <i class="bi bi-card-checklist" style="color: #198754;"></i>
+                    <i class="ti ti-layout-dashboard" style="color: #198754;"></i>
                     Candidate Portal
                 </a>
             </div>
             <div class="col-6 col-md-3">
                 <a href="{{ route('login') }}" class="nts-quick-btn h-100" style="border-left-color: #fd7e14;">
-                    <i class="bi bi-ticket-perforated-fill" style="color: #fd7e14;"></i>
+                    <i class="ti ti-receipt" style="color: #fd7e14;"></i>
                     Roll No Slips
                 </a>
             </div>
             <div class="col-6 col-md-3">
                 <a href="{{ route('results.search') }}" class="nts-quick-btn h-100" style="border-left-color: #dc3545;">
-                    <i class="bi bi-trophy-fill" style="color: #dc3545;"></i>
+                    <i class="ti ti-trophy" style="color: #dc3545;"></i>
                     All Results
                 </a>
             </div>

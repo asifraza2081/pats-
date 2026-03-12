@@ -7,19 +7,34 @@ use Illuminate\Support\Facades\Schema;
 return new class extends Migration {
     public function up(): void
     {
-        Schema::create('roll_numbers', function (Blueprint $table) {
+        Schema::create('exam_rollnos', function (Blueprint $table) {
             $table->id();
             $table->foreignId('application_id')->unique()->constrained('applications')->cascadeOnDelete();
-            // Format: TCID_prefix(3) + job_code(2) + serial(4) = 9 chars, e.g. 301020061
-            $table->string('roll_number', 20)->unique();
-            // Admin bulk-sets when slips are released for download
+            $table->foreignId('project_id')->constrained('projects')->cascadeOnDelete();
+            $table->foreignId('job_id')->constrained('pats_jobs')->cascadeOnDelete();
+            $table->foreignId('city_id')->constrained('cities')->restrictOnDelete();
+            $table->foreignId('center_id')->constrained('test_centers')->restrictOnDelete();
+            
+            // Format: [ProjID][JobID][CityID][CenterID]-[Serial] = 01010203-0001
+            $table->string('roll_no', 30)->unique();
+            $table->string('barcode', 30)->unique();
+            $table->string('batch_no', 20)->comment('e.g 1, 2, Morning, Evening');
+            $table->date('test_date');
+            $table->time('reporting_time');
+            $table->time('start_time');
+            
             $table->boolean('slip_ready')->default(false);
-            $table->timestamp('assigned_at')->useCurrent();
+            $table->timestamps();
+            
+            // Indexes for fast slip generation and lookup
+            $table->index(['project_id', 'job_id', 'city_id']);
         });
 
         Schema::create('attendance_scans', function (Blueprint $table) {
             $table->id();
-            $table->foreignId('batch_id')->constrained('batches')->cascadeOnDelete();
+            $table->foreignId('project_id')->constrained('projects')->cascadeOnDelete();
+            $table->foreignId('center_id')->constrained('test_centers')->cascadeOnDelete();
+            $table->date('test_date');
             $table->string('file_path');
             $table->unsignedTinyInteger('page_number')->default(1);
             $table->foreignId('uploaded_by')->constrained('users');
@@ -29,7 +44,7 @@ return new class extends Migration {
         Schema::create('results', function (Blueprint $table) {
             $table->id();
             $table->foreignId('application_id')->unique()->constrained('applications')->cascadeOnDelete();
-            $table->string('roll_number', 20)->index();
+            $table->string('roll_no', 30)->index();
             $table->decimal('score', 6, 2)->nullable();
             $table->decimal('total_marks', 6, 2)->nullable();
             $table->decimal('percentage', 5, 2)->nullable();
@@ -46,6 +61,6 @@ return new class extends Migration {
     {
         Schema::dropIfExists('results');
         Schema::dropIfExists('attendance_scans');
-        Schema::dropIfExists('roll_numbers');
+        Schema::dropIfExists('exam_rollnos');
     }
 };

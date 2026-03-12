@@ -27,13 +27,14 @@
 <body>
 @php
   use Picqer\Barcode\BarcodeGeneratorSVG;
-  $project   = $app->job->project;
-  $batch     = $app->batch;
-  $center    = $batch->center;
-  $user      = $candidate->user;
+  $project    = $app->job->project;
+  $examRollno = $app->examRollno;
+  $center     = $examRollno->testCenter;
+  $city       = $examRollno->city;
+  $user       = $candidate->user;
 
   $generator = new BarcodeGeneratorSVG();
-  $barcodeSvg = $generator->getBarcode($roll->roll_number, $generator::TYPE_CODE_128, 2.5, 50);
+  $barcodeSvg = $generator->getBarcode($examRollno->roll_no, $generator::TYPE_CODE_128, 2.5, 50);
 @endphp
 
 <div class="slip-outer">
@@ -54,7 +55,7 @@
   </div>
 
   {{-- Roll Number Highlight --}}
-  <div class="roll-highlight">{{ $roll->roll_number }}</div>
+  <div class="roll-highlight">{{ $examRollno->roll_no }}</div>
 
   {{-- Barcode --}}
   <div class="barcode">{!! $barcodeSvg !!}</div>
@@ -64,11 +65,11 @@
     <tr><td class="lbl">Candidate Name</td><td class="val">{{ $user->full_name }}</td><td class="lbl">Father's Name</td><td class="val">{{ $candidate->father_name }}</td></tr>
     <tr><td class="lbl">CNIC / NIC No.</td><td class="val">{{ $user->cnic }}</td><td class="lbl">Gender</td><td class="val">{{ $candidate->gender }}</td></tr>
     <tr><td class="lbl">Post Applied For</td><td class="val" colspan="3">{{ $app->job->title }} {{ $app->job->department ? '('.$app->job->department.')' : '' }}</td></tr>
-    <tr><td class="lbl">Test Date</td><td class="val">{{ $batch->test_date->format('l, d M Y') }}</td><td class="lbl">Reporting Time</td><td class="val">{{ \Carbon\Carbon::parse($batch->reporting_time)->format('h:i A') }}</td></tr>
-    <tr><td class="lbl">Test Start Time</td><td class="val">{{ \Carbon\Carbon::parse($batch->start_time)->format('h:i A') }}</td><td class="lbl">Batch No.</td><td class="val">BATCH-{{ $batch->batch_number }}</td></tr>
-    <tr><td class="lbl">Test Center</td><td class="val" colspan="3">{{ $center->name }}</td></tr>
-    <tr><td class="lbl">Center Address</td><td class="val" colspan="3">{{ $center->address }}</td></tr>
-    <tr><td class="lbl">City / TCID</td><td class="val">{{ $center->city }}</td><td class="lbl">TCID</td><td class="val">{{ $center->tcid }}</td></tr>
+    <tr><td class="lbl">Test Date</td><td class="val">{{ $examRollno->test_date ? \Carbon\Carbon::parse($examRollno->test_date)->format('l, d M Y') : 'TBD' }}</td><td class="lbl">Reporting Time</td><td class="val">{{ $examRollno->reporting_time ? \Carbon\Carbon::parse($examRollno->reporting_time)->format('h:i A') : 'TBD' }}</td></tr>
+    <tr><td class="lbl">Test Start Time</td><td class="val">{{ $examRollno->start_time ? \Carbon\Carbon::parse($examRollno->start_time)->format('h:i A') : 'TBD' }}</td><td class="lbl">Batch No.</td><td class="val">BATCH-{{ $examRollno->batch_no ?? '01' }}</td></tr>
+    <tr><td class="lbl">Test Center</td><td class="val" colspan="3">{{ $center->name ?? 'TBD' }}</td></tr>
+    <tr><td class="lbl">Center Address</td><td class="val" colspan="3">{{ $center->address ?? 'TBD' }}</td></tr>
+    <tr><td class="lbl">City / TCID</td><td class="val">{{ $city->name ?? 'TBD' }}</td><td class="lbl">TCID</td><td class="val">{{ $center->tcid ?? 'TBD' }}</td></tr>
   </table>
 
   {{-- Instructions --}}
@@ -90,7 +91,7 @@
   </div>
 
   <div class="footer-note">
-    Downloaded: {{ now()->format('d M Y H:i:s') }} &nbsp;|&nbsp; PATS &nbsp;|&nbsp; Roll No: {{ $roll->roll_number }}
+    Downloaded: {{ now()->format('d M Y H:i:s') }} &nbsp;|&nbsp; PATS &nbsp;|&nbsp; Roll No: {{ $examRollno->roll_no }}
   </div>
 </div>
 </body>

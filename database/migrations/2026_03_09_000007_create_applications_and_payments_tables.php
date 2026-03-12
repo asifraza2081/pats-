@@ -11,10 +11,9 @@ return new class extends Migration {
             $table->id();
             $table->foreignId('candidate_id')->constrained('candidates');
             $table->foreignId('job_id')->constrained('pats_jobs');
-            $table->foreignId('batch_id')->constrained('batches');
+            $table->foreignId('project_id')->constrained('projects');
             // City preference submitted by candidate
-            $table->string('test_city_priority_1', 80)->nullable();
-            $table->string('test_city_priority_2', 80)->nullable();
+            $table->foreignId('desired_test_city_id')->constrained('cities');
             // Age relaxation if claimed
             $table->string('age_relaxation_type', 80)->nullable();
             $table->unsignedTinyInteger('age_relaxation_years')->nullable();

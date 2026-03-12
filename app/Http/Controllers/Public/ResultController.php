@@ -21,7 +21,7 @@ class ResultController extends Controller
         $result = null;
         if ($query) {
             $result = Result::with(['application.candidate.user', 'application.job.project'])
-                ->where('roll_number', $query)
+                ->where('roll_no', $query)
                 ->orWhereHas('application.candidate.user', function($q) use ($query) {
                     $q->where('cnic', $query);
                 })
@@ -34,7 +34,7 @@ class ResultController extends Controller
     public function verify($roll)
     {
         $result = Result::with(['application.candidate.user', 'application.job.project'])
-            ->where('roll_number', $roll)
+            ->where('roll_no', $roll)
             ->firstOrFail();
 
         // Used by QR Code scans on result cards

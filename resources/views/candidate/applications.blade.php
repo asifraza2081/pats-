@@ -1,87 +1,122 @@
-@extends('layouts.app')
-@section('title', 'My Applications — PATS')
+@extends('layouts.dashboard')
+@section('page-title', 'My Applications')
 
 @section('content')
-<div class="container py-4">
-    <h4 class="fw-bold mb-4">My Applications</h4>
+<div class="row row-cards">
+    <div class="col-12">
+        <h2 class="mb-4">My Submitted Applications</h2>
 
-    @if(session('success'))<div class="alert alert-success alert-dismissible fade show"><i class="bi bi-check-circle me-2"></i>{{ session('success') }}<button type="button" class="btn-close" data-bs-dismiss="alert"></button></div>@endif
-    @if(session('error'))<div class="alert alert-danger alert-dismissible fade show">{{ session('error') }}<button type="button" class="btn-close" data-bs-dismiss="alert"></button></div>@endif
+        @if($applications->isEmpty())
+        <div class="empty bg-white rounded border">
+            <div class="empty-icon">
+                <i class="ti ti-folder-off text-muted"></i>
+            </div>
+            <p class="empty-title">No applications found</p>
+            <p class="empty-subtitle text-muted">
+                You haven't applied for any positions yet. Browse open opportunities to get started.
+            </p>
+            <div class="empty-action">
+                <a href="{{ route('projects') }}" class="btn btn-primary">
+                    <i class="ti ti-search me-2"></i> Browse Opportunities
+                </a>
+            </div>
+        </div>
+        @else
+        <div class="d-flex flex-column gap-3">
+            @foreach($applications as $app)
+            <div class="card shadow-sm">
+                <div class="card-body">
+                    <div class="row align-items-center">
+                        <div class="col-md-6 mb-3 mb-md-0">
+                            <div class="text-muted small mb-1"><i class="ti ti-building me-1"></i> {{ $app->job->project->org_name }}</div>
+                            <h3 class="m-0 fw-bold fs-3 text-pats-primary">{{ $app->job->title }}</h3>
+                            
+                            <div class="d-flex flex-wrap gap-3 mt-2 small text-muted">
+                                @if($app->job->bps_grade)
+                                <span><i class="ti ti-rosette me-1"></i> BPS-{{ $app->job->bps_grade }}</span>
+                                @endif
+                                @if($app->examRollno)
+                                <span><i class="ti ti-building-bank me-1"></i> {{ $app->examRollno->testCenter->name ?? 'N/A' }}</span>
+                                @endif
+                            </div>
+                        </div>
 
-    @if($applications->isEmpty())
-    <div class="text-center py-5 text-muted">
-        <i class="bi bi-folder-x fs-1 d-block mb-3"></i>
-        <p>You haven't applied for any position yet.</p>
-        <a href="{{ route('projects') }}" class="btn btn-pats"><i class="bi bi-briefcase me-1"></i>Browse Opportunities</a>
-    </div>
-    @else
-    <div class="d-flex flex-column gap-3">
-        @foreach($applications as $app)
-        <div class="card border-0 shadow-sm rounded-4">
-            <div class="card-body p-4">
-                <div class="row align-items-center g-3">
-                    <div class="col-md-6">
-                        <div class="small text-muted mb-1">{{ $app->job->project->org_name }}</div>
-                        <div class="fw-bold fs-6">{{ $app->job->title }}</div>
-                        <div class="text-muted small mt-1">
-                            @if($app->job->bps_grade)<span class="me-2"><i class="bi bi-tag me-1"></i>{{ $app->job->bps_grade }}</span>@endif
-                            @if($app->batch)<span><i class="bi bi-building me-1"></i>{{ $app->batch->center->name }}</span>@endif
+                        <div class="col-md-3 mb-3 mb-md-0">
+                            <div class="text-muted small mb-1">Application Status</div>
+                            @php
+                                $statusColors = [
+                                    'submitted' => 'bg-secondary text-secondary-fg',
+                                    'fee_paid'  => 'bg-primary text-primary-fg',
+                                    'processed' => 'bg-info text-info-fg',
+                                    'appeared'  => 'bg-success text-success-fg',
+                                    'absent'    => 'bg-danger text-danger-fg',
+                                ];
+                                $color = $statusColors[$app->status] ?? 'bg-secondary text-secondary-fg';
+                            @endphp
+                            <span class="badge {{ $color }} px-3 py-2 text-uppercase tracking-wide fs-5">
+                                {{ str_replace('_', ' ', $app->status) }}
+                            </span>
+                            
+                            @if($app->status === 'processed' && !$app->examRollno)
+                            <div class="text-info small mt-1"><i class="ti ti-hourglass-empty me-1"></i> Assigning center...</div>
+                            @endif
+                        </div>
+
+                        <div class="col-md-3 d-flex flex-column gap-2 text-md-end">
+                            <a href="{{ route('candidate.applications.show', $app) }}" class="btn btn-outline-secondary btn-sm">
+                                <i class="ti ti-eye me-1"></i> View Details
+                            </a>
+                            
+                            @if($app->status === 'submitted' && $app->payment)
+                            <a href="{{ route('candidate.challan', $app) }}" class="btn btn-warning btn-sm" target="_blank">
+                                <i class="ti ti-download me-1"></i> Download Challan
+                            </a>
+                            @endif
+                            
+                            @if($app->examRollno && $app->examRollno->roll_no)
+                            <a href="{{ route('candidate.slip', $app) }}" class="btn btn-success btn-sm" target="_blank">
+                                <i class="ti ti-ticket me-1"></i> Roll No Slip
+                            </a>
+                            @endif
+                            
+                            @if($app->result?->isPublished())
+                            <a href="{{ route('candidate.result', $app) }}" class="btn btn-info btn-sm">
+                                <i class="ti ti-chart-bar me-1"></i> View Result
+                            </a>
+                            @endif
                         </div>
                     </div>
-                    <div class="col-md-3">
-                        @php
-                            $statusColors = [
-                                'submitted'  => 'secondary',
-                                'fee_paid'   => 'primary',
-                                'processed'  => 'info',
-                                'appeared'   => 'success',
-                                'absent'     => 'danger',
-                            ];
-                        @endphp
-                        <div class="fw-semibold small text-muted mb-1">Status</div>
-                        <span class="badge bg-{{ $statusColors[$app->status] ?? 'secondary' }} text-capitalize fs-6 px-3 py-2">
-                            {{ str_replace('_', ' ', $app->status) }}
-                        </span>
-                        @if($app->status === 'processed')
-                        <div class="small text-info mt-1"><i class="bi bi-hourglass me-1"></i>Roll number slip being prepared…</div>
-                        @endif
-                    </div>
-                    <div class="col-md-3 d-flex flex-column gap-2">
-                        <a href="{{ route('candidate.applications.show', $app) }}" class="btn btn-outline-primary btn-sm">
-                            <i class="bi bi-eye me-1"></i>View Details
-                        </a>
-                        @if($app->status === 'submitted' && $app->payment)
-                        <a href="{{ route('candidate.challan', $app) }}" class="btn btn-warning btn-sm text-dark" target="_blank">
-                            <i class="bi bi-download me-1"></i>Download Challan
-                        </a>
-                        @endif
-                        @if($app->rollNumber?->slip_ready && !$app->batch?->hasStarted())
-                        <a href="{{ route('candidate.slip', $app) }}" class="btn btn-success btn-sm" target="_blank">
-                            <i class="bi bi-ticket-perforated me-1"></i>Roll Number Slip
-                        </a>
-                        @endif
-                        @if($app->result?->isPublished())
-                        <a href="{{ route('candidate.result', $app) }}" class="btn btn-info btn-sm text-white">
-                            <i class="bi bi-bar-chart me-1"></i>View Result
-                        </a>
-                        @endif
+                </div>
+                
+                @if($app->examRollno && $app->examRollno->test_date)
+                <div class="card-footer bg-transparent py-3">
+                    <div class="row align-items-center small text-muted">
+                        <div class="col-12 col-md-auto mb-2 mb-md-0">
+                            <i class="ti ti-calendar text-success me-1"></i> Test Date: <strong class="text-dark">{{ \Carbon\Carbon::parse($app->examRollno->test_date)->format('d M Y') }}</strong>
+                        </div>
+                        <div class="col-12 col-md-auto mb-2 mb-md-0">
+                            <i class="ti ti-clock text-warning me-1"></i> Reporting Time: <strong class="text-dark">{{ \Carbon\Carbon::parse($app->examRollno->reporting_time)->format('h:i A') }}</strong>
+                        </div>
+                        <div class="col-12 col-md-auto mb-2 mb-md-0">
+                            <i class="ti ti-map-pin text-primary me-1"></i> City: <strong class="text-dark">{{ $app->examRollno->city->name ?? 'N/A' }}</strong>
+                        </div>
+                        <div class="col-12 col-md-auto ms-md-auto ms-auto">
+                            Applied: {{ $app->applied_at->format('d M Y') }}
+                        </div>
                     </div>
                 </div>
+                @endif
             </div>
-            @if($app->batch)
-            <div class="card-footer bg-light border-0 px-4 py-2 d-flex flex-wrap gap-3 small text-muted">
-                <span><i class="bi bi-calendar me-1"></i>Test Date: <strong>{{ $app->batch->test_date->format('d M Y') }}</strong></span>
-                <span><i class="bi bi-clock me-1"></i>Reporting: <strong>{{ \Carbon\Carbon::parse($app->batch->reporting_time)->format('h:i A') }}</strong></span>
-                <span><i class="bi bi-geo-alt me-1"></i>{{ $app->batch->center->city }}</span>
-                <span class="ms-auto">Applied: {{ $app->applied_at->format('d M Y') }}</span>
-            </div>
-            @endif
+            @endforeach
         </div>
-        @endforeach
+        
+        @if($applications->hasPages())
+        <div class="mt-4 d-flex justify-content-center">
+            {{ $applications->links('pagination::bootstrap-5') }}
+        </div>
+        @endif
+        
+        @endif
     </div>
-    @if($applications->hasPages())
-    <div class="mt-4">{{ $applications->links() }}</div>
-    @endif
-    @endif
 </div>
 @endsection

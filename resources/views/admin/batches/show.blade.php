@@ -1,98 +1,185 @@
-@extends('layouts.admin')
-@section('title', 'Batch: BATCH-' . $batch->batch_number)
-@section('page-title', 'Batch BATCH-' . $batch->batch_number . ' — ' . $batch->center->name)
+@extends('layouts.dashboard')
+@section('title', 'Session Details — ' . $batch->id)
+@section('page-title', 'Session Allocation Review')
+
+@section('page-actions')
+<div class="btn-list">
+    <a href="{{ route('admin.batches.index') }}" class="btn btn-outline-secondary">
+        <i class="ti ti-arrow-left me-2"></i> All Sessions
+    </a>
+    <a href="{{ route('admin.batches.edit', $batch) }}" class="btn btn-outline-primary">
+        <i class="ti ti-edit me-2"></i> Edit Shift Rules
+    </a>
+</div>
+@endsection
 
 @section('content')
-<div class="row g-4">
-    {{-- Batch Info --}}
+<div class="row row-cards">
+    <!-- Left Column: Batch Stats & Actions -->
     <div class="col-lg-4">
-        <div class="card border-0 shadow-sm rounded-4 p-4 mb-3">
-            <h6 class="fw-bold mb-3">Batch Details</h6>
-            <table class="table table-sm table-borderless">
-                <tr><td class="text-muted small">Project</td><td class="small fw-semibold">{{ $batch->project->name }}</td></tr>
-                <tr><td class="text-muted small">Center</td><td class="small">{{ $batch->center->name }}</td></tr>
-                <tr><td class="text-muted small">TCID</td><td class="small">{{ $batch->center->tcid }}</td></tr>
-                <tr><td class="text-muted small">City</td><td class="small">{{ $batch->center->city }}</td></tr>
-                <tr><td class="text-muted small">Test Date</td><td class="small fw-bold">{{ $batch->test_date->format('l, d M Y') }}</td></tr>
-                <tr><td class="text-muted small">Reporting</td><td class="small">{{ \Carbon\Carbon::parse($batch->reporting_time)->format('h:i A') }}</td></tr>
-                <tr><td class="text-muted small">Start Time</td><td class="small">{{ \Carbon\Carbon::parse($batch->start_time)->format('h:i A') }}</td></tr>
-                <tr><td class="text-muted small">Seats</td><td class="small">{{ $batch->booked_seats }}/{{ $batch->total_seats }}</td></tr>
-                <tr><td class="text-muted small">Envelope Size</td><td class="small">{{ $batch->envelope_size }}</td></tr>
-            </table>
-            <div class="d-flex flex-wrap gap-2 mt-2">
-                <a href="{{ route('admin.batches.edit',$batch) }}" class="btn btn-sm btn-outline-secondary"><i class="bi bi-pencil me-1"></i>Edit</a>
-                <a href="{{ route('admin.batches.attendance',$batch) }}" class="btn btn-sm btn-outline-info"><i class="bi bi-person-check me-1"></i>Attendance</a>
+        <div class="card shadow-sm border-0 mb-4">
+            <div class="card-header border-0 pb-1 pt-3">
+                <h3 class="card-title fw-bold text-primary">Shift Information</h3>
+                <div class="card-actions">
+                    @if($batch->is_ready)
+                    <span class="badge bg-success-lt text-success">Published</span>
+                    @else
+                    <span class="badge bg-yellow-lt text-yellow">Draft</span>
+                    @endif
+                </div>
             </div>
-            <hr>
-            <div class="d-flex flex-wrap gap-2">
-                <a href="{{ route('admin.batches.summary',$batch) }}" target="_blank" class="btn btn-sm btn-outline-primary w-100"><i class="bi bi-printer me-1"></i>Print Batch Summary</a>
-                <a href="{{ route('admin.batches.attendance-sheet',$batch) }}" target="_blank" class="btn btn-sm btn-outline-dark w-100"><i class="bi bi-printer me-1"></i>Print Attendance Sheet</a>
+            <div class="card-body">
+                <div class="datagrid">
+                    <div class="datagrid-item">
+                        <div class="datagrid-title">Project</div>
+                        <div class="datagrid-content fw-bold">{{ $batch->project->name }}</div>
+                    </div>
+                    <div class="datagrid-item">
+                        <div class="datagrid-title">Test Center</div>
+                        <div class="datagrid-content">{{ $batch->center->name }} ({{ $batch->center->tcid }})</div>
+                    </div>
+                    <div class="datagrid-item">
+                        <div class="datagrid-title">City</div>
+                        <div class="datagrid-content text-blue fw-medium">{{ $batch->center->city->name }}</div>
+                    </div>
+                    <div class="datagrid-item">
+                        <div class="datagrid-title">Test Date</div>
+                        <div class="datagrid-content fw-bold">{{ $batch->test_date->format('l, d M Y') }}</div>
+                    </div>
+                    <div class="datagrid-item">
+                        <div class="datagrid-title">Reporting Time</div>
+                        <div class="datagrid-content text-secondary">{{ date('h:i A', strtotime($batch->reporting_time)) }}</div>
+                    </div>
+                    <div class="datagrid-item">
+                        <div class="datagrid-title">Start Time</div>
+                        <div class="datagrid-content text-secondary">{{ date('h:i A', strtotime($batch->start_time)) }}</div>
+                    </div>
+                    <div class="datagrid-item">
+                        <div class="datagrid-title">Seats Utilization</div>
+                        <div class="datagrid-content">
+                            <span class="fw-bold text-{{ $batch->booked_seats >= $batch->total_seats ? 'danger' : 'success' }}">
+                                {{ $batch->booked_seats }} / {{ $batch->total_seats }}
+                            </span>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="mt-4 pt-3 border-top">
+                    <h4 class="fw-bold mb-3">Admin Actions</h4>
+                    <div class="d-grid gap-2">
+                        <a href="{{ route('admin.batches.summary', $batch) }}" target="_blank" class="btn btn-outline-primary">
+                            <i class="ti ti-printer me-2"></i> Print Session Summary
+                        </a>
+                        <a href="{{ route('admin.batches.attendance-sheet', $batch) }}" target="_blank" class="btn btn-outline-dark">
+                            <i class="ti ti-file-text me-2"></i> Print Attendance Sheet
+                        </a>
+                        <a href="{{ route('admin.batches.answer-sheets', $batch) }}" target="_blank" class="btn btn-outline-info">
+                            <i class="ti ti-forms me-2"></i> Print Answer Sheets (NTS Style)
+                        </a>
+                        <a href="{{ route('admin.batches.attendance', $batch) }}" class="btn btn-outline-primary">
+                            <i class="ti ti-user-check me-2"></i> Post-Test Attendance Tracking
+                        </a>
+                    </div>
+                </div>
             </div>
-            <hr>
-            <form method="POST" action="{{ route('admin.batches.ready',$batch) }}" onsubmit="return confirm('Mark all slips as READY? This will notify all candidates via SMS.')">
-                @csrf
-                <button class="btn btn-success w-100"><i class="bi bi-send-check me-1"></i>Mark Slips Ready & Notify</button>
-            </form>
+            
+            @if(!$batch->is_ready)
+            <div class="card-footer bg-yellow-lt">
+                <form method="POST" action="{{ route('admin.batches.ready', $batch) }}" onsubmit="return confirm('Release all slips for this session and notify candidates?')">
+                    @csrf
+                    <button type="submit" class="btn btn-yellow w-100">
+                        <i class="ti ti-broadcast me-2"></i> Publish Slips & Notify Candidates
+                    </button>
+                </form>
+            </div>
+            @else
+            <div class="card-footer bg-success-lt text-center py-2">
+                <span class="text-success small fw-bold"><i class="ti ti-check me-1"></i> Slips have been published.</span>
+            </div>
+            @endif
         </div>
     </div>
 
-    {{-- Roll number summary --}}
+    <!-- Right Column: Roll Number Summary & Candidate List -->
     <div class="col-lg-8">
-        <div class="card border-0 shadow-sm rounded-4 mb-3">
-            <div class="card-header bg-white border-0 pt-4 pb-0 px-4">
-                <h6 class="fw-bold mb-0"><i class="bi bi-ticket-perforated me-2 text-primary"></i>Roll Number Summary by Job</h6>
+        <!-- Job-wise Roll No Ranges -->
+        <div class="card shadow-sm border-0 mb-4">
+            <div class="card-header border-0 pb-1 pt-3">
+                <h3 class="card-title fw-bold text-primary"><i class="ti ti-list-numbers me-2"></i> Roll Number Ranges</h3>
             </div>
             <div class="table-responsive">
-                <table class="table table-hover align-middle mb-0">
-                    <thead class="table-light"><tr class="small text-muted">
-                        <th class="px-4 py-3">Job</th><th>From</th><th>To</th><th>Count</th>
-                    </tr></thead>
-                    <tbody>
-                        @forelse($summary as $jobId => $data)
+                <table class="table card-table table-vcenter">
+                    <thead>
                         <tr>
-                            <td class="px-4 fw-semibold small">{{ $data['job']->title }}</td>
-                            <td class="small text-primary fw-bold">{{ $data['from'] }}</td>
-                            <td class="small text-primary fw-bold">{{ $data['to'] }}</td>
-                            <td><span class="badge bg-primary">{{ $data['count'] }}</span></td>
+                            <th>Job Post</th>
+                            <th>Roll From</th>
+                            <th>Roll To</th>
+                            <th class="w-1">Count</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        @forelse($summary as $row)
+                        <tr>
+                            <td><div class="fw-bold">{{ $row->job->title }}</div></td>
+                            <td><span class="badge bg-blue-lt text-blue fw-bold">{{ $row->roll_from }}</span></td>
+                            <td><span class="badge bg-blue-lt text-blue fw-bold">{{ $row->roll_to }}</span></td>
+                            <td><span class="text-body fw-bold">{{ $row->count }}</span></td>
                         </tr>
                         @empty
-                        <tr><td colspan="4" class="text-center text-muted py-4">No roll numbers assigned yet. Verify payments to assign roll numbers.</td></tr>
+                        <tr><td colspan="4" class="text-center text-secondary py-3 italic">No allocations generated yet.</td></tr>
                         @endforelse
                     </tbody>
                 </table>
             </div>
         </div>
 
-        {{-- Candidate list --}}
-        <div class="card border-0 shadow-sm rounded-4">
-            <div class="card-header bg-white border-0 pt-4 pb-0 px-4">
-                <h6 class="fw-bold mb-0"><i class="bi bi-people me-2 text-success"></i>Candidates in Batch ({{ $batch->applications->count() }})</h6>
+        <!-- Candidate Roster -->
+        <div class="card shadow-sm border-0">
+            <div class="card-header border-0 pb-1 pt-3">
+                <h3 class="card-title fw-bold text-primary"><i class="ti ti-users me-2"></i> Allocation Roster ({{ $batch->examRollnos->count() }})</h3>
             </div>
-            <div class="table-responsive">
-                <table class="table table-hover align-middle mb-0" style="font-size:.85rem">
-                    <thead class="table-light"><tr class="text-muted">
-                        <th class="px-4 py-2">Roll No</th><th>Candidate</th><th>Post</th><th>Status</th><th>Slip</th>
-                    </tr></thead>
-                    <tbody>
-                        @forelse($batch->applications as $app)
+            <div class="table-responsive" style="max-height: 500px; overflow-y: auto;">
+                <table class="table card-table table-vcenter text-nowrap table-hover">
+                    <thead class="sticky-top bg-white">
                         <tr>
-                            <td class="px-4 fw-bold text-primary">{{ $app->rollNumber?->roll_number ?? '—' }}</td>
+                            <th>Roll Number</th>
+                            <th>Candidate</th>
+                            <th>Job Post</th>
+                            <th>Status</th>
+                            <th class="w-1">Slip</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        @forelse($batch->examRollnos as $roll)
+                        <tr>
+                            <td><span class="text-primary fw-bold">{{ $roll->roll_no }}</span></td>
                             <td>
-                                <div class="fw-semibold">{{ $app->candidate->user->full_name }}</div>
-                                <div class="text-muted" style="font-size:.75rem">{{ $app->candidate->user->cnic }}</div>
+                                <div class="font-weight-medium text-body">{{ $roll->application->candidate->user->full_name }}</div>
+                                <div class="text-secondary small">{{ $roll->application->candidate->user->cnic }}</div>
                             </td>
-                            <td>{{ Str::limit($app->job->title,25) }}</td>
-                            <td><span class="badge bg-{{ ['submitted'=>'secondary','fee_paid'=>'primary','appeared'=>'success','absent'=>'danger'][$app->status]??'secondary' }} text-capitalize">{{ str_replace('_',' ',$app->status) }}</span></td>
+                            <td><span class="text-secondary small">{{ Str::limit($roll->job->title, 30) }}</span></td>
                             <td>
-                                @if($app->rollNumber?->slip_ready)
-                                <i class="bi bi-check-circle-fill text-success"></i>
+                                @php
+                                    $st = match($roll->application->status) {
+                                        'submitted' => ['c'=>'secondary', 'l'=>'Pending'],
+                                        'fee_paid' => ['c'=>'primary', 'l'=>'Paid'],
+                                        'appeared' => ['c'=>'success', 'l'=>'Appeared'],
+                                        'absent' => ['c'=>'danger', 'l'=>'Absent'],
+                                        default => ['c'=>'dark', 'l'=>strtoupper($roll->application->status)]
+                                    };
+                                @endphp
+                                <span class="badge bg-{{ $st['c'] }}-lt text-{{ $st['c'] }}">{{ $st['l'] }}</span>
+                            </td>
+                            <td>
+                                @if($roll->slip_ready)
+                                <i class="ti ti-circle-check text-success" data-bs-toggle="tooltip" title="Slip Published"></i>
                                 @else
-                                <i class="bi bi-clock text-muted"></i>
+                                <i class="ti ti-clock text-secondary" data-bs-toggle="tooltip" title="Draft Slip"></i>
                                 @endif
                             </td>
                         </tr>
                         @empty
-                        <tr><td colspan="5" class="text-center text-muted py-3">No candidates in batch yet.</td></tr>
+                        <tr><td colspan="5" class="text-center text-secondary py-4">No candidates assigned to this shift.</td></tr>
                         @endforelse
                     </tbody>
                 </table>

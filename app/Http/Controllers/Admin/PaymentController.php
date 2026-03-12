@@ -5,8 +5,6 @@ namespace App\Http\Controllers\Admin;
 use App\Http\Controllers\Controller;
 use App\Models\Application;
 use App\Models\Payment;
-use App\Models\RollNumber;
-use App\Services\RollNumberService;
 use App\Services\SmsService;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
@@ -14,8 +12,7 @@ use Illuminate\Support\Facades\Auth;
 class PaymentController extends Controller
 {
     public function __construct(
-        private RollNumberService $rollNumbers,
-        private SmsService        $sms,
+        private SmsService $sms,
     ) {}
 
     public function index(Request $request)
@@ -29,7 +26,7 @@ class PaymentController extends Controller
 
     public function show(Payment $payment)
     {
-        $payment->load(['application.candidate.user', 'application.job.project', 'application.batch.center']);
+        $payment->load(['application.candidate.user', 'application.job.project']);
         return view('admin.payments.show', compact('payment'));
     }
 
@@ -53,18 +50,15 @@ class PaymentController extends Controller
         $application = $payment->application;
         $application->update(['status' => 'fee_paid']);
 
-        // Assign roll number
-        $roll = $this->rollNumbers->assign($application);
-
         // Notify candidate
         $candidate = $application->candidate;
         $user      = $candidate->user;
         $this->sms->send(
             $user->phone,
-            "PATS: Your payment for {$application->job->title} has been verified. Roll No: {$roll->roll_number}. Slip will be available once registration closes.",
+            "PATS: Your payment for {$application->job->title} has been verified. Roll No slip will be generated once registration closes.",
             $user->id
         );
 
-        return back()->with('success', "Payment verified. Roll No {$roll->roll_number} assigned.");
+        return back()->with('success', "Payment verified and receipt confirmed.");
     }
 }

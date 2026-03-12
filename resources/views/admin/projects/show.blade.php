@@ -1,93 +1,141 @@
-@extends('layouts.admin')
+@extends('layouts.dashboard')
 @section('title', $project->name)
-@section('page-title', $project->name)
+@section('page-title', 'Overview')
+
+@section('page-actions')
+<a href="{{ route('admin.projects.index') }}" class="btn btn-outline-secondary me-2">
+    <i class="ti ti-arrow-left me-2"></i> Directory
+</a>
+<a href="{{ route('admin.projects.edit', $project) }}" class="btn btn-primary d-none d-sm-inline-block">
+    <i class="ti ti-edit me-2"></i> Edit Project
+</a>
+@endsection
 
 @section('content')
-<div class="row g-4">
-    {{-- Project Info --}}
+<div class="row row-cards">
+    <!-- Project Meta Sidebar -->
     <div class="col-lg-4">
-        <div class="card border-0 shadow-sm rounded-4 p-4">
-            @if($project->logo_path)
-            <img src="{{ asset('storage/'.$project->logo_path) }}" class="mb-3 rounded" style="max-height:60px">
-            @endif
-            <h5 class="fw-bold">{{ $project->name }}</h5>
-            <div class="text-muted small mb-3">{{ $project->org_name }}</div>
-            @php $sc=['draft'=>'secondary','open'=>'success','closed'=>'dark','result_declared'=>'primary']; @endphp
-            <span class="badge bg-{{ $sc[$project->status] ?? 'secondary' }} mb-3">{{ ucwords(str_replace('_',' ',$project->status)) }}</span>
-            <table class="table table-sm table-borderless">
-                <tr><td class="text-muted small">Open Date</td><td class="small">{{ $project->open_date?->format('d M Y') ?? '—' }}</td></tr>
-                <tr><td class="text-muted small">Close Date</td><td class="small">{{ $project->close_date?->format('d M Y') ?? '—' }}</td></tr>
-                <tr><td class="text-muted small">Test Date</td><td class="small">{{ $project->test_date?->format('d M Y') ?? '—' }}</td></tr>
-            </table>
-            <div class="d-flex gap-2 mt-2">
-                <a href="{{ route('admin.projects.edit',$project) }}" class="btn btn-sm btn-outline-secondary"><i class="bi bi-pencil me-1"></i>Edit</a>
-                <form method="POST" action="{{ route('admin.projects.destroy',$project) }}" onsubmit="return confirm('Delete project?')">
+        <div class="card shadow-sm border-0">
+            <div class="card-body text-center">
+                @if($project->logo_path)
+                <span class="avatar avatar-xl mb-3 rounded" style="background-image: url('{{ asset('storage/'.$project->logo_path) }}')"></span>
+                @else
+                <span class="avatar avatar-xl mb-3 rounded bg-blue-lt text-blue fw-bold">{{ substr($project->name, 0, 2) }}</span>
+                @endif
+                <h3 class="m-0 mb-1 fw-bold">{{ $project->name }}</h3>
+                <div class="text-secondary mb-3">{{ $project->org_name }}</div>
+                
+                @php 
+                    $sc=['draft'=>'secondary','open'=>'success','closed'=>'dark','result_declared'=>'info']; 
+                @endphp
+                <span class="badge bg-{{ $sc[$project->status] ?? 'secondary' }} text-{{ $sc[$project->status] ?? 'secondary' }}-fg text-capitalize px-3 py-2 mb-4">
+                    {{ str_replace('_', ' ', $project->status) }}
+                </span>
+                
+                <div class="text-start">
+                    <div class="mb-3">
+                        <div class="d-flex align-items-center mb-1"><i class="ti ti-calendar-event text-secondary me-2"></i> <strong>Opening Date</strong></div>
+                        <div class="ms-4 text-secondary">{{ $project->open_date?->format('l, d M Y') ?? 'Not Set' }}</div>
+                    </div>
+                    <div class="mb-3">
+                        <div class="d-flex align-items-center mb-1"><i class="ti ti-calendar-event text-secondary me-2"></i> <strong>Closing Date</strong></div>
+                        <div class="ms-4 text-secondary">{{ $project->close_date?->format('l, d M Y') ?? 'Not Set' }}</div>
+                    </div>
+                    <div>
+                        <div class="d-flex align-items-center mb-1"><i class="ti ti-calendar-check text-secondary me-2"></i> <strong>Target Test Date</strong></div>
+                        <div class="ms-4 text-secondary">{{ $project->test_date?->format('l, d M Y') ?? 'TBD' }}</div>
+                    </div>
+                </div>
+            </div>
+            <div class="card-footer d-flex gap-2">
+                <a href="{{ route('admin.projects.edit', $project) }}" class="btn btn-outline-secondary w-50">Configure</a>
+                <form method="POST" action="{{ route('admin.projects.destroy', $project) }}" class="w-50" onsubmit="return confirm('Delete this project permanently?')">
                     @csrf @method('DELETE')
-                    <button class="btn btn-sm btn-outline-danger"><i class="bi bi-trash me-1"></i>Delete</button>
+                    <button type="submit" class="btn btn-outline-danger w-100"><i class="ti ti-trash me-1"></i> Terminate</button>
                 </form>
             </div>
         </div>
     </div>
 
-    {{-- Jobs --}}
+    <!-- Main Content: Jobs & Batches -->
     <div class="col-lg-8">
-        <div class="card border-0 shadow-sm rounded-4 mb-4">
-            <div class="card-header bg-white border-0 pt-4 pb-0 px-4 d-flex justify-content-between align-items-center">
-                <h6 class="fw-bold mb-0"><i class="bi bi-briefcase me-2 text-primary"></i>Job Posts</h6>
-                <a href="{{ route('admin.projects.jobs.create',$project) }}" class="btn btn-sm btn-pats"><i class="bi bi-plus me-1"></i>Add Job</a>
+        <!-- Job Posts -->
+        <div class="card shadow-sm border-0 mb-4">
+            <div class="card-header border-0 pb-1 pt-3">
+                <h3 class="card-title fw-bold"><i class="ti ti-briefcase text-primary me-2 fs-2 align-text-bottom"></i> Configured Job Posts</h3>
+                <div class="card-actions">
+                    <a href="{{ route('admin.projects.jobs.create', $project) }}" class="btn btn-sm btn-primary">
+                        <i class="ti ti-plus me-1"></i> Add Post
+                    </a>
+                </div>
             </div>
             <div class="table-responsive">
-                <table class="table table-hover align-middle mb-0">
-                    <thead class="table-light"><tr class="small text-muted">
-                        <th class="px-4 py-3">Code</th><th>Title</th><th>BPS</th><th>Seats</th><th>Fee</th><th></th>
-                    </tr></thead>
+                <table class="table card-table table-vcenter text-nowrap datatable table-hover">
+                    <thead>
+                        <tr>
+                            <th class="w-1">Code</th>
+                            <th>Post Title</th>
+                            <th>BPS Grade</th>
+                            <th>Target Seats</th>
+                            <th>Challan Fee</th>
+                            <th class="w-1"></th>
+                        </tr>
+                    </thead>
                     <tbody>
                         @forelse($project->jobs as $job)
                         <tr>
-                            <td class="px-4"><span class="badge bg-secondary">{{ str_pad($job->job_code,2,'0',STR_PAD_LEFT) }}</span></td>
-                            <td class="fw-semibold small">{{ $job->title }}<div class="text-muted" style="font-size:.75rem">{{ $job->department }}</div></td>
-                            <td class="small">{{ $job->bps_grade ?? '—' }}</td>
-                            <td class="small">{{ $job->total_seats }}</td>
-                            <td class="small">{{ number_format($job->fee) }}</td>
+                            <td><span class="badge bg-secondary-lt text-secondary">{{ str_pad($job->job_code, 2, '0', STR_PAD_LEFT) }}</span></td>
                             <td>
-                                <a href="{{ route('admin.jobs.edit',$job) }}" class="btn btn-xs btn-outline-secondary px-2 py-1 me-1"><i class="bi bi-pencil"></i></a>
-                                <form method="POST" action="{{ route('admin.jobs.destroy',$job) }}" class="d-inline" onsubmit="return confirm('Delete job?')">
-                                    @csrf @method('DELETE')
-                                    <button class="btn btn-xs btn-outline-danger px-2 py-1"><i class="bi bi-trash"></i></button>
-                                </form>
+                                <div class="font-weight-medium fw-bold text-body">{{ $job->title }}</div>
+                                <div class="text-secondary small">{{ $job->department ?: 'General Dept' }}</div>
+                            </td>
+                            <td><span class="text-secondary">{{ $job->bps_grade ? 'BPS-'.$job->bps_grade : '—' }}</span></td>
+                            <td><span class="text-secondary">{{ $job->total_seats }}</span></td>
+                            <td><span class="fw-semibold text-success">PKR {{ number_format($job->fee) }}</span></td>
+                            <td>
+                                <div class="btn-list flex-nowrap">
+                                    <a href="{{ route('admin.jobs.edit', $job) }}" class="btn btn-icon btn-outline-secondary btn-sm" data-bs-toggle="tooltip" title="Edit Post"><i class="ti ti-edit"></i></a>
+                                    <form method="POST" action="{{ route('admin.jobs.destroy', $job) }}" class="d-inline" onsubmit="return confirm('Remove this job post?')">
+                                        @csrf @method('DELETE')
+                                        <button class="btn btn-icon btn-outline-danger btn-sm" data-bs-toggle="tooltip" title="Delete Post"><i class="ti ti-trash"></i></button>
+                                    </form>
+                                </div>
                             </td>
                         </tr>
                         @empty
-                        <tr><td colspan="6" class="text-center text-muted py-4">No jobs added yet.</td></tr>
+                        <tr>
+                            <td colspan="6" class="text-center text-secondary py-5">
+                                <div class="empty">
+                                    <div class="empty-icon text-secondary"><i class="ti ti-briefcase-off fs-1"></i></div>
+                                    <p class="empty-title">No job posts created yet.</p>
+                                    <p class="empty-subtitle text-secondary">Start configuring the positions available for this project.</p>
+                                    <div class="empty-action">
+                                        <a href="{{ route('admin.projects.jobs.create', $project) }}" class="btn btn-primary"><i class="ti ti-plus me-2"></i>Add First Job Post</a>
+                                    </div>
+                                </div>
+                            </td>
+                        </tr>
                         @endforelse
                     </tbody>
                 </table>
             </div>
         </div>
-
-        {{-- Batches summary --}}
-        <div class="card border-0 shadow-sm rounded-4">
-            <div class="card-header bg-white border-0 pt-4 pb-0 px-4 d-flex justify-content-between align-items-center">
-                <h6 class="fw-bold mb-0"><i class="bi bi-calendar2-week me-2 text-info"></i>Batches</h6>
-                <a href="{{ route('admin.batches.create') }}" class="btn btn-sm btn-outline-info"><i class="bi bi-plus me-1"></i>Add Batch</a>
-            </div>
-            <ul class="list-group list-group-flush">
-                @forelse($project->batches as $batch)
-                <li class="list-group-item px-4 py-3 d-flex justify-content-between align-items-center">
+        
+        <!-- Test Session Scheduling Quick Link -->
+        <div class="card shadow-sm border-0 bg-primary-lt">
+            <div class="card-body">
+                <div class="d-flex align-items-center justify-content-between">
                     <div>
-                        <div class="fw-semibold small">BATCH-{{ $batch->batch_number }} — {{ $batch->center->name }}</div>
-                        <div class="text-muted" style="font-size:.75rem">{{ $batch->test_date->format('d M Y') }} · {{ \Carbon\Carbon::parse($batch->reporting_time)->format('h:i A') }}</div>
+                        <h4 class="card-title fw-bold text-primary mb-1"><i class="ti ti-users-group me-2"></i> Test Session Scheduling</h4>
+                        <p class="text-secondary mb-0 small">Schedule test sessions, select centers, and allocate candidates who have applied to this project.</p>
                     </div>
-                    <div class="text-end small">
-                        <div class="text-muted">{{ $batch->booked_seats }}/{{ $batch->total_seats }} booked</div>
-                        <a href="{{ route('admin.batches.show',$batch) }}" class="btn btn-xs btn-outline-primary px-2 py-1">Manage</a>
+                    <div>
+                        <a href="{{ route('admin.batches.index', ['project_id' => $project->id]) }}" class="btn btn-primary shadow-sm"><i class="ti ti-calendar-plus me-2"></i> Schedule Sessions</a>
                     </div>
-                </li>
-                @empty
-                <li class="list-group-item text-center text-muted py-3">No batches yet.</li>
-                @endforelse
-            </ul>
+                </div>
+            </div>
         </div>
+
     </div>
 </div>
 @endsection

@@ -10,7 +10,7 @@ class ApplicationController extends Controller
 {
     public function index()
     {
-        $applications = Application::with(['candidate.user', 'job.project', 'batch.center', 'payment', 'rollNumber'])
+        $applications = Application::with(['candidate.user', 'job.project', 'desiredTestCity', 'examRollno.center'])
             ->latest('applied_at')
             ->paginate(25);
             
@@ -24,9 +24,8 @@ class ApplicationController extends Controller
             'candidate.education', 
             'candidate.experience', 
             'job.project', 
-            'batch.center', 
-            'payment', 
-            'rollNumber', 
+            'desiredTestCity', 
+            'examRollno.center', 
             'result'
         ]);
         

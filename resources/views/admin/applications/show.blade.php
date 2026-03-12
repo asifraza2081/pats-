@@ -1,156 +1,226 @@
-@extends('layouts.admin')
-
+@extends('layouts.dashboard')
 @section('title', 'Application Details')
-@section('header', 'Application #'.$app->id)
+@section('page-title', 'Application Profile')
+
+@section('page-actions')
+<a href="{{ route('admin.applications.index') }}" class="btn btn-outline-secondary">
+    <i class="ti ti-arrow-left me-2"></i> List All
+</a>
+@endsection
 
 @section('content')
-<div class="mb-3">
-    <a href="{{ route('applications.index') }}" class="btn btn-sm btn-outline-secondary">
-        <i class="bi bi-arrow-left"></i> Back to Applications
-    </a>
-</div>
-
-<div class="row g-4">
-    <!-- Candidate Overview -->
-    <div class="col-md-4">
-        <div class="card shadow-sm mb-4">
-            <div class="card-body text-center">
-                @if($app->candidate->photo_path)
-                    <img src="{{ asset('storage/'.$app->candidate->photo_path) }}" alt="Photo" class="rounded-circle mb-3 border" style="width: 120px; height: 120px; object-fit: cover;">
-                @else
-                    <div class="rounded-circle bg-light d-flex align-items-center justify-content-center mx-auto mb-3 border" style="width: 120px; height: 120px;">
-                        <i class="bi bi-person text-secondary fs-1"></i>
-                    </div>
-                @endif
-                h5 class="mb-1">{{ $app->candidate->user->first_name }} {{ $app->candidate->user->last_name }}</h5>
-                <p class="text-muted mb-2">{{ $app->candidate->user->cnic }}</p>
+<div class="row row-cards">
+    <!-- Candidate Sidebar Info -->
+    <div class="col-lg-4">
+        <div class="card shadow-sm border-0 mb-4 text-center">
+            <div class="card-body">
+                <div class="mb-3">
+                    @if($app->candidate->photo_path)
+                    <span class="avatar avatar-xl rounded-circle border shadow-sm" style="background-image: url('{{ asset('storage/'.$app->candidate->photo_path) }}')"></span>
+                    @else
+                    <span class="avatar avatar-xl rounded-circle bg-blue-lt text-blue fw-bold fs-1">{{ substr($app->candidate->user->first_name, 0, 1) }}</span>
+                    @endif
+                </div>
+                <h3 class="m-0 mb-1 fw-bold text-body">{{ $app->candidate->user->full_name }}</h3>
+                <div class="text-secondary small mb-3"><i class="ti ti-id me-1"></i> {{ $app->candidate->user->cnic }}</div>
                 
                 @php
-                    $bg = match($app->status) {
-                        'submitted' => 'bg-secondary',
-                        'fee_paid' => 'bg-info',
-                        'appeared' => 'bg-primary',
-                        'absent' => 'bg-danger',
-                        'result_declared' => 'bg-success',
-                        default => 'bg-dark'
+                    $st = match($app->status) {
+                        'submitted' => ['c'=>'secondary', 'l'=>'Submitted'],
+                        'fee_paid' => ['c'=>'info', 'l'=>'Fee Paid'],
+                        'appeared' => ['c'=>'primary', 'l'=>'Appeared'],
+                        'absent' => ['c'=>'danger', 'l'=>'Absent'],
+                        'result_declared' => ['c'=>'success', 'l'=>'Graded'],
+                        default => ['c'=>'dark', 'l'=>strtoupper($app->status)]
                     };
                 @endphp
-                <span class="badge {{ $bg }} mb-3">{{ strtoupper(str_replace('_', ' ', $app->status)) }}</span>
+                <span class="badge bg-{{ $st['c'] }} text-{{ $st['c'] }}-fg px-3 py-2 mb-4">
+                    {{ $st['l'] }}
+                </span>
 
-                <div class="d-grid gap-2">
-                    @if($app->rollNumber)
-                        <a href="{{ route('rollnumbers.slip', $app) }}" target="_blank" class="btn btn-outline-primary btn-sm">
-                            <i class="bi bi-file-earmark-pdf"></i> View Slip
-                        </a>
+                <div class="text-start">
+                    <div class="mb-3">
+                        <label class="form-label text-secondary fs-5 mb-1">Contact Details</label>
+                        <div class="d-flex align-items-center mb-1"><i class="ti ti-phone text-secondary me-2"></i> <strong>{{ $app->candidate->user->phone }}</strong></div>
+                        <div class="d-flex align-items-center"><i class="ti ti-mail text-secondary me-2"></i> <span class="text-secondary small">{{ $app->candidate->user->email ?: 'No Email' }}</span></div>
+                    </div>
+                    <div class="mb-3">
+                        <label class="form-label text-secondary fs-5 mb-1">Personal Info</label>
+                        <div class="text-secondary small">Father's Name: <span class="text-body fw-medium">{{ $app->candidate->father_name }}</span></div>
+                        <div class="text-secondary small">DOB: <span class="text-body fw-medium">{{ $app->candidate->dob?->format('d M Y') }} ({{ $app->candidate->age }} yrs)</span></div>
+                        <div class="text-secondary small">Domicile: <span class="text-body fw-medium">{{ $app->candidate->district_of_domicile }}, {{ $app->candidate->province_of_domicile }}</span></div>
+                    </div>
+                </div>
+            </div>
+            <div class="card-footer bg-light-lt">
+                <div class="btn-list">
+                    @if($app->examRollno)
+                    <a href="{{ route('admin.rollnumbers.slip', $app) }}" target="_blank" class="btn btn-outline-primary w-100">
+                        <i class="ti ti-file-download me-2"></i> Print Slip
+                    </a>
                     @endif
                     @if($app->result)
-                        <a href="{{ route('results.show', $app) }}" class="btn btn-outline-success btn-sm">
-                            <i class="bi bi-trophy"></i> View Result
-                        </a>
+                    <a href="{{ route('admin.results.show', $app) }}" class="btn btn-outline-success w-100">
+                        <i class="ti ti-trophy me-2"></i> View Score
+                    </a>
                     @endif
                 </div>
             </div>
-            <ul class="list-group list-group-flush border-top">
-                <li class="list-group-item d-flex justify-content-between">
-                    <span class="text-muted">Phone:</span>
-                    <strong>{{ $app->candidate->user->phone }}</strong>
-                </li>
-                <li class="list-group-item d-flex justify-content-between">
-                    <span class="text-muted">Father:</span>
-                    <strong>{{ $app->candidate->father_name }}</strong>
-                </li>
-                <li class="list-group-item d-flex justify-content-between">
-                    <span class="text-muted">DOB:</span>
-                    <strong>{{ $app->candidate->dob?->format('d M, Y') }} ({{ $app->candidate->age }} yrs)</strong>
-                </li>
-                <li class="list-group-item d-flex justify-content-between">
-                    <span class="text-muted">Domicile:</span>
-                    <strong>{{ $app->candidate->district_of_domicile }}, {{ $app->candidate->province_of_domicile }}</strong>
-                </li>
-            </ul>
         </div>
     </div>
 
-    <!-- Application Details -->
-    <div class="col-md-8">
-        <div class="card shadow-sm mb-4">
-            <div class="card-header bg-white py-3">
-                <h6 class="mb-0">Job & Test Details</h6>
+    <!-- Main Content: Job, Education, Experience -->
+    <div class="col-lg-8">
+        <!-- Job Post Context -->
+        <div class="card shadow-sm border-0 mb-4">
+            <div class="card-header border-0 pb-1 pt-3">
+                <h3 class="card-title fw-bold text-primary"><i class="ti ti-briefcase me-2"></i> Applied Position</h3>
             </div>
             <div class="card-body">
-                <div class="row border-bottom pb-3 mb-3">
-                    <div class="col-sm-6">
-                        <label class="text-muted d-block small mb-1">Project</label>
-                        <h6 class="mb-0">{{ $app->job->project->name }}</h6>
+                <div class="datagrid">
+                    <div class="datagrid-item">
+                        <div class="datagrid-title">Project Name</div>
+                        <div class="datagrid-content fw-bold">{{ $app->job->project->name }}</div>
                     </div>
-                    <div class="col-sm-6">
-                        <label class="text-muted d-block small mb-1">Job Title</label>
-                        <h6 class="mb-0">{{ $app->job->title }} ({{ $app->job->job_code }})</h6>
+                    <div class="datagrid-item">
+                        <div class="datagrid-title">Target Job Post</div>
+                        <div class="datagrid-content">{{ $app->job->title }} ({{ $app->job->job_code }})</div>
                     </div>
-                </div>
-                
-                <div class="row border-bottom pb-3 mb-3">
-                    <div class="col-sm-6">
-                        <label class="text-muted d-block small mb-1">Test Center Priority 1</label>
-                        <h6 class="mb-0">{{ $app->test_city_priority_1 }}</h6>
+                    <div class="datagrid-item">
+                        <div class="datagrid-title">Desired City</div>
+                        <div class="datagrid-content text-blue fw-medium">{{ $app->desiredTestCity->name ?? 'Not Set' }}</div>
                     </div>
-                    <div class="col-sm-6">
-                        <label class="text-muted d-block small mb-1">Assigned Batch</label>
-                        @if($app->batch)
-                            <h6 class="mb-0">Batch {{ $app->batch->batch_number }} <span class="text-muted small">({{ $app->batch->test_date->format('d M') }})</span></h6>
-                            <small class="text-muted">{{ $app->batch->center->name }}, {{ $app->batch->center->city }}</small>
-                        @else
-                            <h6 class="mb-0 text-danger">Pending Assignment</h6>
-                        @endif
-                    </div>
-                </div>
-
-                <div class="row">
-                    <div class="col-sm-6">
-                        <label class="text-muted d-block small mb-1">Payment Status</label>
-                        @if($app->payment)
-                            <span class="badge bg-{{ $app->payment->status === 'paid' ? 'success' : 'warning text-dark' }}">
-                                {{ strtoupper($app->payment->status) }}
-                            </span>
-                            @if($app->payment->status === 'paid')
-                                <small class="d-block mt-1 text-muted">Verified on: {{ $app->payment->deposit_date?->format('d M, Y') }}</small>
-                            @endif
-                        @else
-                            <span class="badge bg-danger">Not Generated</span>
-                        @endif
-                    </div>
-                    <div class="col-sm-6">
-                        <label class="text-muted d-block small mb-1">Roll Number</label>
-                        @if($app->rollNumber)
-                            <h5 class="mb-0 text-primary">{{ $app->rollNumber->roll_number }}</h5>
-                            @if($app->rollNumber->slip_ready)
-                                <span class="badge bg-success mt-1">Slip Downloadable</span>
-                            @else
-                                <span class="badge bg-secondary mt-1">Pending Release</span>
-                            @endif
-                        @else
-                            <span class="badge bg-secondary">Not Assigned</span>
-                        @endif
+                    <div class="datagrid-item">
+                        <div class="datagrid-title">Applied On</div>
+                        <div class="datagrid-content">{{ $app->applied_at->format('d M, Y \a\t H:i') }}</div>
                     </div>
                 </div>
             </div>
         </div>
 
+        <!-- Seat Allocation Status -->
+        <div class="card shadow-sm border-0 mb-4">
+            <div class="card-header border-0 pb-1 pt-3">
+                <h3 class="card-title fw-bold text-primary"><i class="ti ti-map-pin me-2"></i> Examination Status</h3>
+            </div>
+            <div class="card-body">
+                @if($app->examRollno)
+                <div class="row items-center border p-3 rounded bg-blue-lt">
+                    <div class="col-md-3 text-center border-end">
+                        <div class="text-secondary small mb-1">Roll Number</div>
+                        <div class="h2 mb-0 text-blue fw-bold">{{ $app->examRollno->roll_no }}</div>
+                    </div>
+                    <div class="col-md-9 ps-4">
+                        <div class="datagrid">
+                            <div class="datagrid-item">
+                                <div class="datagrid-title">Test Center</div>
+                                <div class="datagrid-content fw-bold">{{ $app->examRollno->center->name }}</div>
+                            </div>
+                            <div class="datagrid-item">
+                                <div class="datagrid-title">Test Schedule</div>
+                                <div class="datagrid-content">{{ $app->examRollno->test_date->format('l, d M Y') }} at {{ date('h:i A', strtotime($app->examRollno->start_time)) }}</div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                @else
+                <div class="alert alert-warning mb-0">
+                    <div class="d-flex">
+                        <div><i class="ti ti-alert-triangle fs-2 me-2"></i></div>
+                        <div>
+                            <div class="fw-bold">Pending Allocation</div>
+                            <div class="text-secondary">This candidate has not been assigned a seat or roll number yet. Batch assignment usually happens after the project closing date.</div>
+                        </div>
+                    </div>
+                </div>
+                @endif
+            </div>
+        </div>
+
+        <!-- Education Records -->
+        <div class="card shadow-sm border-0 mb-4">
+            <div class="card-header border-0 pb-1 pt-3">
+                <h3 class="card-title fw-bold text-primary"><i class="ti ti-school me-2"></i> Education Background</h3>
+            </div>
+            <div class="table-responsive">
+                <table class="table card-table table-vcenter">
+                    <thead>
+                        <tr>
+                            <th>Degree / Level</th>
+                            <th>Institute</th>
+                            <th>Passing Year</th>
+                            <th>Result</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        @forelse($app->candidate->education as $edu)
+                        <tr>
+                            <td>
+                                <div class="fw-bold">{{ $edu->degree_name }}</div>
+                                <div class="text-secondary small">Level {{ $edu->degree_level }}</div>
+                            </td>
+                            <td>{{ $edu->institute }}</td>
+                            <td>{{ $edu->passing_year }}</td>
+                            <td>{{ $edu->marks_obtained }} / {{ $edu->total_marks }}</td>
+                        </tr>
+                        @empty
+                        <tr><td colspan="4" class="text-center text-secondary italic py-3">No education records provided.</td></tr>
+                        @endforelse
+                    </tbody>
+                </table>
+            </div>
+        </div>
+
+        <!-- Work Experience -->
+        <div class="card shadow-sm border-0 mb-4">
+            <div class="card-header border-0 pb-1 pt-3">
+                <h3 class="card-title fw-bold text-primary"><i class="ti ti-history me-2"></i> Professional Experience</h3>
+            </div>
+            <div class="table-responsive">
+                <table class="table card-table table-vcenter">
+                    <thead>
+                        <tr>
+                            <th>Organization</th>
+                            <th>Designation</th>
+                            <th>Duration</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        @forelse($app->candidate->experience as $exp)
+                        <tr>
+                            <td>
+                                <div class="fw-bold">{{ $exp->organization }}</div>
+                                <div class="text-secondary small">Sector: {{ $exp->sector }}</div>
+                            </td>
+                            <td>{{ $exp->designation }}</td>
+                            <td>
+                                {{ $exp->start_date->format('M Y') }} — 
+                                {{ $exp->is_current ? 'Present' : $exp->end_date?->format('M Y') }}
+                            </td>
+                        </tr>
+                        @empty
+                        <tr><td colspan="3" class="text-center text-secondary italic py-3">No work experience records provided.</td></tr>
+                        @endforelse
+                    </tbody>
+                </table>
+            </div>
+        </div>
+
+        <!-- Eligibility Debugging -->
         @if($app->eligibility_warnings)
-        <div class="alert alert-warning border-warning">
-            <h6 class="alert-heading fw-bold"><i class="bi bi-exclamation-triangle"></i> Eligibility Warnings on Submission</h6>
-            @php $warnings = json_decode($app->eligibility_warnings, true); @endphp
-            @if(is_array($warnings) && count($warnings) > 0)
-                <ul class="mb-0 mt-2">
-                    @foreach($warnings as $w)
-                        <li>{{ $w }}</li>
+        <div class="card shadow-sm border-0 bg-red-lt mb-4">
+            <div class="card-body">
+                <h4 class="text-red fw-bold mb-3"><i class="ti ti-alert-circle me-2"></i> Screening Warnings</h4>
+                <ul class="mb-0">
+                    @foreach($app->eligibility_warnings as $warning)
+                    <li class="text-red-600 mb-1">{{ $warning }}</li>
                     @endforeach
                 </ul>
-            @else
-                <p class="mb-0">No specific warnings recorded.</p>
-            @endif
+                <div class="mt-3 small text-secondary italic">Note: These warnings were generated based on candidate's profile at the time of submission.</div>
+            </div>
         </div>
         @endif
+
     </div>
 </div>
 @endsection

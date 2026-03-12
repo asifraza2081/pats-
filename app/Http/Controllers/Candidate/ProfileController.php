@@ -4,6 +4,7 @@ namespace App\Http\Controllers\Candidate;
 
 use App\Http\Controllers\Controller;
 use App\Models\Candidate;
+use App\Models\City;
 use App\Models\EducationHistory;
 use App\Models\WorkExperience;
 use Illuminate\Http\Request;
@@ -22,7 +23,14 @@ class ProfileController extends Controller
         $candidate = $this->candidate();
         $education = $candidate->education()->orderBy('degree_level', 'desc')->get();
         $experience = $candidate->experience()->orderBy('from_date', 'desc')->get();
-        return view('candidate.profile', compact('candidate', 'education', 'experience'));
+        $cities = City::orderBy('name')->get();
+        return view('candidate.profile', compact('candidate', 'education', 'experience', 'cities'));
+    }
+
+    public function viewProfile()
+    {
+        $candidate = $this->candidate()->load(['education', 'experience', 'user', 'domicileCity', 'addressCity']);
+        return view('candidate.profile-bio', compact('candidate'));
     }
 
     public function update(Request $request)
@@ -43,8 +51,8 @@ class ProfileController extends Controller
             'current_occupation'    => 'nullable|string|max:120',
             'disability'            => 'nullable|boolean',
             'disability_type'       => 'nullable|string|max:120',
-            'province_of_domicile'  => 'required|string|max:80',
-            'district_of_domicile'  => 'required|string|max:80',
+            'domicile_city_id'      => 'required|exists:cities,id',
+            'address_city_id'       => 'required|exists:cities,id',
             'permanent_address'     => 'required|string',
             'postal_address'        => 'required|string',
             'same_postal_address'   => 'nullable|boolean',

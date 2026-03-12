@@ -15,7 +15,7 @@ class DashboardController extends Controller
         $completion = $candidate ? $candidate->completionPercent() : 0;
 
         $applications = Application::where('candidate_id', $candidate?->id)
-            ->with(['job.project', 'batch.center', 'rollNumber', 'payment', 'result'])
+            ->with(['job.project', 'desiredTestCity', 'examRollno.center', 'payment', 'result'])
             ->latest('applied_at')
             ->get();
 

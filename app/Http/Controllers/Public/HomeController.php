@@ -10,8 +10,8 @@ class HomeController extends Controller
 {
     public function index()
     {
-        $openProjects = Project::where('status', 'open')->latest()->take(6)->get();
-        return view('public.home', compact('openProjects'));
+        $projects = Project::where('status', 'open')->latest()->take(6)->get();
+        return view('welcome', compact('projects'));
     }
 
     public function projects()

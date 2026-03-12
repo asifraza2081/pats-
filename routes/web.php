@@ -54,6 +54,7 @@ Route::middleware(['auth', 'role:candidate'])->prefix('candidate')->name('candid
 
     // Profile
     Route::get('/profile',      [ProfileController::class, 'show'])->name('profile.show');
+    Route::get('/profile/bio',  [ProfileController::class, 'viewProfile'])->name('profile.bio');
     Route::put('/profile',      [ProfileController::class, 'update'])->name('profile.update');
 
     // Education History
@@ -88,18 +89,25 @@ Route::middleware(['auth', 'role:admin|data_entry|super_admin'])->prefix('admin'
     Route::resource('projects.jobs', Admin\JobController::class)->shallow();
 
     // Test Centers & Batches
+    Route::resource('cities', Admin\CityController::class);
     Route::resource('centers', Admin\TestCenterController::class);
+    Route::get('batches/stats', [Admin\BatchController::class, 'stats'])->name('batches.stats');
     Route::resource('batches', Admin\BatchController::class);
     Route::post('batches/{batch}/ready', [Admin\BatchController::class, 'markReady'])->name('batches.ready');
     Route::get('batches/{batch}/summary', [Admin\BatchController::class, 'summary'])->name('batches.summary');
     Route::get('batches/{batch}/attendance', [Admin\BatchController::class, 'attendance'])->name('batches.attendance');
     Route::get('batches/{batch}/attendance-sheet', [Admin\BatchController::class, 'attendanceSheet'])->name('batches.attendance-sheet');
+    Route::get('batches/{batch}/answer-sheets', [Admin\BatchController::class, 'answerSheets'])->name('batches.answer-sheets');
     Route::post('batches/{batch}/scans', [Admin\BatchController::class, 'uploadScan'])->name('batches.scans.upload');
     Route::post('batches/{batch}/mark-attendance', [Admin\BatchController::class, 'markAttendance'])->name('batches.attendance.mark');
 
     // Applications
     Route::get('applications', [Admin\ApplicationController::class, 'index'])->name('applications.index');
     Route::get('applications/{app}', [Admin\ApplicationController::class, 'show'])->name('applications.show');
+
+    // Candidates Management
+    Route::get('candidates', [Admin\CandidateController::class, 'index'])->name('candidates.index');
+    Route::get('candidates/{candidate}', [Admin\CandidateController::class, 'show'])->name('candidates.show');
 
     // Payments
     Route::get('payments', [Admin\PaymentController::class, 'index'])->name('payments.index');
@@ -121,5 +129,13 @@ Route::middleware(['auth', 'role:admin|data_entry|super_admin'])->prefix('admin'
     Route::middleware('role:super_admin')->group(function () {
         Route::resource('users', Admin\UserController::class);
         Route::post('users/{user}/toggle', [Admin\UserController::class, 'toggle'])->name('users.toggle');
+        Route::get('activity-logs', [Admin\ActivityLogController::class, 'index'])->name('activity-logs.index');
+        Route::get('activity-logs/{log}', [Admin\ActivityLogController::class, 'show'])->name('activity-logs.show');
     });
+});
+
+// Examiner Routes
+Route::middleware(['auth', 'role:examiner|super_admin'])->prefix('examiner')->name('examiner.')->group(function () {
+    Route::get('/dashboard', [App\Http\Controllers\Examiner\DashboardController::class, 'index'])->name('dashboard');
+    Route::get('/sessions/{batch}', [App\Http\Controllers\Examiner\DashboardController::class, 'showSession'])->name('sessions.show');
 });

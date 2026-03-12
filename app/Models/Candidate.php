@@ -12,7 +12,8 @@ class Candidate extends Model
     protected $fillable = [
         'user_id', 'father_name', 'dob', 'gender', 'marital_status', 'religion',
         'blood_group', 'current_occupation', 'disability', 'disability_type',
-        'province_of_domicile', 'district_of_domicile', 'permanent_address',
+        'domicile_city_id', 'province_of_domicile', 'district_of_domicile',
+        'address_city_id', 'permanent_address',
         'postal_address', 'same_postal_address', 'alternate_phone',
         'photo_path', 'cnic_front_path', 'profile_locked',
     ];
@@ -32,6 +33,8 @@ class Candidate extends Model
     public function education()   { return $this->hasMany(EducationHistory::class); }
     public function experience()  { return $this->hasMany(WorkExperience::class); }
     public function applications(){ return $this->hasMany(Application::class); }
+    public function domicileCity(){ return $this->belongsTo(City::class, 'domicile_city_id'); }
+    public function addressCity() { return $this->belongsTo(City::class, 'address_city_id'); }
 
     // ── Helpers ─────────────────────────────────────────────
 
@@ -69,26 +72,25 @@ class Candidate extends Model
      * Profile completion percentage (0–100).
      * Required fields for 100%:
      * father_name, dob, gender, marital_status, religion,
-     * province_of_domicile, district_of_domicile,
+     * domicile_city_id, address_city_id,
      * permanent_address, postal_address,
      * photo_path, cnic_front_path,
-     * ≥1 education entry, ≥1 experience entry
+     * ≥1 education entry
      */
     public function completionPercent(): int
     {
         $fields = [
             'father_name', 'dob', 'gender', 'marital_status', 'religion',
-            'province_of_domicile', 'district_of_domicile',
+            'domicile_city_id', 'address_city_id',
             'permanent_address', 'postal_address',
             'photo_path', 'cnic_front_path',
         ];
         $filled = 0;
-        $total  = count($fields) + 2; // +2 for education & experience
+        $total  = count($fields) + 1; // +1 for education only
         foreach ($fields as $f) {
             if (!empty($this->$f)) $filled++;
         }
         if ($this->education()->exists())  $filled++;
-        if ($this->experience()->exists()) $filled++;
         return (int) round(($filled / $total) * 100);
     }
 }

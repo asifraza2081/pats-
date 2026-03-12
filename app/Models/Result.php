@@ -9,7 +9,7 @@ class Result extends Model
     protected $fillable = [
         'application_id', 'roll_number', 'score', 'total_marks',
         'percentage', 'percentile', 'result_status', 'is_published',
-        'published_at', 'published_by',
+        'published_at', 'published_by', 'scanned_sheet_path',
     ];
 
     protected function casts(): array

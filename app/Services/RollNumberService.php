@@ -4,83 +4,120 @@ namespace App\Services;
 
 use App\Models\Application;
 use App\Models\Batch;
-use App\Models\RollNumber;
+use App\Models\ExamRollno;
 use Illuminate\Support\Facades\DB;
+use Picqer\Barcode\BarcodeGeneratorSVG;
 
 class RollNumberService
 {
     /**
-     * Assign a roll number for an application after payment is verified.
-     * Format: TCID_prefix(3) + job_code(2, zero-padded) + serial(4, zero-padded)
-     * e.g. TCID=3001 → prefix=301, job_code=2 → 02, serial=61 → 0061 → 301020061
+     * Allocate candidates to a specific batch and generate roll numbers.
+     * 
+     * @param Batch $batch
+     * @param int $count Number of candidates to allocate in this pass
+     * @param array $jobIds List of job IDs to restrict the allocation to
+     * @return int Number of successfully allocated candidates
      */
-    public function assign(Application $application): RollNumber
+    public function allocateBatch(Batch $batch, int $count, array $jobIds = []): int
     {
-        return DB::transaction(function () use ($application) {
-            if ($application->rollNumber) {
-                return $application->rollNumber;
+        return DB::transaction(function () use ($batch, $count, $jobIds) {
+            // 1. Find eligible candidates:
+            // - Fee Paid
+            // - No existing exam_rollnos record
+            // - Desired test city matches batch center's city
+            // - Same Project
+            // - Selected Jobs
+            $query = Application::where('project_id', $batch->project_id)
+                ->where('status', 'fee_paid')
+                ->where('desired_test_city_id', $batch->center->city_id)
+                ->whereDoesntHave('examRollno');
+                
+            if (!empty($jobIds)) {
+                $query->whereIn('job_id', $jobIds);
             }
 
-            $batch    = $application->batch()->with('center')->first();
-            $job      = $application->job;
-            $prefix   = substr($batch->center->tcid, 0, 3);
-            $jobCode  = str_pad((string) $job->job_code, 2, '0', STR_PAD_LEFT);
+            $candidates = $query->lockForUpdate()->limit($count)->get();
 
-            // Serial = count of existing roll numbers for this project+job + 1
-            $serial = RollNumber::whereHas('application', fn($q) =>
-                    $q->where('job_id', $job->id)
-                      ->whereHas('batch', fn($b) => $b->where('project_id', $batch->project_id))
-                )->lockForUpdate()->count() + 1;
-
-            $rollNumber = $prefix . $jobCode . str_pad((string) $serial, 4, '0', STR_PAD_LEFT);
-
-            // Collision guard (extremely rare but safe)
-            while (RollNumber::where('roll_number', $rollNumber)->exists()) {
-                $serial++;
-                $rollNumber = $prefix . $jobCode . str_pad((string) $serial, 4, '0', STR_PAD_LEFT);
+            if ($candidates->isEmpty()) {
+                return 0;
             }
 
-            return RollNumber::create([
-                'application_id' => $application->id,
-                'roll_number'    => $rollNumber,
-                'slip_ready'     => false,
-                'assigned_at'    => now(),
-            ]);
+            $allocated = 0;
+            $generator = new BarcodeGeneratorSVG();
+
+            foreach ($candidates as $app) {
+                // Get the last serial for this project/job/city/center to increment
+                $lastSerial = ExamRollno::where('project_id', $app->project_id)
+                    ->where('job_id', $app->job_id)
+                    ->where('city_id', $app->desired_test_city_id)
+                    ->where('center_id', $batch->center_id)
+                    ->count();
+
+                $serial = $lastSerial + 1;
+                
+                // Roll No Format: [ProjID][JobID][CityID][CenterTCID]-[Serial]
+                // Example: 11023001-001
+                $rollNo = sprintf(
+                    '%d%d%02d%s-%04d',
+                    $app->project_id % 10, // Single digit for project
+                    $app->job->job_code % 100, // Up to 2 digits for job
+                    $app->desired_test_city_id % 100, // 2 digits for city
+                    $batch->center->tcid, // Use TCID string (e.g. 3001)
+                    $serial
+                );
+
+                // Create Roll Number Record
+                ExamRollno::create([
+                    'application_id' => $app->id,
+                    'project_id'     => $app->project_id,
+                    'job_id'         => $app->job_id,
+                    'city_id'        => $app->desired_test_city_id,
+                    'center_id'      => $batch->center_id,
+                    'batch_id'       => $batch->id,
+                    'roll_no'        => $rollNo,
+                    'barcode'        => $rollNo, // Using Roll No as barcode content
+                    'batch_no'       => (string)$batch->batch_number,
+                    'test_date'      => $batch->test_date,
+                    'reporting_time' => $batch->reporting_time,
+                    'start_time'     => $batch->start_time,
+                    'slip_ready'     => false, // Admin publishes later
+                ]);
+
+                // Update application with batch_id (redundant but helpful for quick query)
+                $app->update(['batch_id' => $batch->id]);
+                
+                $allocated++;
+            }
+
+            // Update batch booked seats
+            $batch->increment('booked_seats', $allocated);
+
+            return $allocated;
         });
     }
 
     /**
-     * Mark all roll numbers in a batch as slip_ready and return count.
+     * Mark all roll numbers in a batch as ready for download.
      */
     public function markBatchReady(Batch $batch): int
     {
-        return RollNumber::whereHas('application', fn($q) =>
-            $q->where('batch_id', $batch->id)
-        )->update(['slip_ready' => true]);
+        return ExamRollno::where('batch_id', $batch->id)
+            ->update(['slip_ready' => true]);
     }
 
     /**
-     * Get all roll numbers grouped by job for a batch (for batch summary sheet).
-     * Returns [job_id => ['job' => PatsJob, 'from' => roll, 'to' => roll, 'count' => n], ...]
+     * Get a summary of allocations in a batch by Job Post.
      */
-    public function batchSummary(Batch $batch): array
+    /**
+     * Get full list of candidates in a batch grouped by Job Post.
+     */
+    public function batchRoster(Batch $batch)
     {
-        $rows = RollNumber::with(['application.job'])
-            ->whereHas('application', fn($q) => $q->where('batch_id', $batch->id))
-            ->orderBy('roll_number')
+        return ExamRollno::where('batch_id', $batch->id)
+            ->with(['application.candidate.user', 'job'])
+            ->orderBy('job_id')
+            ->orderBy('roll_no')
             ->get()
-            ->groupBy(fn($rn) => $rn->application->job_id);
-
-        $summary = [];
-        foreach ($rows as $jobId => $group) {
-            $summary[$jobId] = [
-                'job'   => $group->first()->application->job,
-                'from'  => $group->first()->roll_number,
-                'to'    => $group->last()->roll_number,
-                'count' => $group->count(),
-                'items' => $group,
-            ];
-        }
-        return $summary;
+            ->groupBy('job_id');
     }
 }

@@ -9,16 +9,25 @@ class TestCenter extends Model
     protected $table = 'test_centers';
 
     protected $fillable = [
-        'tcid', 'name', 'city', 'province', 'address', 'map_url',
-        'total_capacity', 'is_active',
+        'tcid',
+        'name',
+        'city_id',
+        'address',
+        'map_url',
+        'seating_capacity',
+        'is_active',
     ];
 
     protected function casts(): array
     {
         return [
-            'is_active'      => 'boolean',
-            'total_capacity' => 'integer',
+            'is_active' => 'boolean',
         ];
+    }
+
+    public function city()
+    {
+        return $this->belongsTo(City::class);
     }
 
     public function batches()

@@ -1,80 +1,91 @@
-@extends('layouts.admin')
-
+@extends('layouts.dashboard')
 @section('title', 'All Applications')
-@section('header', 'Applications Management')
+@section('page-title', 'Applications Management')
 
 @section('content')
-<div class="card shadow-sm">
-    <div class="card-header bg-white py-3">
-        <h5 class="mb-0">Recent Candidate Applications</h5>
+<div class="card shadow-sm border-0">
+    <div class="card-header border-0 pb-1 pt-3">
+        <h3 class="card-title fw-bold text-primary">Recent Candidate Submissions</h3>
     </div>
-    <div class="card-body p-0">
-        <div class="table-responsive">
-            <table class="table table-hover align-middle mb-0">
-                <thead class="table-light">
-                    <tr>
-                        <th class="ps-4">App ID</th>
-                        <th>Candidate</th>
-                        <th>Job / Project</th>
-                        <th>Batch / Center</th>
-                        <th>Status</th>
-                        <th>Applied On</th>
-                        <th class="text-end pe-4">Actions</th>
-                    </tr>
-                </thead>
-                <tbody>
-                    @forelse($applications as $app)
-                        <tr>
-                            <td class="ps-4">#{{ $app->id }}</td>
-                            <td>
-                                <strong>{{ $app->candidate->user->first_name }} {{ $app->candidate->user->last_name }}</strong><br>
-                                <small class="text-muted">{{ $app->candidate->user->cnic }}</small>
-                            </td>
-                            <td>
-                                <strong>{{ $app->job->title }}</strong><br>
-                                <small class="text-muted">{{ $app->job->project->name }}</small>
-                            </td>
-                            <td>
-                                @if($app->batch)
-                                    B-{{ $app->batch->batch_number }}<br>
-                                    <small class="text-muted">{{ $app->batch->center->name }}</small>
-                                @else
-                                    <span class="text-danger">No Batch</span>
-                                @endif
-                            </td>
-                            <td>
-                                @php
-                                    $bg = match($app->status) {
-                                        'submitted' => 'bg-secondary',
-                                        'fee_paid' => 'bg-info',
-                                        'appeared' => 'bg-primary',
-                                        'absent' => 'bg-danger',
-                                        'result_declared' => 'bg-success',
-                                        default => 'bg-dark'
-                                    };
-                                @endphp
-                                <span class="badge {{ $bg }}">{{ strtoupper(str_replace('_', ' ', $app->status)) }}</span>
-                            </td>
-                            <td>{{ $app->applied_at->format('d M, Y H:i') }}</td>
-                            <td class="text-end pe-4">
-                                <a href="{{ route('applications.show', $app) }}" class="btn btn-sm btn-outline-primary">
-                                    <i class="bi bi-eye"></i> View
-                                </a>
-                            </td>
-                        </tr>
-                    @empty
-                        <tr>
-                            <td colspan="7" class="text-center py-4 text-muted">No applications found.</td>
-                        </tr>
-                    @endforelse
-                </tbody>
-            </table>
-        </div>
+    <div class="table-responsive">
+        <table class="table card-table table-vcenter text-nowrap datatable table-hover">
+            <thead>
+                <tr>
+                    <th class="w-1">App ID</th>
+                    <th>Candidate</th>
+                    <th>Job Post / Project</th>
+                    <th>Desired City</th>
+                    <th>Roll No / Center</th>
+                    <th>Status</th>
+                    <th>Applied On</th>
+                    <th class="w-1"></th>
+                </tr>
+            </thead>
+            <tbody>
+                @forelse($applications as $app)
+                <tr>
+                    <td><span class="text-secondary fw-bold">#{{ $app->id }}</span></td>
+                    <td>
+                        <div class="d-flex py-1 align-items-center">
+                            <span class="avatar me-2 bg-blue-lt text-blue fw-bold">{{ substr($app->candidate->user->first_name, 0, 1) }}</span>
+                            <div class="flex-fill">
+                                <div class="font-weight-medium fw-bold text-body">{{ $app->candidate->user->full_name }}</div>
+                                <div class="text-secondary small">{{ $app->candidate->user->cnic }}</div>
+                            </div>
+                        </div>
+                    </td>
+                    <td>
+                        <div class="font-weight-medium text-body">{{ $app->job->title }}</div>
+                        <div class="text-secondary small">{{ $app->job->project->name }}</div>
+                    </td>
+                    <td>
+                        <span class="text-body fw-medium">{{ $app->desiredTestCity->name ?? 'Not Set' }}</span>
+                    </td>
+                    <td>
+                        @if($app->examRollno)
+                        <div class="font-weight-medium text-blue fw-bold">{{ $app->examRollno->roll_no }}</div>
+                        <div class="text-secondary small">{{ $app->examRollno->center->name }}</div>
+                        @else
+                        <span class="badge bg-yellow-lt text-yellow px-2 py-1">Pending Allocation</span>
+                        @endif
+                    </td>
+                    <td>
+                        @php
+                            $st = match($app->status) {
+                                'submitted' => ['c'=>'secondary', 'l'=>'Submitted'],
+                                'fee_paid' => ['c'=>'info', 'l'=>'Fee Paid'],
+                                'appeared' => ['c'=>'primary', 'l'=>'Appeared'],
+                                'absent' => ['c'=>'danger', 'l'=>'Absent'],
+                                'result_declared' => ['c'=>'success', 'l'=>'Graded'],
+                                default => ['c'=>'dark', 'l'=>strtoupper($app->status)]
+                            };
+                        @endphp
+                        <span class="badge bg-{{ $st['c'] }} text-{{ $st['c'] }}-fg">{{ $st['l'] }}</span>
+                    </td>
+                    <td><span class="text-secondary small">{{ $app->applied_at->format('d M, Y H:i') }}</span></td>
+                    <td>
+                        <a href="{{ route('admin.applications.show', $app) }}" class="btn btn-icon btn-outline-primary btn-sm" data-bs-toggle="tooltip" title="View Details">
+                            <i class="ti ti-eye"></i>
+                        </a>
+                    </td>
+                </tr>
+                @empty
+                <tr>
+                    <td colspan="8" class="text-center text-secondary py-5">
+                        <div class="empty">
+                            <div class="empty-icon text-secondary"><i class="ti ti-folders-off fs-1"></i></div>
+                            <p class="empty-title">No applications found in the records.</p>
+                        </div>
+                    </td>
+                </tr>
+                @endforelse
+            </tbody>
+        </table>
     </div>
     @if($applications->hasPages())
-        <div class="card-footer bg-white border-top-0">
-            {{ $applications->links() }}
-        </div>
+    <div class="card-footer d-flex align-items-center">
+        {{ $applications->links('pagination::bootstrap-5') }}
+    </div>
     @endif
 </div>
 @endsection
