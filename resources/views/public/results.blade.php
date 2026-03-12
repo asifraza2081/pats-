@@ -1,5 +1,6 @@
-@extends('layouts.app')
+@extends('layouts.public')
 @section('title', 'Check Results — PATS')
+@section('header-title', 'Search Results')
 
 @section('content')
 <div class="container-xl py-5">

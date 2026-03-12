@@ -1,5 +1,13 @@
-@extends('layouts.app')
+@extends('layouts.public')
 @section('title', $project->name . ' — PATS')
+@section('header-title', 'Project Details')
+@section('header-breadcrumb')
+    <a href="{{ route('home') }}" class="text-white text-decoration-none">Home</a> 
+    <span class="mx-2">/</span> 
+    <a href="{{ route('projects') }}" class="text-white text-decoration-none">Projects</a>
+    <span class="mx-2">/</span>
+    <span class="text-white-50">{{ $project->org_name }}</span>
+@endsection
 
 @section('content')
 <div class="container-xl py-5">

@@ -89,3 +89,7 @@ body {
 [data-bs-theme="dark"] .main-nav .nav-link { color: white !important; }
 [data-bs-theme="dark"] .notice-board { background: #1e293b; border-bottom-color: #0ea5e9; }
 [data-bs-theme="dark"] .card-nts { background: #1e293b; color: white; }
+
+/* Theme Toggle Visibility */
+[data-bs-theme="dark"] .hide-theme-dark { display: none !important; }
+[data-bs-theme="light"] .hide-theme-light { display: none !important; }

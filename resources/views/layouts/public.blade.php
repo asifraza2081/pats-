@@ -47,7 +47,7 @@
                     
                     <div class="d-none d-lg-block">
                         <ul class="nav">
-                            <li class="nav-item"><a href="{{ url('/') }}" class="nav-link text-dark">Home</a></li>
+                            <li class="nav-item"><a href="{{ url('/') }}" class="nav-link text-dark fw-bold">Home</a></li>
                             <li class="nav-item"><a href="{{ route('about') }}" class="nav-link text-dark">About Us</a></li>
                             <li class="nav-item"><a href="{{ route('projects') }}" class="nav-link text-dark">Open Projects</a></li>
                             <li class="nav-item"><a href="{{ route('results.search') }}" class="nav-link text-dark">Results</a></li>
@@ -74,6 +74,9 @@
                         @else
                             <a href="{{ route('login') }}" class="btn btn-primary d-none d-md-inline-block px-4">Sign In</a>
                         @endauth
+                        <button class="navbar-toggler d-lg-none ms-2" type="button" data-bs-toggle="collapse" data-bs-target="#mobileMenu">
+                            <span class="navbar-toggler-icon"></span>
+                        </button>
                     </div>
                 </div>
             </div>

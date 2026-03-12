@@ -1,5 +1,5 @@
-@extends('layouts.app')
-@section('title', 'Register — PATS')
+@extends('layouts.public')
+@section('title', 'Candidate Registration — PATS')
 
 @section('content')
 <div class="page page-center h-100 bg-white">
