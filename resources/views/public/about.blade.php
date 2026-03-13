@@ -5,10 +5,10 @@
 @section('content')
 <div class="row g-5">
     <div class="col-lg-8">
-        <div class="card card-stacked shadow-sm p-4 border-0 mb-5">
+        <div class="card glass-panel p-5 border-0 mb-5 rounded-4 animate__animated animate__fadeIn">
             <h2 class="section-header">OUR MISSION</h2>
-            <p class="fs-3 text-secondary lh-lg">
-                Prime Assessment & Testing Service (PATS) was established with a singular vision: to revolutionize the testing and recruitment landscape in Pakistan through unwavering commitment to merit, transparency, and innovation. We believe that every individual deserves a fair chance to succeed, and every organization deserves the most qualified talent.
+            <p class="fs-2 text-dark fw-medium lh-base">
+                Prime Assessment & Testing Service (PATS) was established with a singular vision: to revolutionize the testing and recruitment landscape in Pakistan through unwavering commitment to merit, transparency, and innovation.
             </p>
             
             <h2 class="section-header mt-5">WHO WE ARE</h2>
@@ -21,14 +21,14 @@
 
             <div class="row g-4 mt-4">
                 <div class="col-md-6">
-                    <div class="card bg-teal-lt border-0 p-3">
-                        <h4 class="fw-bold mb-2">Transparency</h4>
+                    <div class="card bg-teal-lt border-0 p-4 hover-lift rounded-3">
+                        <h4 class="fw-bold mb-2 text-teal">Transparency</h4>
                         <p class="small text-secondary mb-0">Open results, scanned answer sheets, and merit-driven ranking systems.</p>
                     </div>
                 </div>
                 <div class="col-md-6">
-                    <div class="card bg-teal-lt border-0 p-3">
-                        <h4 class="fw-bold mb-2">Integrity</h4>
+                    <div class="card bg-teal-lt border-0 p-4 hover-lift rounded-3">
+                        <h4 class="fw-bold mb-2 text-teal">Integrity</h4>
                         <p class="small text-secondary mb-0">Strict security protocols and zero-tolerance for malpractice.</p>
                     </div>
                 </div>
@@ -37,7 +37,7 @@
     </div>
     
     <div class="col-lg-4">
-        <div class="card border-0 shadow-sm p-4 sticky-top" style="top: 100px">
+        <div class="card glass-panel border-0 p-4 sticky-top rounded-4" style="top: 100px">
             <h3 class="fw-bold mb-4">Core Leadership</h3>
             <div class="d-flex align-items-center mb-4">
                 <span class="avatar avatar-md rounded-circle me-3">JD</span>

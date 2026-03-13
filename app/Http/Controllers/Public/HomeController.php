@@ -11,8 +11,36 @@ class HomeController extends Controller
     public function index()
     {
         $projects = Project::where('status', 'open')->latest()->take(6)->get();
-        $results = Project::where('status', 'closed')->latest()->take(6)->get(); // For "Latest Results" section
-        return view('welcome', compact('projects', 'results'));
+        $results = Project::where('status', 'closed')->latest()->take(6)->get();
+
+        // Dynamic Stats
+        $stats = [
+            'active_projects' => Project::where('status', 'open')->count(),
+            'job_posts'       => PatsJob::whereHas('project', function($q){ $q->where('status', 'open'); })->count(),
+            'applications'    => \App\Models\Application::count(),
+            'results'         => Project::where('status', 'closed')->count(),
+        ];
+
+        // Dynamic Announcements (Simulated from latest events)
+        $announcements = collect();
+        
+        // Latest open projects
+        foreach($projects->take(2) as $p) {
+            $announcements->push((object)[
+                'text' => "Registration for {$p->org_name} ({$p->name}) is now OPEN.",
+                'type' => 'new'
+            ]);
+        }
+
+        // Latest results
+        foreach($results->take(2) as $r) {
+            $announcements->push((object)[
+                'text' => "Official Results for {$r->name} have been declared.",
+                'type' => 'result'
+            ]);
+        }
+
+        return view('welcome', compact('projects', 'results', 'stats', 'announcements'));
     }
 
     public function about() { return view('public.about'); }
