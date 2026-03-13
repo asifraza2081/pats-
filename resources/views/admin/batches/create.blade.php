@@ -154,7 +154,7 @@
                                         <div class="p-3 border-bottom bg-light">
                                             <div class="d-flex justify-content-between align-items-center">
                                                 <span class="fw-bold">Available in Selection</span>
-                                                <span class="badge bg-primary fs-3" id="totalPendingBadge">0</span>
+                                                <span class="badge bg-primary fs-3 text-white" id="totalPendingBadge">0</span>
                                             </div>
                                         </div>
                                         <div id="poolCitiesList" style="max-height: 400px; overflow-y: auto;">
@@ -167,7 +167,7 @@
                                             </div>
                                             <div class="d-flex justify-content-between align-items-center">
                                                 <h3 class="m-0 fw-bold">REMAINING POOL</h3>
-                                                <span class="badge bg-success fs-3" id="remainingPoolBadge">0</span>
+                                                <span class="badge bg-success fs-3 text-white" id="remainingPoolBadge">0</span>
                                             </div>
                                         </div>
                                     </div>
@@ -385,7 +385,7 @@ document.addEventListener('DOMContentLoaded', () => {
                 <div class="p-3 border-bottom ${isSelectedCity ? 'border-start border-4 border-success' : ''}" style="opacity: ${isSelectedCity ? '1' : '0.4'}">
                     <div class="d-flex justify-content-between align-items-center mb-1">
                         <span class="fw-bold">${group.name}</span>
-                        <span class="badge ${isSelectedCity ? 'bg-success' : 'bg-secondary'}">${group.pending}</span>
+                        <span class="badge ${isSelectedCity ? 'bg-success' : 'bg-secondary'} text-white">${group.pending}</span>
                     </div>
                 </div>
             `;
