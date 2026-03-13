@@ -158,8 +158,8 @@ When an admin uploads the results for a project, the system expects a file (`.cs
 
 | roll_no | score | total_marks | result_status |
 |---|---|---|---|
-| LHE010001 | 85.5 | 100 | pass |
-| LHE010002 | 40.0 | 100 | fail |
-| LHE010003 | 0 | 100 | absent |
+| 1010130010001 | 85.5 | 100 | pass |
+| 1010130010002 | 40.0 | 100 | fail |
+| 1010130010003 | 0 | 100 | absent |
 
 **Allowed Status Values:** `pass`, `fail`, `absent`, `withheld`.

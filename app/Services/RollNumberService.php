@@ -56,13 +56,13 @@ class RollNumberService
                 $serial = $lastSerial + 1;
                 
                 // Roll No Format: [ProjID][JobID][CityID][CenterTCID][Serial] (NUMBERS ONLY)
-                // Example: 110230010001
+                // Example: 1010130010001
                 $rollNo = sprintf(
-                    '%d%d%02d%s%04d',
+                    '%d%02s%02d%s%04d',
                     $app->project_id % 10, // Single digit for project
-                    $app->job->job_code % 100, // Up to 2 digits for job
+                    str_pad($app->job->job_code % 100, 2, '0', STR_PAD_LEFT), // 2 digits for job
                     $app->desired_test_city_id % 100, // 2 digits for city
-                    $batch->center->tcid, // Use TCID string (e.g. 3001)
+                    preg_replace('/[^0-9]/', '', $batch->center->tcid), // Strip any non-numeric chars from TCID
                     $serial
                 );
 

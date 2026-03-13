@@ -151,7 +151,7 @@ class DatabaseSeeder extends Seeder
         ]);
 
         $center1 = \App\Models\TestCenter::create([
-            'tcid'             => 'LHE',
+            'tcid'             => '3001',
             'name'             => 'Expo Center Lahore',
             'city_id'          => $cityLhe->id,
             'address'          => 'Johar Town, Lahore',
@@ -161,7 +161,7 @@ class DatabaseSeeder extends Seeder
         $center1->projects()->attach([$project1->id, $project2->id]);
 
         $center2 = \App\Models\TestCenter::create([
-            'tcid'             => 'ISB',
+            'tcid'             => '3002',
             'name'             => 'Pak-China Friendship Center',
             'city_id'          => $cityIsb->id,
             'address'          => 'Garden Avenue, Shakarparian',
