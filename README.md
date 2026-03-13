@@ -14,6 +14,21 @@ PATS is a comprehensive Laravel 11 application designed to manage the entire lif
 
 ---
 
+## 🏗️ Core System Logic (The "Handshake")
+
+The PATS system is built on a "Handshake" logic that coordinates candidate preferences with administrative infrastructure:
+
+1.  **Candidate Choice**: When applying for a job, a candidate selects their **Desired Test City** (e.g., *Islamabad*). This preference is bound to their application.
+2.  **Admin Infrastructure**: Administrators manage **Cities** and **Test Centers**. Every Center is physically located in a City (e.g., *Friendship Center* is in *Islamabad*).
+3.  **The Allocation Process**: During the **Scheduling Phase**, the Admin creates **Batches** for specific **Test Centers**.
+4.  **Automatic Matching**: When an Admin initiates allocation for a batch, the system:
+    *   Filters for candidates who have a **Verified Payment**.
+    *   Matches candidates whose **Desired Test City** matches the city of the **Test Center** being filled.
+    *   Fills the Batch sequentially until the Center's **Seating Capacity** is reached.
+    *   Generates a unique, barcode-ready **Roll Number** for the specific seat.
+
+---
+
 ## 🚀 Installation & Local Setup
 
 1. **Clone the repository and install dependencies**:
