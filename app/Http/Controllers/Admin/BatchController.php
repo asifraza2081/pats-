@@ -13,6 +13,7 @@ use App\Services\SmsService;
 use Barryvdh\DomPDF\Facade\Pdf;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
+use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Storage;
 
 class BatchController extends Controller
@@ -55,36 +56,63 @@ class BatchController extends Controller
         $totalAllocated = 0;
         $batchIds = [];
 
-        foreach ($data['center_ids'] as $centerId) {
-            $batchData = $request->except(['job_ids', 'count_to_allocate', 'center_ids']);
-            $batchData['center_id'] = $centerId;
-            $batchData['created_by'] = Auth::id();
-            
-            // Dumbproof check: Are there any eligible candidates for THIS specific center's city?
-            $cityId = TestCenter::find($centerId)->city_id;
-            $eligibleCount = Application::where('project_id', $batchData['project_id'])
-                ->where('status', 'fee_paid')
-                ->where('desired_test_city_id', $cityId)
-                ->whereDoesntHave('examRollno')
-                ->whereIn('job_id', $data['job_ids'])
-                ->count();
+        try {
+            DB::beginTransaction();
 
-            if ($eligibleCount === 0) {
-                continue; // Skip centers where no work needs to be done
+            foreach ($data['center_ids'] as $centerId) {
+                $center = TestCenter::findOrFail($centerId);
+                
+                // 1. Physical Capacity Check
+                if ($data['total_seats'] > $center->seating_capacity) {
+                    throw new \Exception("Center '{$center->name}' only has {$center->seating_capacity} seats, but {$data['total_seats']} were requested.");
+                }
+
+                // 2. Conflict Detection (Same center, same date, overlapping time)
+                $conflict = Batch::where('center_id', $centerId)
+                    ->where('test_date', $data['test_date'])
+                    ->where(function($q) use ($data) {
+                        $q->where('start_time', $data['start_time'])
+                          ->orWhere('reporting_time', $data['reporting_time']);
+                    })
+                    ->exists();
+
+                if ($conflict) {
+                    throw new \Exception("A session is already scheduled at '{$center->name}' on this date and time.");
+                }
+
+                $batchData = $request->except(['job_ids', 'count_to_allocate', 'center_ids']);
+                $batchData['center_id'] = $centerId;
+                $batchData['created_by'] = Auth::id();
+                
+                $cityId = $center->city_id;
+                $eligibleCount = Application::where('project_id', $batchData['project_id'])
+                    ->where('status', 'fee_paid')
+                    ->where('desired_test_city_id', $cityId)
+                    ->whereDoesntHave('examRollno')
+                    ->whereIn('job_id', $data['job_ids'])
+                    ->count();
+
+                if ($eligibleCount === 0) {
+                    continue; 
+                }
+
+                $batch = Batch::create($batchData);
+                $batchIds[] = $batch->id;
+
+                $allocCount = min($data['count_to_allocate'], $eligibleCount);
+                $allocated = $this->rollNumbers->allocateBatch($batch, $allocCount, $data['job_ids']);
+                $totalAllocated += $allocated;
+
+                \App\Models\ActivityLog::log('allocate_seats', $batch, [
+                    'count' => $allocated,
+                    'job_ids' => $data['job_ids']
+                ]);
             }
 
-            $batch = Batch::create($batchData);
-            $batchIds[] = $batch->id;
-
-            // Allocate up to the requested count or available eligible count
-            $allocCount = min($data['count_to_allocate'], $eligibleCount);
-            $allocated = $this->rollNumbers->allocateBatch($batch, $allocCount, $data['job_ids']);
-            $totalAllocated += $allocated;
-
-            \App\Models\ActivityLog::log('allocate_seats', $batch, [
-                'count' => $allocated,
-                'job_ids' => $data['job_ids']
-            ]);
+            DB::commit();
+        } catch (\Exception $e) {
+            DB::rollBack();
+            return back()->with('error', $e->getMessage())->withInput();
         }
 
         if (empty($batchIds)) {
@@ -101,6 +129,8 @@ class BatchController extends Controller
         $projectId = $request->project_id;
         if (!$projectId) return response()->json([]);
 
+        $project = Project::with('jobs')->findOrFail($projectId);
+
         // Get unassigned, paid candidates grouped by job and city
         $stats = Application::where('applications.project_id', $projectId)
             ->where('applications.status', 'fee_paid')
@@ -111,7 +141,11 @@ class BatchController extends Controller
             ->groupBy('cities.id', 'cities.name', 'pats_jobs.id', 'pats_jobs.title')
             ->get();
 
-        return response()->json(['stats' => $stats]);
+        return response()->json([
+            'stats' => $stats,
+            'project_total' => $project->applications()->where('status', 'fee_paid')->count(),
+            'project_unallocated' => $project->unallocatedApplicationsCount(),
+        ]);
     }
 
     public function show(Batch $batch)

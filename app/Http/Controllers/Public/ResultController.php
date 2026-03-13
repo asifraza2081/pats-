@@ -17,10 +17,10 @@ class ResultController extends Controller
             return view('public.results');
         }
 
-        // If a query is provided, attempt to find the result by roll number or CNIC
-        $result = null;
+        // If a query is provided, attempt to find the results by roll number or CNIC
+        $results = collect();
         if ($query) {
-            $result = Result::with(['application.candidate.user', 'application.job.project'])
+            $results = Result::with(['application.candidate.user', 'application.job.project'])
                 ->whereNotNull('published_at') // ONLY SHOW PUBLISHED RESULTS
                 ->where(function($q) use ($query) {
                     $q->where('roll_no', $query)
@@ -28,10 +28,10 @@ class ResultController extends Controller
                           $sq->where('cnic', $query);
                       });
                 })
-                ->first();
+                ->get();
         }
 
-        return view('public.results', ['result' => $result ?? false]);
+        return view('public.results', ['results' => $results]);
     }
 
     public function verify($roll)

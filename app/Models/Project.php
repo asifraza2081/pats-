@@ -3,6 +3,11 @@
 namespace App\Models;
 
 use Illuminate\Database\Eloquent\Model;
+use App\Models\Application;
+use App\Models\PatsJob;
+use App\Models\Batch;
+use App\Models\TestCenter;
+use App\Models\User;
 
 class Project extends Model
 {
@@ -20,11 +25,25 @@ class Project extends Model
         ];
     }
 
-    public function jobs()    { return $this->hasMany(PatsJob::class, 'project_id'); }
-    public function centers() { return $this->belongsToMany(TestCenter::class, 'project_centers', 'project_id', 'center_id'); }
-    public function batches() { return $this->hasMany(Batch::class, 'project_id'); }
-    public function creator() { return $this->belongsTo(User::class, 'created_by'); }
+    public function jobs()         { return $this->hasMany(PatsJob::class, 'project_id'); }
+    public function centers()      { return $this->belongsToMany(TestCenter::class, 'project_centers', 'project_id', 'center_id'); }
+    public function batches()      { return $this->hasMany(Batch::class, 'project_id'); }
+    public function applications() { return $this->hasMany(Application::class, 'project_id'); }
+    public function creator()      { return $this->belongsTo(User::class, 'created_by'); }
 
-    public function isOpen(): bool       { return $this->status === 'open' && now()->between($this->open_date, $this->close_date); }
-    public function isRegistrationOpen(): bool { return $this->isOpen() && now()->lte($this->close_date); }
+    public function isOpen(): bool { 
+        return $this->status === 'open' && now()->between($this->open_date, $this->close_date); 
+    }
+
+    public function isRegistrationOpen(): bool { 
+        return $this->status === 'open' && (!$this->close_date || now()->lte($this->close_date)); 
+    }
+
+    public function unallocatedApplicationsCount(): int
+    {
+        return $this->applications()
+            ->where('status', 'fee_paid')
+            ->whereDoesntHave('examRollno')
+            ->count();
+    }
 }

@@ -12,6 +12,7 @@ return new class extends Migration
     public function up(): void
     {
         Schema::table('exam_rollnos', function (Blueprint $table) {
+            $table->dropIndex('exam_rollnos_barcode_unique');
             $table->text('barcode')->change(); // Use TEXT to be safe for base64 strings
         });
     }

@@ -13,14 +13,16 @@ class DashboardController extends Controller
 {
     public function index()
     {
-        $stats = [
-            'projects'     => Project::count(),
-            'jobs'          => PatsJob::count(),
-            'applications'  => Application::count(),
-            'pending_pay'   => Payment::where('status', 'pending')->count(),
-            'verified_pay'  => Payment::where('status', 'paid')->count(),
-            'appeared'      => Application::where('status', 'appeared')->count(),
-        ];
+        $stats = cache()->remember('admin_dashboard_stats', now()->addMinutes(5), function() {
+            return [
+                'projects'     => Project::count(),
+                'jobs'          => PatsJob::count(),
+                'applications'  => Application::count(),
+                'pending_pay'   => Payment::where('status', 'pending')->count(),
+                'verified_pay'  => Payment::where('status', 'paid')->count(),
+                'appeared'      => Application::where('status', 'appeared')->count(),
+            ];
+        });
 
         $recentApps = Application::with(['candidate.user', 'job', 'payment'])
             ->latest('applied_at')->take(10)->get();

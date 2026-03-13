@@ -26,7 +26,19 @@ class PatsJob extends Model
         ];
     }
 
-    public function project()      { return $this->belongsTo(Project::class, 'project_id'); }
+    public function project()
+    {
+        return $this->belongsTo(Project::class);
+    }
+
+    public function unallocatedApplicationsCount(): int
+    {
+        return $this->applications()
+            ->where('status', 'fee_paid')
+            ->whereDoesntHave('examRollno')
+            ->count();
+    }
+
     public function applications() { return $this->hasMany(Application::class, 'job_id'); }
 
     /**

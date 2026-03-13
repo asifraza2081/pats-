@@ -118,7 +118,12 @@ class ApplicationController extends Controller
     {
         abort_if($app->candidate_id !== Auth::user()->candidate->id, 403);
         abort_if(!$app->payment, 404, 'No payment record found.');
-        abort_if($app->job->project->close_date && now()->isAfter($app->job->project->close_date), 403, 'Challan generation is closed.');
+        
+        // 3-day grace period for payment after project closing
+        $closeDate = $app->job->project->close_date;
+        if ($closeDate && now()->isAfter($closeDate->copy()->addDays(3))) {
+            abort(403, 'The payment window for this project (including grace period) has closed.');
+        }
 
         $app->load(['job.project', 'batch.center', 'payment']);
         $pdf = Pdf::loadView('pdf.challan', compact('app'));
