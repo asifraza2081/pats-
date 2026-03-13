@@ -37,7 +37,7 @@
     </div>
     
     <div class="col-lg-4">
-        <div class="card glass-panel border-0 p-4 sticky-top rounded-4" style="top: 100px">
+        <div class="card glass-panel border-0 p-4 sticky-top rounded-4 shadow-lg animate__animated animate__fadeInRight" style="top: 100px">
             <h3 class="fw-bold mb-4">Core Leadership</h3>
             <div class="d-flex align-items-center mb-4">
                 <span class="avatar avatar-md rounded-circle me-3">JD</span>
