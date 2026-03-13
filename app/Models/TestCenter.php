@@ -40,6 +40,12 @@ class TestCenter extends Model
         return $this->belongsToMany(Project::class, 'project_centers', 'center_id', 'project_id');
     }
 
+    public function examiners()
+    {
+        return $this->belongsToMany(User::class, 'project_centers', 'center_id', 'examiner_id')
+            ->withPivot('project_id');
+    }
+
     /** Available seats across all batches for a given project */
     public function availableSeatsForProject(int $projectId): int
     {

@@ -90,6 +90,9 @@ class ProfileController extends Controller
     public function addEducation(Request $request)
     {
         $candidate = $this->candidate();
+        if ($candidate->profile_locked) {
+            return back()->with('error', 'Your profile is locked because you have submitted applications.');
+        }
         $data = $request->validate([
             'degree_level'   => 'required|integer|min:1|max:6',
             'degree_name'    => 'required|string|max:100',
@@ -106,7 +109,11 @@ class ProfileController extends Controller
 
     public function updateEducation(Request $request, EducationHistory $edu)
     {
-        abort_if($edu->candidate_id !== $this->candidate()->id, 403);
+        $candidate = $this->candidate();
+        if ($candidate->profile_locked) {
+            return back()->with('error', 'Your profile is locked because you have submitted applications.');
+        }
+        abort_if($edu->candidate_id !== $candidate->id, 403);
         $data = $request->validate([
             'degree_level'   => 'required|integer|min:1|max:6',
             'degree_name'    => 'required|string|max:100',
@@ -133,6 +140,9 @@ class ProfileController extends Controller
     public function addExperience(Request $request)
     {
         $candidate = $this->candidate();
+        if ($candidate->profile_locked) {
+            return back()->with('error', 'Your profile is locked because you have submitted applications.');
+        }
         $data = $request->validate([
             'job_type'          => 'required|in:Public,Private',
             'organization_name' => 'required|string|max:150',
@@ -148,7 +158,11 @@ class ProfileController extends Controller
 
     public function updateExperience(Request $request, WorkExperience $exp)
     {
-        abort_if($exp->candidate_id !== $this->candidate()->id, 403);
+        $candidate = $this->candidate();
+        if ($candidate->profile_locked) {
+            return back()->with('error', 'Your profile is locked because you have submitted applications.');
+        }
+        abort_if($exp->candidate_id !== $candidate->id, 403);
         $data = $request->validate([
             'job_type'          => 'required|in:Public,Private',
             'organization_name' => 'required|string|max:150',

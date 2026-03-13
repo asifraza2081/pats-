@@ -8,6 +8,37 @@
         <h2 class="section-header">RESOURCES & FORMS</h2>
         <p class="text-secondary">Access standard forms, sample papers, and candidate instructions from the repository below.</p>
         
+        <div class="list-group list-group-flush">
+            <a href="{{ asset('assets/docs/form.pdf') }}" target="_blank" class="list-group-item list-group-item-action d-flex align-items-center py-3">
+                <div class="me-3">
+                    <span class="bg-blue-100 text-blue p-2 rounded">
+                        <i class="ti ti-file-text fs-3"></i>
+                    </span>
+                </div>
+                <div>
+                    <div class="fw-bold mb-0">Generic Application Form</div>
+                    <div class="text-muted small text-uppercase">PDF Document • 1.2 MB</div>
+                </div>
+                <div class="ms-auto">
+                    <i class="ti ti-download text-muted"></i>
+                </div>
+            </a>
+            <a href="{{ asset('assets/docs/instructions.pdf') }}" target="_blank" class="list-group-item list-group-item-action d-flex align-items-center py-3">
+                <div class="me-3">
+                    <span class="bg-purple-100 text-purple p-2 rounded">
+                        <i class="ti ti-info-circle fs-3"></i>
+                    </span>
+                </div>
+                <div>
+                    <div class="fw-bold mb-0">Testing Instructions & Guidelines</div>
+                    <div class="text-muted small text-uppercase">PDF Document • 0.8 MB</div>
+                </div>
+                <div class="ms-auto">
+                    <i class="ti ti-download text-muted"></i>
+                </div>
+            </a>
+        </div>
+
         <div class="table-responsive mt-4">
             <table class="table table-vcenter card-table table-hover">
                 <thead class="bg-light">

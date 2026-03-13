@@ -47,7 +47,9 @@ class Candidate extends Model
     /** Highest education degree_level */
     public function getMaxDegreeLevelAttribute(): int
     {
-        return (int) $this->education()->max('degree_level');
+        return (int) $this->education()
+            ->where('passing_year', '<=', now()->year)
+            ->max('degree_level');
     }
 
     /**

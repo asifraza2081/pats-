@@ -194,7 +194,79 @@
             </div>
         </div>
     </div>
+    </div>
 </div>
+
+<!-- Our Process Section (Modernized) -->
+<section class="bg-white py-6 border-top mt-6 glass-panel rounded-4 mx-3 shadow-none animate__animated animate__fadeIn">
+    <div class="container-xl">
+        <div class="row align-items-center g-5">
+            <div class="col-lg-6">
+                <div class="badge bg-teal-lt text-teal px-3 py-1 mb-3">OUR METHODOLOGY</div>
+                <h2 class="display-5 fw-extrabold mb-4 text-dark">Transparent Assessment Process</h2>
+                <p class="text-secondary fs-3 mb-4 lh-base">
+                    PATS follows a globally recognized assessment methodology designed to ensure that merit is never compromised. Our end-to-end digital tracking allows candidates to monitor their status in real-time.
+                </p>
+                <div class="row g-4 pt-2">
+                    <div class="col-6">
+                        <div class="card bg-light border-0 p-3 hover-lift h-100">
+                            <div class="fw-bold h4 mb-1 text-teal"><i class="ti ti-check-box me-2"></i> Secure PBT/CBT</div>
+                            <p class="small text-muted mb-0">Multiple test formats including Paper Based and Computer Based testing.</p>
+                        </div>
+                    </div>
+                    <div class="col-6">
+                        <div class="card bg-light border-0 p-3 hover-lift h-100">
+                            <div class="fw-bold h4 mb-1 text-teal"><i class="ti ti-scan me-2"></i> OMR Scanning</div>
+                            <p class="small text-muted mb-0">High-speed optical mark recognition for error-free marking.</p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            <div class="col-lg-6">
+                <div class="card border-0 shadow-lg overflow-hidden rounded-4 hover-rotate-sm transition-all duration-500">
+                    <img src="{{ asset('assets/pats_process.png') }}" alt="PATS Process Flow" class="img-fluid">
+                    <div class="card-img-overlay d-flex align-items-end p-0">
+                        <div class="w-100 p-3 glass-panel-dark text-white rounded-0">
+                            <i class="ti ti-info-circle me-2"></i> End-to-end Merit Tracking
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</section>
+
+<!-- Assessment Flow (Modernized) -->
+<section class="py-6 mt-5 bg-teal-lt mx-3 rounded-4 animate__animated animate__fadeIn">
+    <div class="container-xl">
+        <div class="text-center mb-5">
+            <h2 class="display-5 fw-extrabold text-dark">Efficient Assessment Flow</h2>
+            <p class="text-muted fs-3">Our streamlined 4-step process ensures a smooth journey from application to result.</p>
+        </div>
+        <div class="row g-4 text-center">
+            <div class="col-md-3">
+                <div class="mb-4"><span class="avatar avatar-xl bg-white text-teal rounded-circle shadow-sm hover-lift"><i class="ti ti-user-plus fs-1"></i></span></div>
+                <h3 class="fw-extrabold text-dark">1. PROFILE</h3>
+                <p class="text-secondary small px-3">Register and build your permanent profile once for all future projects.</p>
+            </div>
+            <div class="col-md-3">
+                <div class="mb-4"><span class="avatar avatar-xl bg-white text-teal rounded-circle shadow-sm hover-lift"><i class="ti ti-send fs-1"></i></span></div>
+                <h3 class="fw-extrabold text-dark">2. APPLY</h3>
+                <p class="text-secondary small px-3">Automatic eligibility checks based on your profile for rapid submission.</p>
+            </div>
+            <div class="col-md-3">
+                <div class="mb-4"><span class="avatar avatar-xl bg-white text-teal rounded-circle shadow-sm hover-lift"><i class="ti ti-id fs-1"></i></span></div>
+                <h3 class="fw-extrabold text-dark">3. ADMIT</h3>
+                <p class="text-secondary small px-3">Download roll number slips with exact venue and shift details.</p>
+            </div>
+            <div class="col-md-3">
+                <div class="mb-4"><span class="avatar avatar-xl bg-white text-teal rounded-circle shadow-sm hover-lift"><i class="ti ti-trophy fs-1"></i></span></div>
+                <h3 class="fw-extrabold text-dark">4. RESULT</h3>
+                <p class="text-secondary small px-3">Transparent result declaration with percentile ranking and scanned sheets.</p>
+            </div>
+        </div>
+    </div>
+</section>
 
 <style>
     .pulse-red {

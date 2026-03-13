@@ -68,11 +68,23 @@ class BatchController extends Controller
                 }
 
                 // 2. Conflict Detection (Same center, same date, overlapping time)
+                // New logic: Check if (start < current_end AND end > current_start)
+                // We use reporting_time to start_time + 4 hours (estimated) for overlap-safety
+                $startTime = $data['start_time'];
+                $endTime   = date('H:i:s', strtotime($startTime . ' + 4 hours'));
+
                 $conflict = Batch::where('center_id', $centerId)
                     ->where('test_date', $data['test_date'])
-                    ->where(function($q) use ($data) {
-                        $q->where('start_time', $data['start_time'])
-                          ->orWhere('reporting_time', $data['reporting_time']);
+                    ->where(function($q) use ($startTime, $endTime) {
+                        $q->where(function($sq) use ($startTime, $endTime) {
+                             $sq->where('start_time', '<', $endTime)
+                                ->where('start_time', '>=', $startTime);
+                        })
+                        ->orWhere(function($sq) use ($startTime, $endTime) {
+                             // This is a rough window check, ideally we'd have a fixed duration or end_time in DB
+                             $sq->where('reporting_time', '<', $endTime)
+                                ->where('reporting_time', '>=', $startTime);
+                        });
                     })
                     ->exists();
 
@@ -127,15 +139,34 @@ class BatchController extends Controller
     public function stats(Request $request)
     {
         $projectId = $request->project_id;
+        $testDate = $request->test_date; // Optional: for CCP
         if (!$projectId) return response()->json([]);
 
         $project = Project::with('jobs')->findOrFail($projectId);
 
-        // Get unassigned, paid candidates grouped by job and city
-        $stats = Application::where('applications.project_id', $projectId)
+        // Base Query with AEE (Eligibility) Hardening
+        $baseQuery = Application::where('applications.project_id', $projectId)
             ->where('applications.status', 'fee_paid')
             ->whereDoesntHave('examRollno')
+            ->join('candidates', 'applications.candidate_id', '=', 'candidates.id')
             ->join('pats_jobs', 'applications.job_id', '=', 'pats_jobs.id')
+            // [AEE] Eligibility enforcement
+            ->whereRaw('pats_jobs.min_degree_level <= (
+                SELECT MAX(degree_level) FROM education_histories 
+                WHERE candidate_id = candidates.id 
+                AND passing_year <= YEAR(CURDATE())
+            )')
+            ->whereRaw('TIMESTAMPDIFF(YEAR, candidates.dob, CURDATE()) BETWEEN pats_jobs.age_min AND pats_jobs.age_max');
+
+        // [CCP] Collision Prevention (if date provided)
+        if ($testDate) {
+            $baseQuery->whereDoesntHave('candidate.applications.examRollno', function($q) use ($testDate) {
+                $q->where('test_date', $testDate);
+            });
+        }
+
+        // Clone for breakdown
+        $stats = (clone $baseQuery)
             ->join('cities', 'applications.desired_test_city_id', '=', 'cities.id')
             ->selectRaw('cities.id as city_id, cities.name as city_name, pats_jobs.id as job_id, pats_jobs.title as job_title, count(*) as pending_count')
             ->groupBy('cities.id', 'cities.name', 'pats_jobs.id', 'pats_jobs.title')
@@ -143,8 +174,14 @@ class BatchController extends Controller
 
         return response()->json([
             'stats' => $stats,
-            'project_total' => $project->applications()->where('status', 'fee_paid')->count(),
-            'project_unallocated' => $project->unallocatedApplicationsCount(),
+            'job_stats' => $project->jobs->map(function($j) use ($baseQuery) {
+                return [
+                    'id' => $j->id,
+                    'pending' => (clone $baseQuery)->where('applications.job_id', $j->id)->count()
+                ];
+            }),
+            'project_total' => (clone $baseQuery)->count(),
+            'project_unallocated' => (clone $baseQuery)->count(), 
         ]);
     }
 
@@ -247,6 +284,9 @@ class BatchController extends Controller
     /** Upload scanned attendance sheet image */
     public function uploadScan(Request $request, Batch $batch)
     {
+        if ($batch->results_published) {
+            return back()->with('error', 'Operation denied. Results for this session have already been published.');
+        }
         $request->validate([
             'scans.*'   => 'required|file|mimes:jpg,jpeg,png,pdf|max:10240',
             'scans'     => 'required|array|min:1',
@@ -271,6 +311,9 @@ class BatchController extends Controller
     /** Mark candidates as appeared or absent */
     public function markAttendance(Request $request, Batch $batch)
     {
+        if ($batch->results_published) {
+            return back()->with('error', 'Operation denied. Results for this session have already been published.');
+        }
         $data = $request->validate([
             'attendance'   => 'required|array',
             'attendance.*' => 'required|in:appeared,absent',
@@ -283,5 +326,12 @@ class BatchController extends Controller
         }
 
         return back()->with('success', 'Attendance tracking completed.');
+    }
+
+    public function toggleResults(Batch $batch)
+    {
+        $batch->update(['results_published' => !$batch->results_published]);
+        $status = $batch->results_published ? 'published' : 'unpublished';
+        return back()->with('success', "Results for this session are now {$status}.");
     }
 }

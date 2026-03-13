@@ -5,7 +5,7 @@
 @section('content')
 <div class="row g-5">
     <div class="col-lg-7">
-        <div class="card shadow-sm border-0 p-4">
+        <div class="card glass-panel border-0 p-5 rounded-4 animate__animated animate__fadeInLeft shadow-lg">
             <h2 class="section-header">SEND US A MESSAGE</h2>
             <form action="#" method="POST">
                 @csrf
@@ -41,23 +41,23 @@
     </div>
 
     <div class="col-lg-5">
-        <div class="card border-0 bg-primary-lt p-4 mb-4">
-            <h3 class="fw-bold text-primary mb-4">Headquarters</h3>
-            <div class="mb-3">
-                <div class="text-secondary small fw-bold">Address</div>
-                <div class="text-dark">Plot 96, Street 4, H-8/1, Islamabad, Pakistan</div>
+        <div class="card border-0 bg-primary shadow-lg text-white p-5 mb-4 rounded-4 animate__animated animate__fadeInRight">
+            <h3 class="fw-bold text-white mb-4">Headquarters</h3>
+            <div class="mb-4">
+                <div class="text-white-50 small fw-bold text-uppercase tracking-wider mb-1">Address</div>
+                <div class="fs-4">Plot 96, Street 4, H-8/1, Islamabad, Pakistan</div>
             </div>
-            <div class="mb-3">
-                <div class="text-secondary small fw-bold">UAN Helpline</div>
-                <div class="text-dark">(051) 111-728-7XX</div>
+            <div class="mb-4">
+                <div class="text-white-50 small fw-bold text-uppercase tracking-wider mb-1">UAN Helpline</div>
+                <div class="fs-4">(051) 111-728-7XX</div>
             </div>
-            <div class="mb-3">
-                <div class="text-secondary small fw-bold">Email</div>
-                <div class="text-dark">info@pats.org.pk</div>
+            <div class="mb-4">
+                <div class="text-white-50 small fw-bold text-uppercase tracking-wider mb-1">Email Support</div>
+                <div class="fs-4">info@pats.org.pk</div>
             </div>
             <div class="mb-0">
-                <div class="text-secondary small fw-bold">Office Hours</div>
-                <div class="text-dark">Mon - Fri (09:00 AM - 05:00 PM)</div>
+                <div class="text-white-50 small fw-bold text-uppercase tracking-wider mb-1">Office Hours</div>
+                <div class="fs-4">Mon - Fri (09:00 AM - 05:00 PM)</div>
             </div>
         </div>
 

@@ -12,11 +12,12 @@ class DashboardController extends Controller
     public function index()
     {
         $user = Auth::user();
-        // For now, let's assume examiners see sessions assigned to their specific centers
-        // or just all active sessions for demo purposes if no assignment logic is yet fully built.
-        // Usually, an examiner is linked to a center or a specific batch.
         
+        // Fetch centers assigned to this examiner
+        $assignedCenterIds = $user->assignedCenters()->pluck('test_centers.id');
+
         $sessions = Batch::with(['project', 'center.city'])
+            ->whereIn('center_id', $assignedCenterIds)
             ->where('test_date', '>=', now()->toDateString())
             ->orderBy('test_date')
             ->get();
@@ -26,6 +27,9 @@ class DashboardController extends Controller
 
     public function showSession(Batch $batch)
     {
+        $assignedCenterIds = Auth::user()->assignedCenters()->pluck('test_centers.id');
+        abort_unless($assignedCenterIds->contains($batch->center_id), 403, 'Unauthorized access to this session.');
+
         $batch->load(['project', 'center.city', 'examRollnos.application.candidate.user', 'examRollnos.job']);
         return view('examiner.session-detail', compact('batch'));
     }

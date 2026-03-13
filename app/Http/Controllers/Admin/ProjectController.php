@@ -66,6 +66,9 @@ class ProjectController extends Controller
 
     public function destroy(Project $project)
     {
+        if ($project->applications()->exists()) {
+            return back()->with('error', 'Cannot delete a project that has active applications. Please close the project first.');
+        }
         $project->delete();
         return redirect()->route('admin.projects.index')->with('success', 'Project deleted.');
     }

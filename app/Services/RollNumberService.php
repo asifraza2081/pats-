@@ -21,14 +21,35 @@ class RollNumberService
     public function allocateBatch(Batch $batch, int $count, array $jobIds = []): int
     {
         return DB::transaction(function () use ($batch, $count, $jobIds) {
-            // 1. Find eligible candidates
+            // 1. Find eligible candidates with strict hardening
             $query = Application::where('project_id', $batch->project_id)
-                ->where('status', 'fee_paid')
+                ->where('status', 'fee_paid') // [FLG] Strict Payment Guard
                 ->where('desired_test_city_id', $batch->center->city_id)
-                ->whereDoesntHave('examRollno');
+                ->whereDoesntHave('examRollno')
+                
+                // [CCP] Candidate Collision Prevention: 
+                // Exclude candidates already scheduled for ANY exam on the same date
+                ->whereDoesntHave('candidate.applications.examRollno', function($q) use ($batch) {
+                    $q->where('test_date', $batch->test_date->format('Y-m-d'));
+                })
+                
+                // [AEE] Automated Eligibility Enforcement:
+                // Filter by Job's minimum degree requirement and candidate's max degree
+                ->join('candidates', 'applications.candidate_id', '=', 'candidates.id')
+                ->join('pats_jobs', 'applications.job_id', '=', 'pats_jobs.id')
+                ->where(function($q) {
+                    $q->whereRaw('pats_jobs.min_degree_level <= (
+                        SELECT MAX(degree_level) FROM education_histories 
+                        WHERE candidate_id = candidates.id 
+                        AND passing_year <= YEAR(CURDATE())
+                    )');
+                })
+                // Age check
+                ->whereRaw('TIMESTAMPDIFF(YEAR, candidates.dob, CURDATE()) BETWEEN pats_jobs.age_min AND pats_jobs.age_max')
+                ->select('applications.*'); // Ensure we only get application columns
                 
             if (!empty($jobIds)) {
-                $query->whereIn('job_id', $jobIds);
+                $query->whereIn('applications.job_id', $jobIds);
             }
 
             // Lock for update to prevent double allocation in high concurrency
@@ -39,16 +60,18 @@ class RollNumberService
             }
 
             // 2. Pre-fetch last serials for each job to avoid N+1 queries in the loop
-            // We use lockForUpdate() on a dummy select or on the existing records to prevent race conditions
-            $jobCounts = ExamRollno::where('project_id', $batch->project_id)
-                ->where('city_id', $batch->center->city_id)
-                ->where('center_id', $batch->center_id)
-                ->whereIn('job_id', $candidates->pluck('job_id')->unique())
-                ->lockForUpdate() // LOCK these rows to prevent concurrent serial calculation
-                ->selectRaw('job_id, count(*) as count')
-                ->groupBy('job_id')
-                ->pluck('count', 'job_id')
-                ->toArray();
+            // Use count(*) on exam_rollnos but lock the parent project/city/center/job combination
+            $uniqueJobs = $candidates->pluck('job_id')->unique();
+            $jobCounts = [];
+            
+            foreach ($uniqueJobs as $jobId) {
+                $jobCounts[$jobId] = ExamRollno::where('project_id', $batch->project_id)
+                    ->where('city_id', $batch->center->city_id)
+                    ->where('center_id', $batch->center_id)
+                    ->where('job_id', $jobId)
+                    ->lockForUpdate() // LOCK these existing records to prevent concurrent serial calculation
+                    ->count();
+            }
 
             $allocated = 0;
             $generator = new BarcodeGeneratorPNG();
@@ -131,9 +154,9 @@ class RollNumberService
     public function batchSummary(Batch $batch)
     {
         return ExamRollno::where('batch_id', $batch->id)
-            ->join('pats_jobs', 'exam_rollnos.job_id', '=', 'pats_jobs.id')
-            ->selectRaw('pats_jobs.title as job_title, count(*) as allocated')
-            ->groupBy('pats_jobs.title')
+            ->with('job')
+            ->selectRaw('job_id, MIN(roll_no) as roll_from, MAX(roll_no) as roll_to, COUNT(*) as allocated')
+            ->groupBy('job_id')
             ->get();
     }
     /**

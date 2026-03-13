@@ -54,7 +54,7 @@
                             <div class="card-body">
                                 <h3 class="fw-bold mb-1">Attendance Sheet</h3>
                                 <p class="text-secondary small">Comprehensive roster with candidate photos and signature spots.</p>
-                                <a href="{{ route('admin.batches.attendance-sheet', $batch) }}" target="_blank" class="btn btn-primary w-100">
+                                <a href="{{ route('examiner.sessions.attendance-sheet', $batch) }}" target="_blank" class="btn btn-primary w-100">
                                     <i class="ti ti-printer me-2"></i> Print Attendance Sheet
                                 </a>
                             </div>
@@ -65,7 +65,7 @@
                             <div class="card-body">
                                 <h3 class="fw-bold mb-1">Session Summary</h3>
                                 <p class="text-secondary small">Summary report showing total envelopes, seat plan, and job breakdown.</p>
-                                <a href="{{ route('admin.batches.summary', $batch) }}" target="_blank" class="btn btn-dark w-100">
+                                <a href="{{ route('examiner.sessions.summary', $batch) }}" target="_blank" class="btn btn-dark w-100">
                                     <i class="ti ti-file-text me-2"></i> Print Batch Summary
                                 </a>
                             </div>
@@ -77,8 +77,17 @@
                 
                 <h3 class="fw-bold mb-3">Session Management</h3>
                 <div class="d-flex gap-2">
-                    <a href="{{ route('admin.batches.attendance', $batch) }}" class="btn btn-outline-info">
-                        <i class="ti ti-user-check me-2"></i> Mark Attendance / Results Scans
+                    @if($batch->results_published)
+                        <button class="btn btn-secondary" disabled title="Results are published and locked.">
+                            <i class="ti ti-lock me-2"></i> Attendance Locked (Published)
+                        </button>
+                    @else
+                        <a href="{{ route('examiner.sessions.attendance', $batch) }}" class="btn btn-outline-info">
+                            <i class="ti ti-user-check me-2"></i> Mark Attendance / Results Scans
+                        </a>
+                    @endif
+                    <a href="{{ route('examiner.sessions.answer-sheets', $batch) }}" target="_blank" class="btn btn-outline-primary">
+                        <i class="ti ti-file-pencil me-2"></i> Print Answer Sheets
                     </a>
                 </div>
             </div>

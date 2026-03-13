@@ -319,9 +319,22 @@ document.addEventListener('DOMContentLoaded', () => {
                 projectProgressContainer.style.display = 'none';
                 tsJobs.clear(); tsCity.clear(); return;
             }
+            refreshStats();
+        }
+    });
 
-            fetch(`{{ route('admin.batches.stats') }}?project_id=${pid}`)
-                .then(res => res.json())
+    const dateInput = document.getElementById('test_date');
+    dateInput.addEventListener('change', () => {
+        if(tsProject.getValue()) refreshStats();
+    });
+
+    function refreshStats() {
+        const pid = tsProject.getValue();
+        const testDate = document.getElementById('test_date').value;
+        if(!pid) return;
+
+        fetch(`{{ route('admin.batches.stats') }}?project_id=${pid}&test_date=${testDate}`)
+            .then(res => res.json())
                 .then(data => {
                     rawStats = data.stats || [];
                     projectTotals = { total: data.project_total || 0, unallocated: data.project_unallocated || 0 };
@@ -333,7 +346,16 @@ document.addEventListener('DOMContentLoaded', () => {
                     progressPercent.innerText = percent + '%';
 
                     tsJobs.clear(true); tsJobs.clearOptions();
-                    (originalJobsOptions[pid] || []).forEach(j => tsJobs.addOption({value: j.id, text: j.title}));
+                    (originalJobsOptions[pid] || []).forEach(j => {
+                        const jobStat = (data.job_stats || []).find(js => js.id == j.id);
+                        const isPending = jobStat ? jobStat.pending > 0 : false;
+                        tsJobs.addOption({
+                            value: j.id, 
+                            text: j.title + (isPending ? '' : ' (Fully Allocated)'),
+                            disabled: !isPending
+                        });
+                    });
+                    tsJobs.refreshOptions(false);
 
                     const tempDiv = document.createElement('div');
                     tempDiv.innerHTML = `<select>${originalCentersHTML}</select>`;

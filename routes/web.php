@@ -20,6 +20,7 @@ Route::get('/procurement', [HomeController::class, 'procurement'])->name('procur
 Route::get('/csr', [HomeController::class, 'csr'])->name('csr');
 Route::get('/instructions', [HomeController::class, 'instructions'])->name('instructions');
 
+
 Route::get('/projects', [HomeController::class, 'projects'])->name('projects');
 Route::get('/projects/{project}', [HomeController::class, 'project'])->name('projects.show');
 Route::get('/projects/{project}/jobs/{job}', [HomeController::class, 'job'])->name('jobs.show');
@@ -107,6 +108,7 @@ Route::middleware(['auth', 'role:admin|data_entry|super_admin'])->prefix('admin'
     Route::get('batches/{batch}/answer-sheets', [Admin\BatchController::class, 'answerSheets'])->name('batches.answer-sheets');
     Route::post('batches/{batch}/scans', [Admin\BatchController::class, 'uploadScan'])->name('batches.scans.upload');
     Route::post('batches/{batch}/mark-attendance', [Admin\BatchController::class, 'markAttendance'])->name('batches.attendance.mark');
+    Route::post('batches/{batch}/toggle-results', [Admin\BatchController::class, 'toggleResults'])->name('batches.toggle-results');
 
     // Applications
     Route::get('applications', [Admin\ApplicationController::class, 'index'])->name('applications.index');
@@ -141,8 +143,34 @@ Route::middleware(['auth', 'role:admin|data_entry|super_admin'])->prefix('admin'
     });
 });
 
-// Examiner Routes
-Route::middleware(['auth', 'role:examiner|super_admin'])->prefix('examiner')->name('examiner.')->group(function () {
-    Route::get('/dashboard', [App\Http\Controllers\Examiner\DashboardController::class, 'index'])->name('dashboard');
-    Route::get('/sessions/{batch}', [App\Http\Controllers\Examiner\DashboardController::class, 'showSession'])->name('sessions.show');
-});
+    // Examiner Portal
+    Route::middleware(['auth', 'role:examiner'])->prefix('examiner')->name('examiner.')->group(function () {
+        Route::get('/dashboard', [App\Http\Controllers\Examiner\DashboardController::class, 'index'])->name('dashboard');
+        Route::get('/sessions/{batch}', [App\Http\Controllers\Examiner\DashboardController::class, 'showSession'])->name('sessions.show');
+        
+        // Dedicated Examiner Printing Routes (Fix for 403 errors)
+        Route::get('/sessions/{batch}/summary', [App\Http\Controllers\Admin\BatchController::class, 'summary'])
+            ->middleware('can:view-session,batch')
+            ->name('sessions.summary');
+            
+        Route::get('/sessions/{batch}/attendance-sheet', [App\Http\Controllers\Admin\BatchController::class, 'attendanceSheet'])
+            ->middleware('can:view-session,batch')
+            ->name('sessions.attendance-sheet');
+            
+        Route::get('/sessions/{batch}/answer-sheets', [App\Http\Controllers\Admin\BatchController::class, 'answerSheets'])
+            ->middleware('can:view-session,batch')
+            ->name('sessions.answer-sheets');
+
+        // Attendance Management for Examiners
+        Route::get('/sessions/{batch}/attendance', [App\Http\Controllers\Admin\BatchController::class, 'attendance'])
+            ->middleware('can:view-session,batch')
+            ->name('sessions.attendance');
+            
+        Route::post('/sessions/{batch}/mark-attendance', [App\Http\Controllers\Admin\BatchController::class, 'markAttendance'])
+            ->middleware('can:view-session,batch')
+            ->name('sessions.mark-attendance');
+            
+        Route::post('/sessions/{batch}/upload-scan', [App\Http\Controllers\Admin\BatchController::class, 'uploadScan'])
+            ->middleware('can:view-session,batch')
+            ->name('sessions.upload-scan');
+    });

@@ -34,6 +34,12 @@ class User extends Authenticatable
         return $this->hasOne(Candidate::class);
     }
 
+    public function assignedCenters()
+    {
+        return $this->belongsToMany(TestCenter::class, 'project_centers', 'examiner_id', 'center_id')
+            ->withPivot('project_id');
+    }
+
     // ── Helpers ─────────────────────────────────────────────
     public function getFullNameAttribute(): string
     {

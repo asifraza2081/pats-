@@ -65,6 +65,36 @@
                 </div>
 
                 <div class="mt-4 pt-3 border-top">
+                    <h4 class="fw-bold mb-3">Roll Number Ranges</h4>
+                    <div class="table-responsive">
+                        <table class="table card-table table-vcenter">
+                            <thead>
+                                <tr class="bg-gray-50 text-gray-700">
+                                    <th class="px-4 py-3 text-left font-semibold">Job Position</th>
+                                    <th class="px-4 py-3 text-center font-semibold">Roll No From</th>
+                                    <th class="px-4 py-3 text-center font-semibold">Roll No To</th>
+                                    <th class="px-4 py-3 text-center font-semibold">Allocated</th>
+                                </tr>
+                            </thead>
+                            <tbody class="divide-y divide-gray-100">
+                                @foreach($summary as $row)
+                                <tr>
+                                    <td class="px-4 py-3 font-medium">{{ $row->job->title }}</td>
+                                    <td class="px-4 py-3 text-center font-mono text-sm">{{ $row->roll_from }}</td>
+                                    <td class="px-4 py-3 text-center font-mono text-sm">{{ $row->roll_to }}</td>
+                                    <td class="px-4 py-3 text-center">
+                                        <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-blue-100 text-blue-800">
+                                            {{ $row->count }}
+                                        </span>
+                                    </td>
+                                </tr>
+                                @endforeach
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+
+                <div class="mt-4 pt-3 border-top">
                     <h4 class="fw-bold mb-3">Admin Actions</h4>
                     <div class="d-grid gap-2">
                         <a href="{{ route('admin.batches.summary', $batch) }}" target="_blank" class="btn btn-outline-primary">
@@ -93,8 +123,25 @@
                 </form>
             </div>
             @else
-            <div class="card-footer bg-success-lt text-center py-2">
-                <span class="text-success small fw-bold"><i class="ti ti-check me-1"></i> Slips have been published.</span>
+            <div class="card-footer bg-success-lt">
+                <div class="d-flex flex-column gap-2">
+                    <div class="text-center py-2">
+                         <span class="text-success small fw-bold"><i class="ti ti-check me-1"></i> Slips have been published.</span>
+                    </div>
+                    
+                    <form method="POST" action="{{ route('admin.batches.toggle-results', $batch) }}" onsubmit="return confirm('{{ $batch->results_published ? 'Open results for editing?' : 'Lock results and finalize marks? This will block further changes.' }}')">
+                        @csrf
+                        @if($batch->results_published)
+                            <button type="submit" class="btn btn-outline-danger btn-sm w-100">
+                                <i class="ti ti-lock-open me-2"></i> Unpublish Results (Unlock)
+                            </button>
+                        @else
+                            <button type="submit" class="btn btn-success w-100">
+                                <i class="ti ti-lock me-2"></i> Publish Results (Final Lockdown)
+                            </button>
+                        @endif
+                    </form>
+                </div>
             </div>
             @endif
         </div>

@@ -20,32 +20,32 @@
     <div class="table-responsive">
         <table class="table card-table table-vcenter text-nowrap datatable table-hover">
             <thead>
-                <tr>
-                    <th class="w-1">Payment ID</th>
-                    <th>Candidate & CNIC</th>
-                    <th>Challan / Post</th>
-                    <th>Amount</th>
-                    <th>Status</th>
-                    <th>Generation Date</th>
-                    <th class="w-1"></th>
+                <tr class="bg-gray-50 text-gray-700">
+                    <th class="px-4 py-3 text-left">Challan Ref</th>
+                    <th class="px-4 py-3 text-left">Candidate</th>
+                    <th class="px-4 py-3 text-left">Project/Job</th>
+                    <th class="px-4 py-3 text-center">Amount</th>
+                    <th class="px-4 py-3 text-center">Status</th>
+                    <th class="px-4 py-3 text-left">Verified By</th>
+                    <th class="px-4 py-3 text-center">Actions</th>
                 </tr>
             </thead>
-            <tbody>
+            <tbody class="divide-y divide-gray-100">
                 @forelse($payments as $payment)
                 <tr>
-                    <td><span class="text-secondary fw-bold">#{{ $payment->id }}</span></td>
-                    <td>
-                        <div class="font-weight-medium fw-bold text-body">{{ $payment->application->candidate->user->full_name }}</div>
-                        <div class="text-secondary small">{{ $payment->application->candidate->user->cnic }}</div>
+                    <td class="px-4 py-3 font-mono text-sm">#{{ $payment->challan_number }}</td>
+                    <td class="px-4 py-3">
+                        <div>{{ $payment->application->candidate->user->full_name }}</div>
+                        <div class="text-xs text-gray-500">{{ $payment->application->candidate->user->cnic }}</div>
                     </td>
-                    <td>
-                        <div class="font-weight-medium text-body">ID: {{ $payment->challan_number }}</div>
-                        <div class="text-secondary small">{{ $payment->application->job->title }}</div>
+                    <td class="px-4 py-3">
+                        <div class="font-medium">{{ $payment->application->job->title }}</div>
+                        <div class="text-xs text-gray-500">{{ $payment->application->job->project->name }}</div>
                     </td>
-                    <td>
-                        <div class="h4 mb-0 fw-bold text-success">PKR {{ number_format($payment->amount) }}</div>
+                    <td class="px-4 py-3 text-center font-semibold">
+                        PKR {{ number_format($payment->amount) }}
                     </td>
-                    <td>
+                    <td class="px-4 py-3 text-center">
                         @php
                             $st = match($payment->status) {
                                 'pending' => ['c'=>'warning', 'l'=>'Pending Verification'],
