@@ -206,16 +206,9 @@
                             </td>
                             <td><span class="text-secondary small">{{ Str::limit($roll->job->title, 30) }}</span></td>
                             <td>
-                                @php
-                                    $st = match($roll->application->status) {
-                                        'submitted' => ['c'=>'secondary', 'l'=>'Pending'],
-                                        'fee_paid' => ['c'=>'primary', 'l'=>'Paid'],
-                                        'appeared' => ['c'=>'success', 'l'=>'Appeared'],
-                                        'absent' => ['c'=>'danger', 'l'=>'Absent'],
-                                        default => ['c'=>'dark', 'l'=>strtoupper($roll->application->status)]
-                                    };
-                                @endphp
-                                <span class="badge bg-{{ $st['c'] }}-lt text-{{ $st['c'] }}">{{ $st['l'] }}</span>
+                                <span class="badge bg-{{ $roll->application->status->color() }}-lt text-{{ $roll->application->status->color() }}">
+                                    {{ $roll->application->status->label() }}
+                                </span>
                             </td>
                             <td>
                                 @if($roll->slip_ready)

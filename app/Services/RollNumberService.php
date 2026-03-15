@@ -5,6 +5,7 @@ namespace App\Services;
 use App\Models\Application;
 use App\Models\Batch;
 use App\Models\ExamRollno;
+use Carbon\Carbon;
 use Illuminate\Support\Facades\DB;
 use Picqer\Barcode\BarcodeGeneratorPNG;
 
@@ -20,78 +21,72 @@ class RollNumberService
      */
     public function allocateBatch(Batch $batch, int $count, array $jobIds = []): int
     {
+        
+        // 1. Prepare data, generate barcodes, and insert EVERYTHING in ONE transaction
         return DB::transaction(function () use ($batch, $count, $jobIds) {
-            // 1. Find eligible candidates with strict hardening
-            $query = Application::where('project_id', $batch->project_id)
-                ->where('status', 'fee_paid') // [FLG] Strict Payment Guard
-                ->where('desired_test_city_id', $batch->center->city_id)
+            $closeDate = $batch->project->close_date
+                ? Carbon::parse($batch->project->close_date)->toDateString()
+                : Carbon::now()->toDateString();
+            
+            $closeYear = $batch->project->close_date
+                ? Carbon::parse($batch->project->close_date)->year
+                : Carbon::now()->year;
+
+            $testDateStr = Carbon::parse($batch->test_date)->toDateString();
+
+            $query = Application::where('applications.project_id', $batch->project_id)
+                ->where('applications.status', 'fee_paid')
+                ->where('applications.desired_test_city_id', $batch->center->city_id)
                 ->whereDoesntHave('examRollno')
-                
-                // [CCP] Candidate Collision Prevention: 
-                // Exclude candidates already scheduled for ANY exam on the same date
-                ->whereDoesntHave('candidate.applications.examRollno', function($q) use ($batch) {
-                    $q->where('test_date', $batch->test_date->format('Y-m-d'));
+                ->whereDoesntHave('candidate.applications.examRollno', function($q) use ($testDateStr) {
+                    $q->whereHas('batch', function($q2) use ($testDateStr) {
+                        $q2->where('test_date', $testDateStr);
+                    });
                 })
-                
-                // [AEE] Automated Eligibility Enforcement:
-                // Filter by Job's minimum degree requirement and candidate's max degree
                 ->join('candidates', 'applications.candidate_id', '=', 'candidates.id')
                 ->join('pats_jobs', 'applications.job_id', '=', 'pats_jobs.id')
-                ->where(function($q) {
-                    $q->whereRaw('pats_jobs.min_degree_level <= (
-                        SELECT MAX(degree_level) FROM education_histories 
+                ->where(function($q) use ($closeYear) {
+                    $q->whereRaw('(pats_jobs.min_degree_level IS NULL OR pats_jobs.min_degree_level <= (
+                        SELECT MAX(degree_level) FROM education_history 
                         WHERE candidate_id = candidates.id 
-                        AND passing_year <= YEAR(CURDATE())
-                    )');
+                        AND passing_year <= ?
+                    ))', [$closeYear]);
                 })
-                // Age check
-                ->whereRaw('TIMESTAMPDIFF(YEAR, candidates.dob, CURDATE()) BETWEEN pats_jobs.age_min AND pats_jobs.age_max')
-                ->select('applications.*'); // Ensure we only get application columns
-                
+                ->whereRaw('(pats_jobs.age_min IS NULL OR (TIMESTAMPDIFF(YEAR, candidates.dob, ?) >= pats_jobs.age_min AND (pats_jobs.age_max IS NULL OR TIMESTAMPDIFF(YEAR, candidates.dob, ?) <= pats_jobs.age_max)))', [$closeDate, $closeDate])
+                ->select('applications.*');
+
             if (!empty($jobIds)) {
                 $query->whereIn('applications.job_id', $jobIds);
             }
 
-            // Lock for update to prevent double allocation in high concurrency
             $candidates = $query->with('job')->lockForUpdate()->limit($count)->get();
+            if ($candidates->isEmpty()) return 0;
 
-            if ($candidates->isEmpty()) {
-                return 0;
-            }
-
-            // 2. Pre-fetch last serials for each job to avoid N+1 queries in the loop
-            // Use count(*) on exam_rollnos but lock the parent project/city/center/job combination
             $uniqueJobs = $candidates->pluck('job_id')->unique();
             $jobCounts = [];
-            
             foreach ($uniqueJobs as $jobId) {
                 $jobCounts[$jobId] = ExamRollno::where('project_id', $batch->project_id)
                     ->where('city_id', $batch->center->city_id)
                     ->where('center_id', $batch->center_id)
                     ->where('job_id', $jobId)
-                    ->lockForUpdate() // LOCK these existing records to prevent concurrent serial calculation
+                    ->lockForUpdate()
                     ->count();
             }
 
-            $allocated = 0;
-            $generator = new BarcodeGeneratorPNG();
             $examRecords = [];
-            $appIdsForUpdate = [];
-
-            $numericCenterTcid = preg_replace('/[^0-9]/', '', $batch->center->tcid);
+            $appIds = [];
 
             foreach ($candidates as $app) {
                 $jobId = $app->job_id;
                 $serial = ($jobCounts[$jobId] ?? 0) + 1;
-                $jobCounts[$jobId] = $serial; // Increment for next candidate in loop
+                $jobCounts[$jobId] = $serial;
 
-                // Roll No Format: [ProjID][JobID][CityID][CenterTCID][Serial]
                 $rollNo = sprintf(
-                    '%d%02s%02d%s%04d',
-                    $app->project_id % 10,
-                    str_pad($app->job->job_code % 100, 2, '0', STR_PAD_LEFT),
+                    '%02d%02d%02d%02d%04d',
+                    $app->project_id % 100,
+                    $app->job->job_code % 100,
                     $app->desired_test_city_id % 100,
-                    $numericCenterTcid,
+                    ((int) preg_replace('/[^0-9]/', '', $batch->center->tcid) % 100),
                     $serial
                 );
 
@@ -103,39 +98,29 @@ class RollNumberService
                     'center_id'      => $batch->center_id,
                     'batch_id'       => $batch->id,
                     'roll_no'        => $rollNo,
-                    'barcode'        => base64_encode($generator->getBarcode($rollNo, $generator::TYPE_CODE_128, 2, 50)),
+                    'barcode'        => $rollNo, // Using roll_no as barcode for integrity and uniqueness
                     'batch_no'       => (string)$batch->batch_number,
-                    'test_date'      => $batch->test_date->format('Y-m-d'),
+                    'test_date'      => $testDateStr,
                     'reporting_time' => $batch->reporting_time,
                     'start_time'     => $batch->start_time,
                     'slip_ready'     => 0,
                     'created_at'     => now(),
                     'updated_at'     => now(),
                 ];
-
-                $appIdsForUpdate[] = $app->id;
-                $allocated++;
+                $appIds[] = $app->id;
             }
 
-            // 3. Bulk Insert Exam Records
-            if (!empty($examRecords)) {
-                // Chunking to avoid large packet issues
-                foreach (array_chunk($examRecords, 100) as $chunk) {
-                    ExamRollno::insert($chunk);
-                }
+            foreach (array_chunk($examRecords, 100) as $chunk) {
+                ExamRollno::insert($chunk);
             }
 
-            // 4. Bulk Update Applications
-            if (!empty($appIdsForUpdate)) {
-                Application::whereIn('id', $appIdsForUpdate)->update([
-                    'batch_id' => $batch->id
-                ]);
-            }
+            Application::whereIn('id', $appIds)->update([
+                'batch_id' => $batch->id,
+                'status'   => 'scheduled'
+            ]);
+            $batch->increment('booked_seats', count($appIds));
 
-            // 5. Update batch booked seats
-            $batch->increment('booked_seats', $allocated);
-
-            return $allocated;
+            return count($appIds);
         });
     }
 
@@ -144,6 +129,7 @@ class RollNumberService
      */
     public function markBatchReady(Batch $batch): int
     {
+        $batch->update(['is_ready' => true]);
         return ExamRollno::where('batch_id', $batch->id)
             ->update(['slip_ready' => true]);
     }
@@ -155,7 +141,7 @@ class RollNumberService
     {
         return ExamRollno::where('batch_id', $batch->id)
             ->with('job')
-            ->selectRaw('job_id, MIN(roll_no) as roll_from, MAX(roll_no) as roll_to, COUNT(*) as allocated')
+            ->selectRaw('job_id, MIN(CAST(roll_no AS UNSIGNED)) as roll_from, MAX(CAST(roll_no AS UNSIGNED)) as roll_to, COUNT(*) as allocated')
             ->groupBy('job_id')
             ->get();
     }

@@ -2,26 +2,25 @@
 
 namespace App\Models;
 
+use Illuminate\Database\Eloquent\SoftDeletes;
+use App\Traits\Auditable;
+use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 
 class Batch extends Model
 {
+    use HasFactory, Auditable, SoftDeletes;
+
     protected $fillable = [
-        'project_id',
-        'center_id',
-        'batch_number',
-        'test_date',
-        'reporting_time',
-        'start_time',
-        'total_seats',
-        'booked_seats',
-        'envelope_size',
-        'is_ready',
+        'project_id', 'center_id', 'batch_number', 'test_date',
+        'reporting_time', 'start_time', 'total_seats', 'booked_seats',
+        'envelope_size', 'is_ready', 'results_published',
     ];
 
     protected $casts = [
-        'test_date' => 'date',
-        'is_ready'  => 'boolean',
+        'test_date'          => 'date',
+        'is_ready'           => 'boolean',
+        'results_published'  => 'boolean',
     ];
 
     public function project()
