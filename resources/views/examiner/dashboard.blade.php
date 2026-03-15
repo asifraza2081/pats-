@@ -44,10 +44,10 @@
                             </td>
                             <td>
                                 <div class="btn-list flex-nowrap">
-                                    <a href="{{ route('admin.batches.attendance-sheet', $session) }}" target="_blank" class="btn btn-outline-dark btn-sm" title="Print Attendance">
+                                    <a href="{{ route('examiner.sessions.attendance-sheet', $session) }}" target="_blank" class="btn btn-outline-dark btn-sm" title="Print Attendance">
                                         <i class="ti ti-file-text"></i>
                                     </a>
-                                    <a href="{{ route('admin.batches.answer-sheets', $session) }}" target="_blank" class="btn btn-outline-info btn-sm" title="Print Answer Sheets">
+                                    <a href="{{ route('examiner.sessions.answer-sheets', $session) }}" target="_blank" class="btn btn-outline-info btn-sm" title="Print Answer Sheets">
                                         <i class="ti ti-forms"></i>
                                     </a>
                                     <a href="{{ route('examiner.sessions.show', $session) }}" class="btn btn-primary btn-sm">

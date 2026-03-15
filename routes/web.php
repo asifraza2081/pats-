@@ -29,6 +29,9 @@ Route::get('/projects/{project}/jobs/{job}', [HomeController::class, 'job'])->na
 Route::get('/results', [ResultController::class, 'search'])->name('results.search');
 Route::post('/results', [ResultController::class, 'search'])->name('results.search.post');
 Route::get('/results/verify/{roll}', [ResultController::class, 'verify'])->name('results.verify');
+Route::get('/safe-download', [App\Http\Controllers\PublicDownloadController::class, 'download'])
+    ->name('public.download.signed')
+    ->middleware('signed');
 
 // ═══════════════════════════════════════════════════
 // AUTH ROUTES (guests only)
@@ -37,17 +40,17 @@ Route::middleware('guest')->group(function () {
     Route::get('/register',           [AuthController::class, 'showRegister'])->name('auth.register');
     Route::post('/register',          [AuthController::class, 'register']);
     Route::get('/login',              [AuthController::class, 'showLogin'])->name('login');
-    Route::post('/login',             [AuthController::class, 'login'])->name('auth.login.post');
+    Route::post('/login',             [AuthController::class, 'login'])->middleware('throttle:5,1')->name('auth.login.post');
     Route::get('/forgot-password',    [AuthController::class, 'showForgotPassword'])->name('auth.forgot-password');
-    Route::post('/forgot-password',   [AuthController::class, 'forgotPassword']);
+    Route::post('/forgot-password',   [AuthController::class, 'forgotPassword'])->middleware('throttle:3,1');
     Route::get('/reset-password',     [AuthController::class, 'showResetPassword'])->name('auth.reset-password');
-    Route::post('/reset-password',    [AuthController::class, 'resetPassword']);
+    Route::post('/reset-password',    [AuthController::class, 'resetPassword'])->middleware('throttle:3,1');
 });
 
 // OTP verification (available to partially authenticated users)
 Route::get('/verify-otp',    [AuthController::class, 'showOtp'])->name('auth.otp');
-Route::post('/verify-otp',   [AuthController::class, 'verifyOtp']);
-Route::post('/resend-otp',   [AuthController::class, 'resendOtp'])->name('auth.otp.resend');
+Route::post('/verify-otp',   [AuthController::class, 'verifyOtp'])->middleware('throttle:5,1');
+Route::post('/resend-otp',   [AuthController::class, 'resendOtp'])->middleware('throttle:3,1')->name('auth.otp.resend');
 
 // Logout
 Route::post('/logout', [AuthController::class, 'logout'])->name('auth.logout');
@@ -55,7 +58,7 @@ Route::post('/logout', [AuthController::class, 'logout'])->name('auth.logout');
 // ═══════════════════════════════════════════════════
 // CANDIDATE ROUTES
 // ═══════════════════════════════════════════════════
-Route::middleware(['auth', 'role:candidate'])->prefix('candidate')->name('candidate.')->group(function () {
+Route::middleware(['auth', 'role:candidate', \App\Http\Middleware\InactivityLogout::class])->prefix('candidate')->name('candidate.')->group(function () {
 
     // Dashboard
     Route::get('/dashboard', [DashboardController::class, 'index'])->name('dashboard');
@@ -88,12 +91,14 @@ Route::middleware(['auth', 'role:candidate'])->prefix('candidate')->name('candid
 // ═══════════════════════════════════════════════════
 // ADMIN ROUTES
 // ═══════════════════════════════════════════════════
-Route::middleware(['auth', 'role:admin|data_entry|super_admin'])->prefix('admin')->name('admin.')->group(function () {
+Route::middleware(['auth', 'role:admin|data_entry|super_admin', \App\Http\Middleware\InactivityLogout::class])->prefix('admin')->name('admin.')->group(function () {
 
     Route::get('/dashboard', [Admin\DashboardController::class, 'index'])->name('dashboard');
 
     // Projects & Jobs
     Route::resource('projects', Admin\ProjectController::class);
+    Route::get('projects/{project}/centers', [Admin\ProjectCenterController::class, 'index'])->name('projects.centers.index');
+    Route::post('projects/{project}/centers', [Admin\ProjectCenterController::class, 'sync'])->name('projects.centers.sync');
     Route::resource('projects.jobs', Admin\JobController::class)->shallow();
 
     // Test Centers & Batches
@@ -134,6 +139,10 @@ Route::middleware(['auth', 'role:admin|data_entry|super_admin'])->prefix('admin'
     Route::post('results/publish/{project}', [Admin\ResultController::class, 'publish'])->name('results.publish');
     Route::get('results/{app}', [Admin\ResultController::class, 'show'])->name('results.show');
 
+    // Attendance Sheets
+    Route::get('attendance', [Admin\AttendanceController::class, 'index'])->name('attendance.index');
+    Route::get('attendance/print/{batch}', [Admin\AttendanceController::class, 'print'])->name('attendance.print');
+
     // User Management (super_admin only)
     Route::middleware('role:super_admin')->group(function () {
         Route::resource('users', Admin\UserController::class);
@@ -144,7 +153,7 @@ Route::middleware(['auth', 'role:admin|data_entry|super_admin'])->prefix('admin'
 });
 
     // Examiner Portal
-    Route::middleware(['auth', 'role:examiner'])->prefix('examiner')->name('examiner.')->group(function () {
+    Route::middleware(['auth', 'role:examiner', \App\Http\Middleware\InactivityLogout::class])->prefix('examiner')->name('examiner.')->group(function () {
         Route::get('/dashboard', [App\Http\Controllers\Examiner\DashboardController::class, 'index'])->name('dashboard');
         Route::get('/sessions/{batch}', [App\Http\Controllers\Examiner\DashboardController::class, 'showSession'])->name('sessions.show');
         
