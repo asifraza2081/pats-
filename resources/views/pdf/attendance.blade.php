@@ -49,14 +49,13 @@
         <thead>
             <tr>
                 <th width="30">SR#</th>
-                <th width="60">PICTURE</th>
                 <th width="80">ROLL NUMBER</th>
                 <th>CANDIDATE DETAILS</th>
                 <th>POST APPLIED</th>
                 <th colspan="2" style="text-align:center">ATTENDANCE</th>
             </tr>
             <tr>
-                <th colspan="5"></th>
+                <th colspan="4"></th>
                 <th width="45" style="text-align:center">PRESENT</th>
                 <th width="45" style="text-align:center">ABSENT</th>
             </tr>
@@ -67,13 +66,6 @@
                 @foreach($rolls as $roll)
                 <tr>
                     <td style="text-align:center">{{ $sr++ }}</td>
-                    <td class="photo-cell">
-                        @if($roll->application->candidate->photo_path)
-                            <img src="{{ storage_path('app/public/' . $roll->application->candidate->photo_path) }}" width="45" height="55" style="object-fit: cover;">
-                        @else
-                            <div style="font-size: 7px; color: #999; padding-top: 20px;">PHOTO</div>
-                        @endif
-                    </td>
                     <td style="font-weight: bold; font-size: 10px;">{{ $roll->roll_no }}</td>
                     <td>
                         <strong>{{ strtoupper($roll->application->candidate->user->full_name) }}</strong><br>

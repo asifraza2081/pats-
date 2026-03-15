@@ -41,7 +41,7 @@
             <div class="row align-items-center">
                 <div class="col-12 col-md-9">
                     <div class="d-flex flex-wrap gap-2 mb-3">
-                        <span class="badge bg-success text-success-fg">Status: {{ ucfirst($project->status) }}</span>
+                        <span class="badge bg-success text-success-fg">Status: {{ ucfirst($project->status->value) }}</span>
                         
                         @if($project->close_date)
                             <span class="badge {{ $project->close_date->isPast() ? 'bg-danger text-danger-fg' : 'bg-warning text-dark' }}">

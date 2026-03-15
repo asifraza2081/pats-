@@ -12,29 +12,10 @@
         </div>
 
         <!-- Application Status Header -->
-        @php 
-            $statusColors = [
-                'submitted' => 'bg-secondary',
-                'fee_paid'  => 'bg-primary',
-                'processed' => 'bg-info',
-                'appeared'  => 'bg-success',
-                'absent'    => 'bg-danger'
-            ];
-            $statusColor = $statusColors[$app->status] ?? 'bg-secondary';
-        @endphp
-        
-        <div class="card mb-4 border-0 shadow-sm overflow-hidden">
-            <div class="card-status-top {{ str_replace('bg-', '', $statusColor) }}"></div>
-            <div class="card-body p-4 p-md-5">
-                <div class="row align-items-center">
-                    <div class="col-md-8">
-                        <div class="text-muted text-uppercase tracking-wide small fw-bold mb-2">
-                            <i class="ti ti-building me-1"></i> {{ $app->job->project->org_name }} &bull; {{ $app->job->project->name }}
-                        </div>
                         <h2 class="h1 fw-bold mb-3 text-pats-primary">{{ $app->job->title }}</h2>
                         <div class="d-flex flex-wrap gap-2">
-                            <span class="badge {{ $statusColor }} text-white px-3 py-2 text-uppercase tracking-wide fs-5">
-                                {{ str_replace('_', ' ', $app->status) }}
+                            <span class="badge bg-{{ $app->status->color() }} text-white px-3 py-2 text-uppercase tracking-wide fs-5">
+                                {{ $app->status->label() }}
                             </span>
                             @if($app->job->bps_grade)
                             <span class="badge bg-secondary-lt px-3 py-2 fs-5">BPS-{{ $app->job->bps_grade }}</span>
@@ -52,7 +33,7 @@
 
         <!-- Action Buttons -->
         <div class="d-flex flex-wrap gap-2 mb-4">
-            @if($app->payment && $app->status === 'submitted')
+            @if($app->payment && $app->status === \App\Enums\ApplicationStatus::SUBMITTED)
             <a href="{{ route('candidate.challan', $app) }}" class="btn btn-warning" target="_blank">
                 <i class="ti ti-download me-2"></i> Download Fee Challan
             </a>
@@ -91,13 +72,12 @@
                             </div>
                             <div class="col-md-4">
                                 <div class="text-muted small">Payment Status</div>
-                                @php 
-                                    $pc = ['pending' => 'bg-warning text-warning-fg', 'paid' => 'bg-success text-success-fg', 'failed' => 'bg-danger text-danger-fg']; 
-                                @endphp
-                                <span class="badge {{ $pc[$app->payment->status] ?? 'bg-secondary' }} px-2 py-1 text-uppercase">{{ $app->payment->status }}</span>
+                                <span class="badge bg-{{ $app->payment->status->color() }} text-{{ $app->payment->status->color() }}-fg px-2 py-1 text-uppercase">
+                                    {{ $app->payment->status->label() }}
+                                </span>
                             </div>
                             
-                            @if($app->payment->status === 'paid')
+                            @if($app->payment->status === \App\Enums\PaymentStatus::PAID)
                             <div class="col-md-4">
                                 <div class="text-muted small">Bank Name</div>
                                 <div class="fw-semibold">{{ $app->payment->bank_name ?? '—' }}</div>
@@ -113,7 +93,7 @@
                             @endif
                         </div>
                         
-                        @if($app->payment->status === 'pending')
+                        @if($app->payment->status === \App\Enums\PaymentStatus::UNPAID)
                         <div class="alert alert-important alert-warning mt-4 mb-0" role="alert">
                             <div class="d-flex">
                                 <div><i class="ti ti-alert-triangle fs-2 me-3"></i></div>
@@ -165,7 +145,7 @@
                         <div class="datagrid">
                             <div class="datagrid-item">
                                 <div class="datagrid-title">Test Center</div>
-                                <div class="datagrid-content fw-bold">{{ $app->examRollno->testCenter->name ?? 'TBD' }}</div>
+                                <div class="datagrid-content fw-bold">{{ $app->examRollno->center->name ?? 'TBD' }}</div>
                             </div>
                             <div class="datagrid-item">
                                 <div class="datagrid-title">City</div>

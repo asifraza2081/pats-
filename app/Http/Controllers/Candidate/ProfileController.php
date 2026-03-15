@@ -2,6 +2,9 @@
 
 namespace App\Http\Controllers\Candidate;
 
+use App\Http\Requests\UpdateProfileRequest;
+use App\Http\Requests\EducationRequest;
+use App\Http\Requests\ExperienceRequest;
 use App\Http\Controllers\Controller;
 use App\Models\Candidate;
 use App\Models\City;
@@ -33,51 +36,26 @@ class ProfileController extends Controller
         return view('candidate.profile-bio', compact('candidate'));
     }
 
-    public function update(Request $request)
+    public function update(UpdateProfileRequest $request)
     {
         $candidate = $this->candidate();
+        $this->authorize('update', $candidate);
 
-        if ($candidate->profile_locked) {
-            return back()->with('error', 'Your profile is locked because you have submitted applications.');
-        }
-
-        $data = $request->validate([
-            'father_name'           => 'required|string|max:120',
-            'dob'                   => 'required|date|before:today',
-            'gender'                => 'required|in:Male,Female',
-            'marital_status'        => 'required|in:Single,Married,Divorced,Widowed',
-            'religion'              => 'required|in:Islam,Christianity,Hinduism,Sikhism,Other',
-            'blood_group'           => 'nullable|string|max:5',
-            'current_occupation'    => 'nullable|string|max:120',
-            'disability'            => 'nullable|boolean',
-            'disability_type'       => 'nullable|string|max:120',
-            'domicile_city_id'      => 'required|exists:cities,id',
-            'address_city_id'       => 'required|exists:cities,id',
-            'permanent_address'     => 'required|string',
-            'postal_address'        => 'required_without:same_postal_address|nullable|string',
-            'same_postal_address'   => 'nullable|boolean',
-            'alternate_phone'       => 'nullable|string|max:15',
-        ]);
-
-        // Ensure disability is always boolean (false when checkbox unchecked)
-        $data['disability'] = $request->boolean('disability');
-
+        $data = $request->validated();
 
         // Handle same postal address
-        if ($request->boolean('same_postal_address')) {
+        if ($data['same_postal_address']) {
             $data['postal_address'] = $data['permanent_address'];
         }
 
         // Photo upload
         if ($request->hasFile('photo')) {
-            $request->validate(['photo' => 'image|max:5120']);
             if ($candidate->photo_path) Storage::delete($candidate->photo_path);
             $data['photo_path'] = $request->file('photo')->store('photos', 'public');
         }
 
         // CNIC copy upload
         if ($request->hasFile('cnic_copy')) {
-            $request->validate(['cnic_copy' => 'image|max:5120']);
             if ($candidate->cnic_front_path) Storage::delete($candidate->cnic_front_path);
             $data['cnic_front_path'] = $request->file('cnic_copy')->store('cnic_copies', 'public');
         }
@@ -87,90 +65,45 @@ class ProfileController extends Controller
     }
 
     // ── Education ─────────────────────────────────────────────
-    public function addEducation(Request $request)
+    public function addEducation(EducationRequest $request)
     {
         $candidate = $this->candidate();
-        if ($candidate->profile_locked) {
-            return back()->with('error', 'Your profile is locked because you have submitted applications.');
-        }
-        $data = $request->validate([
-            'degree_level'   => 'required|integer|min:1|max:6',
-            'degree_name'    => 'required|string|max:100',
-            'subject_major'  => 'nullable|string|max:100',
-            'institution'    => 'nullable|string|max:150',
-            'passing_year'   => 'nullable|integer|min:1970|max:' . date('Y'),
-            'marks_type'     => 'required|in:Marks,CGPA',
-            'obtained_marks' => 'nullable|numeric|min:0',
-            'total_marks'    => 'nullable|numeric|min:0',
-        ]);
+        $this->authorize('update', $candidate);
+        $data = $request->validated();
         $candidate->education()->create($data);
         return back()->with('success', 'Education record added.');
     }
 
-    public function updateEducation(Request $request, EducationHistory $edu)
+    public function updateEducation(EducationRequest $request, EducationHistory $edu)
     {
-        $candidate = $this->candidate();
-        if ($candidate->profile_locked) {
-            return back()->with('error', 'Your profile is locked because you have submitted applications.');
-        }
-        abort_if($edu->candidate_id !== $candidate->id, 403);
-        $data = $request->validate([
-            'degree_level'   => 'required|integer|min:1|max:6',
-            'degree_name'    => 'required|string|max:100',
-            'subject_major'  => 'nullable|string|max:100',
-            'institution'    => 'nullable|string|max:150',
-            'passing_year'   => 'nullable|integer|min:1970|max:' . date('Y'),
-            'marks_type'     => 'required|in:Marks,CGPA',
-            'obtained_marks' => 'nullable|numeric|min:0',
-            'total_marks'    => 'nullable|numeric|min:0',
-        ]);
+        $this->authorize('update', $edu);
+        $data = $request->validated();
         $edu->update($data);
         return back()->with('success', 'Education record updated.');
     }
 
     public function deleteEducation(EducationHistory $edu)
     {
-        abort_if($edu->candidate_id !== $this->candidate()->id, 403);
-        abort_if($this->candidate()->profile_locked, 403, 'Profile locked.');
+        $this->authorize('delete', $edu);
         $edu->delete();
         return back()->with('success', 'Education record removed.');
     }
 
     // ── Work Experience ───────────────────────────────────────
-    public function addExperience(Request $request)
+    public function addExperience(ExperienceRequest $request)
     {
         $candidate = $this->candidate();
-        if ($candidate->profile_locked) {
-            return back()->with('error', 'Your profile is locked because you have submitted applications.');
-        }
-        $data = $request->validate([
-            'job_type'          => 'required|in:Public,Private',
-            'organization_name' => 'required|string|max:150',
-            'designation'       => 'required|string|max:120',
-            'from_date'         => 'required|date',
-            'to_date'           => 'nullable|date|after:from_date',
-            'is_current'        => 'nullable|boolean',
-        ]);
+        $this->authorize('update', $candidate);
+        $data = $request->validated();
         if ($request->boolean('is_current')) $data['to_date'] = null;
         $candidate->experience()->create($data);
         return back()->with('success', 'Experience record added.');
     }
 
-    public function updateExperience(Request $request, WorkExperience $exp)
+    public function updateExperience(ExperienceRequest $request, WorkExperience $exp)
     {
-        $candidate = $this->candidate();
-        if ($candidate->profile_locked) {
-            return back()->with('error', 'Your profile is locked because you have submitted applications.');
-        }
-        abort_if($exp->candidate_id !== $candidate->id, 403);
-        $data = $request->validate([
-            'job_type'          => 'required|in:Public,Private',
-            'organization_name' => 'required|string|max:150',
-            'designation'       => 'required|string|max:120',
-            'from_date'         => 'required|date',
-            'to_date'           => 'nullable|date|after:from_date',
-            'is_current'        => 'nullable|boolean',
-        ]);
+        $this->authorize('update', $exp);
+        $data = $request->validated();
         if ($request->boolean('is_current')) $data['to_date'] = null;
         $exp->update($data);
         return back()->with('success', 'Experience record updated.');
@@ -178,8 +111,7 @@ class ProfileController extends Controller
 
     public function deleteExperience(WorkExperience $exp)
     {
-        abort_if($exp->candidate_id !== $this->candidate()->id, 403);
-        abort_if($this->candidate()->profile_locked, 403, 'Profile locked.');
+        $this->authorize('delete', $exp);
         $exp->delete();
         return back()->with('success', 'Experience record removed.');
     }

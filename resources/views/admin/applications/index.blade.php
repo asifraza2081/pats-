@@ -50,17 +50,9 @@
                         @endif
                     </td>
                     <td>
-                        @php
-                            $st = match($app->status) {
-                                'submitted' => ['c'=>'secondary', 'l'=>'Submitted'],
-                                'fee_paid' => ['c'=>'info', 'l'=>'Fee Paid'],
-                                'appeared' => ['c'=>'primary', 'l'=>'Appeared'],
-                                'absent' => ['c'=>'danger', 'l'=>'Absent'],
-                                'result_declared' => ['c'=>'success', 'l'=>'Graded'],
-                                default => ['c'=>'dark', 'l'=>strtoupper($app->status)]
-                            };
-                        @endphp
-                        <span class="badge bg-{{ $st['c'] }} text-{{ $st['c'] }}-fg">{{ $st['l'] }}</span>
+                        <span class="badge bg-{{ $app->status->color() }}-lt text-{{ $app->status->color() }}">
+                            {{ $app->status->label() }}
+                        </span>
                     </td>
                     <td><span class="text-secondary small">{{ $app->applied_at->format('d M, Y H:i') }}</span></td>
                     <td>

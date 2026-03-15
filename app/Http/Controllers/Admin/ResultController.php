@@ -2,6 +2,7 @@
 
 namespace App\Http\Controllers\Admin;
 
+use App\Events\ResultsPublished;
 use App\Http\Controllers\Controller;
 use App\Models\Application;
 use App\Models\PatsJob;
@@ -11,6 +12,7 @@ use App\Services\SmsService;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Cache;
 use PhpOffice\PhpSpreadsheet\IOFactory;
 
 class ResultController extends Controller
@@ -52,6 +54,16 @@ class ResultController extends Controller
             }
         }
 
+        $rolls = array_map(fn($row) => trim($row['roll_number'] ?? $row[0] ?? ''), $rows);
+        $rolls = array_filter($rolls);
+
+        // Fetch ALL matching applications in ONE query to eliminate N+1 choke
+        $applications = Application::whereHas('examRollno', fn($q) => $q->whereIn('roll_no', $rolls))
+            ->where('project_id', $projectId)
+            ->with(['candidate.user', 'job', 'examRollno'])
+            ->get()
+            ->keyBy(fn($app) => $app->examRollno->roll_no);
+
         $preview  = [];
         $warnings = [];
 
@@ -59,10 +71,7 @@ class ResultController extends Controller
             $roll = trim($row['roll_number'] ?? $row[0] ?? '');
             if (!$roll) continue;
 
-            $application = Application::whereHas('examRollno', fn($q) => $q->where('roll_no', $roll))
-                ->where('project_id', $projectId)
-                ->with(['candidate.user', 'job', 'examRollno'])
-                ->first();
+            $application = $applications->get($roll);
 
             if (!$application) {
                 $warnings[] = "Row " . ($i + 2) . ": Roll No {$roll} not found in project.";
@@ -70,8 +79,11 @@ class ResultController extends Controller
             }
 
             $preview[] = [
-                'application'   => $application,
-                'roll_number'   => $roll,
+                'application_id' => $application->id,
+                'roll_number'    => $roll,
+                'candidate_name' => $application->candidate->user->full_name,
+                'cnic'           => $application->candidate->user->cnic,
+                'job_title'      => $application->job->title,
                 'score'         => floatval($row['score'] ?? $row[1] ?? 0),
                 'total_marks'   => floatval($row['total_marks'] ?? $row[2] ?? 100),
                 'result_status' => strtolower(trim($row['status'] ?? $row[3] ?? 'fail')),
@@ -79,56 +91,101 @@ class ResultController extends Controller
             ];
         }
 
-        session(['result_preview' => $preview, 'result_project_id' => $projectId]);
+        Cache::put('result_preview_' . Auth::id(), $preview, now()->addMinutes(60));
+        session(['result_project_id' => $projectId]);
+
         return view('admin.results.preview', compact('preview', 'warnings', 'projectId'));
     }
 
     public function publish(Request $request, Project $project)
     {
-        $preview = session('result_preview', []);
-        if (empty($preview)) return back()->with('error', 'No result data in session. Please re-upload.');
+        $preview = Cache::get('result_preview_' . Auth::id(), []);
+        $sessionProjectId = session('result_project_id');
+        if (empty($preview) || $sessionProjectId !== $project->id) {
+            return back()->with('error', 'Result data mismatch. Please upload the file for this specific project again.');
+        }
 
         DB::transaction(function () use ($preview, $project) {
-            // Get all appeared counts for percentile calc
+            $appIds = array_column($preview, 'application_id');
+            // Fetch jobs for apps in one query to avoid N+1 inside the loop
+            $appsMap = Application::whereIn('id', $appIds)->pluck('job_id', 'id');
+            
+            $resultsData = [];
             $jobAppeared = [];
+            $now = now();
+            $authId = Auth::id();
 
             foreach ($preview as $row) {
-                $application  = Application::findOrFail($row['application']['id']);
+                $appId = $row['application_id'];
+                $jobId = $appsMap[$appId] ?? null;
+                if (!$jobId) continue;
+
                 $score        = $row['score'];
                 $totalMarks   = $row['total_marks'];
                 $resultStatus = in_array($row['result_status'], ['pass','fail','absent','withheld'])
                     ? $row['result_status'] : 'fail';
                 $percentage   = $totalMarks > 0 ? round(($score / $totalMarks) * 100, 2) : 0;
 
-                Result::updateOrCreate(
-                    ['application_id' => $application->id],
-                    [
-                        'roll_number'         => $row['roll_number'],
-                        'score'               => $score,
-                        'total_marks'         => $totalMarks,
-                        'percentage'          => $percentage,
-                        'result_status'       => $resultStatus,
-                        'uploaded_by'         => Auth::id(),
-                        'published_at'        => now(),
-                        'scanned_sheet_path'  => $row['scan_path'],
-                    ]
-                );
+                $resultsData[] = [
+                    'application_id'    => $appId,
+                    'roll_no'           => $row['roll_number'],
+                    'score'             => $score,
+                    'total_marks'       => $totalMarks,
+                    'percentage'        => $percentage,
+                    'result_status'     => $resultStatus,
+                    'uploaded_by'       => $authId,
+                    'published_at'      => $now,
+                    'scanned_sheet_path'=> $row['scan_path'],
+                    'percentile'        => 0, // Placeholder
+                ];
 
-                $application->update(['status' => 'result_declared']);
-                $jobAppeared[$application->job_id][] = ['app_id' => $application->id, 'pct' => $percentage];
+                $jobAppeared[$jobId][] = ['app_id' => $appId, 'pct' => $percentage];
             }
 
-            // Compute percentiles per job category
-            foreach ($jobAppeared as $jobId => $entries) {
-                usort($entries, fn($a, $b) => $a['pct'] <=> $b['pct']);
-                $total = count($entries);
-                foreach ($entries as $rank => $entry) {
-                    Result::where('application_id', $entry['app_id'])
-                        ->update(['percentile' => round((($rank + 1) / $total) * 100, 2)]);
+            // 1. Bulk Upsert Results (Include all requisite columns to avoid default value errors)
+            if (!empty($resultsData)) {
+                Result::upsert($resultsData, ['application_id'], [
+                    'roll_no', 'score', 'total_marks', 'percentage', 'result_status', 
+                    'uploaded_by', 'published_at', 'scanned_sheet_path'
+                ]);
+            }
+
+            // 2. Bulk Update Application Status
+            Application::whereIn('id', $appIds)->update(['status' => 'result_declared']);
+
+            // 3. Compute percentiles GLOBALLY per job category and update
+            foreach ($jobAppeared as $jobId => $newEntries) {
+                $allScores = Result::join('applications', 'results.application_id', '=', 'applications.id')
+                    ->where('applications.job_id', $jobId)
+                    ->whereNotNull('published_at')
+                    ->select('results.*') // Select all to satisfy strict mode in the subsequent upsert
+                    ->get()
+                    ->toArray();
+
+                if (!empty($allScores)) {
+                    $sorted = collect($allScores)->sortByDesc('percentage')->values();
+                    $total = count($sorted);
+                    $upsertData = [];
+
+                    foreach ($allScores as $entry) {
+                        $rank = $sorted->search(fn($s) => $s['application_id'] == $entry['application_id']) + 1;
+                        $entry['percentile'] = round((($total - $rank) / $total) * 100, 2);
+                        // Laravel's upsert needs the keys to match the fillable/columns exactly.
+                        // We filter any unwanted numeric keys if present from toArray()
+                        $upsertData[] = array_filter($entry, fn($k) => !is_numeric($k), ARRAY_FILTER_USE_KEY);
+                    }
+
+                    // Bulk update percentiles using upsert with full data to satisfy strict mode defaults
+                    if (!empty($upsertData)) {
+                        Result::upsert($upsertData, ['application_id'], ['percentile']);
+                    }
                 }
             }
 
             $project->update(['status' => 'result_declared']);
+
+            // 4. Dispatch Event for Notifications
+            ResultsPublished::dispatch($appIds);
 
             \App\Models\ActivityLog::log('publish_results', $project, [
                 'count' => count($preview),
@@ -136,18 +193,8 @@ class ResultController extends Controller
             ]);
         });
 
-        // Notify candidates
-        $applications = Application::where('status', 'result_declared')
-            ->where('project_id', $project->id)
-            ->with(['candidate.user', 'job'])
-            ->get();
-
-        foreach ($applications as $app) {
-            $user = $app->candidate->user;
-            $this->sms->send($user->phone, "PATS: Results for {$app->job->title} are published. Log in to view.", $user->id);
-        }
-
-        session()->forget(['result_preview', 'result_project_id']);
+        Cache::forget('result_preview_' . Auth::id());
+        session()->forget('result_project_id');
         return redirect()->route('admin.results.index')->with('success', 'Results published and candidates notified.');
     }
 
@@ -168,7 +215,7 @@ class ResultController extends Controller
             $headers = fgetcsv($handle);
             $headers = array_map('strtolower', array_map('trim', $headers));
             while ($row = fgetcsv($handle)) {
-                $rows[] = array_combine($headers, array_pad($row, count($headers), ''));
+                $rows[] = array_combine($headers, array_slice(array_pad($row, count($headers), ''), 0, count($headers)));
             }
             fclose($handle);
             return $rows;
@@ -177,6 +224,6 @@ class ResultController extends Controller
         $spreadsheet = IOFactory::load($file->getPathname());
         $sheet = $spreadsheet->getActiveSheet()->toArray(null, true, true, false);
         $headers = array_map('strtolower', array_map('trim', array_shift($sheet)));
-        return array_map(fn($r) => array_combine($headers, array_pad($r, count($headers), '')), $sheet);
+        return array_map(fn($r) => array_combine($headers, array_slice(array_pad($r, count($headers), ''), 0, count($headers))), $sheet);
     }
 }

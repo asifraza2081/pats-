@@ -2,6 +2,9 @@
 
 namespace App\Http\Controllers\Admin;
 
+use App\Events\SlipsPublished;
+use App\Http\Resources\BatchStatResource;
+use App\Http\Requests\UpdateBatchRequest;
 use App\Http\Controllers\Controller;
 use App\Models\Application;
 use App\Models\Batch;
@@ -10,7 +13,10 @@ use App\Models\Project;
 use App\Models\TestCenter;
 use App\Services\RollNumberService;
 use App\Services\SmsService;
+use App\Services\AllocationStatsService;
+use App\Models\ExamRollno;
 use Barryvdh\DomPDF\Facade\Pdf;
+use Carbon\Carbon;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\DB;
@@ -19,8 +25,9 @@ use Illuminate\Support\Facades\Storage;
 class BatchController extends Controller
 {
     public function __construct(
-        private RollNumberService $rollNumbers,
-        private SmsService        $sms,
+        private RollNumberService      $rollNumbers,
+        private SmsService             $sms,
+        private AllocationStatsService $statsService,
     ) {}
 
     public function index()
@@ -45,21 +52,24 @@ class BatchController extends Controller
             'center_ids'     => 'required|array|min:1',
             'center_ids.*'   => 'required|exists:test_centers,id',
             'batch_number'   => 'required|integer|min:1',
-            'test_date'      => 'required|date',
+            'test_date'      => 'required|date_format:Y-m-d|after_or_equal:today|before:2100-01-01',
             'reporting_time' => 'required',
             'start_time'     => 'required|after:reporting_time',
             'total_seats'    => 'required|integer|min:1',
-            'count_to_allocate' => 'required|integer|min:1|max:'.$request->total_seats,
+            'count_to_allocate' => 'required|integer|min:1|lte:total_seats',
             'envelope_size'  => 'required|integer|min:10|max:100',
         ]);
 
+        $testDateNormalized = Carbon::parse($data['test_date'])->toDateString();
+        $data['test_date']  = $testDateNormalized;
+
+        $centerIds = array_unique($data['center_ids'] ?? []);
         $totalAllocated = 0;
         $batchIds = [];
 
+        DB::beginTransaction();
         try {
-            DB::beginTransaction();
-
-            foreach ($data['center_ids'] as $centerId) {
+            foreach ($centerIds as $centerId) {
                 $center = TestCenter::findOrFail($centerId);
                 
                 // 1. Physical Capacity Check
@@ -71,20 +81,16 @@ class BatchController extends Controller
                 // New logic: Check if (start < current_end AND end > current_start)
                 // We use reporting_time to start_time + 4 hours (estimated) for overlap-safety
                 $startTime = $data['start_time'];
-                $endTime   = date('H:i:s', strtotime($startTime . ' + 4 hours'));
+                $endTime   = \Carbon\Carbon::parse($startTime)->addHours(4)->format('H:i:s');
 
                 $conflict = Batch::where('center_id', $centerId)
-                    ->where('test_date', $data['test_date'])
+                    ->where('test_date', $testDateNormalized)
                     ->where(function($q) use ($startTime, $endTime) {
-                        $q->where(function($sq) use ($startTime, $endTime) {
-                             $sq->where('start_time', '<', $endTime)
-                                ->where('start_time', '>=', $startTime);
-                        })
-                        ->orWhere(function($sq) use ($startTime, $endTime) {
-                             // This is a rough window check, ideally we'd have a fixed duration or end_time in DB
-                             $sq->where('reporting_time', '<', $endTime)
-                                ->where('reporting_time', '>=', $startTime);
-                        });
+                         // Improved overlap detection [M5]
+                         // Logic: (StartA < EndB) AND (EndA > StartB)
+                         // NOTE: We assume a 4-hour window per batch as duration is not stored in DB.
+                         $q->where('start_time', '<', $endTime)
+                           ->whereRaw('DATE_ADD(start_time, INTERVAL 4 HOUR) > ?', [$startTime]);
                     })
                     ->exists();
 
@@ -92,7 +98,7 @@ class BatchController extends Controller
                     throw new \Exception("A session is already scheduled at '{$center->name}' on this date and time.");
                 }
 
-                $batchData = $request->except(['job_ids', 'count_to_allocate', 'center_ids']);
+                $batchData = array_diff_key($data, array_flip(['job_ids', 'count_to_allocate', 'center_ids']));
                 $batchData['center_id'] = $centerId;
                 $batchData['created_by'] = Auth::id();
                 
@@ -124,11 +130,21 @@ class BatchController extends Controller
             DB::commit();
         } catch (\Exception $e) {
             DB::rollBack();
+            \Log::error('BatchController@store exception', [
+                'message'    => $e->getMessage(),
+                'class'      => get_class($e),
+                'file'       => $e->getFile(),
+                'line'       => $e->getLine(),
+                'test_date'  => $data['test_date'] ?? 'not set',
+                'project_id' => $data['project_id'] ?? 'not set',
+                'center_ids' => $data['center_ids'] ?? [],
+            ]);
             return back()->with('error', $e->getMessage())->withInput();
         }
 
         if (empty($batchIds)) {
-            return back()->with('error', 'No eligible candidates matching the criteria were found for the selected centers. No batches created.')->withInput();
+            $msg = "No eligible candidates found. Check if candidates have 'Paid' status and if their 'Desired Test City' matches the selected centers.";
+            return back()->with('error', $msg)->withInput();
         }
 
         return redirect()->route('admin.batches.index')
@@ -138,50 +154,23 @@ class BatchController extends Controller
     /** AJAX endpoint to get real-time pending candidate counts */
     public function stats(Request $request)
     {
-        $projectId = $request->project_id;
-        $testDate = $request->test_date; // Optional: for CCP
-        if (!$projectId) return response()->json([]);
+        $data = $request->validate([
+            'project_id' => 'required|exists:projects,id',
+            'test_date'  => 'nullable|date_format:Y-m-d|after:2000-01-01|before:2100-01-01',
+        ]);
 
-        $project = Project::with('jobs')->findOrFail($projectId);
+        $testDate = isset($data['test_date']) && $data['test_date'] !== ''
+            ? Carbon::parse($data['test_date'])->toDateString()
+            : null;
 
-        // Base Query with AEE (Eligibility) Hardening
-        $baseQuery = Application::where('applications.project_id', $projectId)
-            ->where('applications.status', 'fee_paid')
-            ->whereDoesntHave('examRollno')
-            ->join('candidates', 'applications.candidate_id', '=', 'candidates.id')
-            ->join('pats_jobs', 'applications.job_id', '=', 'pats_jobs.id')
-            // [AEE] Eligibility enforcement
-            ->whereRaw('pats_jobs.min_degree_level <= (
-                SELECT MAX(degree_level) FROM education_histories 
-                WHERE candidate_id = candidates.id 
-                AND passing_year <= YEAR(CURDATE())
-            )')
-            ->whereRaw('TIMESTAMPDIFF(YEAR, candidates.dob, CURDATE()) BETWEEN pats_jobs.age_min AND pats_jobs.age_max');
-
-        // [CCP] Collision Prevention (if date provided)
-        if ($testDate) {
-            $baseQuery->whereDoesntHave('candidate.applications.examRollno', function($q) use ($testDate) {
-                $q->where('test_date', $testDate);
-            });
-        }
-
-        // Clone for breakdown
-        $stats = (clone $baseQuery)
-            ->join('cities', 'applications.desired_test_city_id', '=', 'cities.id')
-            ->selectRaw('cities.id as city_id, cities.name as city_name, pats_jobs.id as job_id, pats_jobs.title as job_title, count(*) as pending_count')
-            ->groupBy('cities.id', 'cities.name', 'pats_jobs.id', 'pats_jobs.title')
-            ->get();
+        $project = Project::with('jobs')->findOrFail($data['project_id']);
+        $result  = $this->statsService->getStats($project, $testDate);
 
         return response()->json([
-            'stats' => $stats,
-            'job_stats' => $project->jobs->map(function($j) use ($baseQuery) {
-                return [
-                    'id' => $j->id,
-                    'pending' => (clone $baseQuery)->where('applications.job_id', $j->id)->count()
-                ];
-            }),
-            'project_total' => (clone $baseQuery)->count(),
-            'project_unallocated' => (clone $baseQuery)->count(), 
+            'stats'               => BatchStatResource::collection($result['stats']),
+            'job_stats'           => $result['job_stats'],
+            'project_total'       => $result['project_total'],
+            'project_unallocated' => $result['project_unallocated'], 
         ]);
     }
 
@@ -199,19 +188,21 @@ class BatchController extends Controller
         return view('admin.batches.edit', compact('batch', 'projects', 'centers'));
     }
 
-    public function update(Request $request, Batch $batch)
+    public function update(UpdateBatchRequest $request, Batch $batch)
     {
-        $data = $request->validate([
-            'reporting_time' => 'required',
-            'start_time'     => 'required',
-            'total_seats'    => 'required|integer|min:1',
-            'envelope_size'  => 'required|integer|min:10|max:100',
-        ]);
+        $data = $request->validated();
         $batch->update($data);
         return back()->with('success', 'Test Session updated.');
     }
 
-    public function destroy(Batch $batch) { $batch->delete(); return redirect()->route('admin.batches.index')->with('success', 'Test Session deleted.'); }
+    public function destroy(Batch $batch) 
+    { 
+        if ($batch->booked_seats > 0) {
+            return back()->with('error', 'Cannot delete a test session that already has candidates allocated. Please unallocate or move candidates first.');
+        }
+        $batch->delete(); 
+        return redirect()->route('admin.batches.index')->with('success', 'Test Session deleted.'); 
+    }
 
     /** Mark all roll numbers in batch as slip_ready and SMS all candidates */
     public function markReady(Batch $batch)
@@ -220,18 +211,8 @@ class BatchController extends Controller
 
         \App\Models\ActivityLog::log('publish_slips', $batch, ['count' => $count]);
 
-        // Queue SMS notifications
-        $applications = $batch->applications()->with(['candidate.user', 'examRollno'])->get();
-        foreach ($applications as $app) {
-            if ($app->examRollno?->slip_ready) {
-                $user = $app->candidate->user;
-                $this->sms->send(
-                    $user->phone,
-                    "PATS: Your Roll Number Slip for {$app->job->title} is ready. Log in to download: " . url('/candidate/dashboard'),
-                    $user->id
-                );
-            }
-        }
+        // Dispatch event for notifications
+        SlipsPublished::dispatch($batch);
 
         return back()->with('success', "{$count} roll number slips marked ready. Candidates notified.");
     }
@@ -260,8 +241,8 @@ class BatchController extends Controller
     /** NTS-style printable Answer Sheets for all candidates in batch */
     public function answerSheets(Batch $batch)
     {
-        if ($batch->booked_seats == 0) {
-            return back()->with('error', 'Cannot generate Answer Sheets for an empty batch.');
+        if ($batch->booked_seats > 500) {
+            return back()->with('error', 'Batch too large for bulk generation (Max 500). Please download post-wise or in smaller sessions.');
         }
         $batch->load(['project.jobs', 'center.city']);
         // Get all roll numbers in one flat list for bulk PDF
@@ -277,6 +258,9 @@ class BatchController extends Controller
     /** Show attendance management (upload scans + mark appeared/absent) */
     public function attendance(Batch $batch)
     {
+        if ($batch->results_published) {
+            return redirect()->route('admin.batches.show', $batch)->with('error', 'Attendance and marks are locked for this session as results have been published.');
+        }
         $batch->load(['center.city', 'project', 'scans', 'examRollnos.application.candidate.user', 'examRollnos.job']);
         return view('admin.batches.attendance', compact('batch'));
     }
@@ -297,6 +281,9 @@ class BatchController extends Controller
             $path = $file->store("attendance_scans/batch_{$batch->id}", 'public');
             AttendanceScan::create([
                 'batch_id'    => $batch->id,
+                'project_id'  => $batch->project_id,
+                'center_id'   => $batch->center_id,
+                'test_date'   => $batch->test_date->toDateString(),
                 'file_path'   => $path,
                 'page_number' => $i + 1,
                 'uploaded_by' => Auth::id(),
@@ -308,7 +295,7 @@ class BatchController extends Controller
         return back()->with('success', "{$uploaded} scan(s) uploaded.");
     }
 
-    /** Mark candidates as appeared or absent */
+    /** Mark candidates as appeared or absent with bulk update and validation */
     public function markAttendance(Request $request, Batch $batch)
     {
         if ($batch->results_published) {
@@ -319,17 +306,38 @@ class BatchController extends Controller
             'attendance.*' => 'required|in:appeared,absent',
         ]);
 
+        $appearedIds = [];
+        $absentIds   = [];
+
         foreach ($data['attendance'] as $appId => $status) {
-            Application::where('id', $appId)
-                ->where('batch_id', $batch->id)
-                ->update(['status' => $status]);
+            if ($status === 'appeared') {
+                $appearedIds[] = $appId;
+            } else {
+                $absentIds[] = $appId;
+            }
         }
 
-        return back()->with('success', 'Attendance tracking completed.');
+        // Use bulk updates with status allowlist
+        if (!empty($appearedIds)) {
+            Application::whereIn('id', $appearedIds)
+                ->where('batch_id', $batch->id)
+                ->whereIn('status', ['scheduled', 'absent']) // allow absent -> appeared
+                ->update(['status' => 'appeared']);
+        }
+
+        if (!empty($absentIds)) {
+            Application::whereIn('id', $absentIds)
+                ->where('batch_id', $batch->id)
+                ->whereIn('status', ['scheduled', 'appeared']) // can go appeared -> absent if corrected
+                ->update(['status' => 'absent']);
+        }
+
+        return back()->with('success', 'Attendance tracking completed for validated candidates.');
     }
 
     public function toggleResults(Batch $batch)
     {
+        $this->authorize('publish results');
         $batch->update(['results_published' => !$batch->results_published]);
         $status = $batch->results_published ? 'published' : 'unpublished';
         return back()->with('success', "Results for this session are now {$status}.");

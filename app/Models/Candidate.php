@@ -38,35 +38,85 @@ class Candidate extends Model
 
     // ── Helpers ─────────────────────────────────────────────
 
-    /** Age in full years as of today */
-    public function getAgeAttribute(): int
+    /** 
+     * Age in full years.
+     * Defaults to Project Close Date if available, else today.
+     */
+    public function age(?Carbon $asOfDate = null): int
     {
-        return $this->dob ? (int) $this->dob->diffInYears(now()) : 0;
+        $refDate = $asOfDate ?? now();
+        return $this->dob ? (int) $this->dob->diffInYears($refDate) : 0;
     }
 
-    /** Highest education degree_level */
+    /** Legacy accessor for existing blade views, uses today */
+    public function getAgeAttribute(): int
+    {
+        return $this->age(now());
+    }
+
+    /** 
+     * Highest education degree_level.
+     * Defaults to Project Close Year if available, else current year.
+     */
+    public function maxDegreeLevel(?int $asOfYear = null): int
+    {
+        $refYear = $asOfYear ?? now()->year;
+        return (int) $this->education()
+            ->where('passing_year', '<=', $refYear)
+            ->max('degree_level');
+    }
+
+    /** Legacy accessor for existing blade views, uses current year */
     public function getMaxDegreeLevelAttribute(): int
     {
-        return (int) $this->education()
-            ->where('passing_year', '<=', now()->year)
-            ->max('degree_level');
+        return $this->maxDegreeLevel(now()->year);
     }
 
     /**
      * Total years of work experience.
      * Optionally filtered by sector ('Public'|'Private').
      */
-    public function totalExperienceYears(?string $sector = null): float
+    public function totalExperienceYears(?string $sector = null, ?Carbon $asOfDate = null): float
     {
+        $refDate = $asOfDate ?? now();
         $query = $this->experience();
         if ($sector && $sector !== 'Any') {
             $query->where('job_type', $sector);
         }
-        $total = 0.0;
-        foreach ($query->get() as $exp) {
-            $end    = $exp->is_current ? now() : Carbon::parse($exp->to_date);
-            $total += Carbon::parse($exp->from_date)->floatDiffInYears($end);
+
+        $intervals = $query->get()->map(function($exp) use ($refDate) {
+            return [
+                'from' => Carbon::parse($exp->from_date),
+                'to'   => $exp->is_current ? $refDate : Carbon::parse($exp->to_date)
+            ];
+        })->sortBy('from')->values()->toArray();
+
+        if (empty($intervals)) return 0.0;
+
+        // Merge overlapping intervals
+        $merged = [];
+        $current = $intervals[0];
+
+        for ($i = 1; $i < count($intervals); $i++) {
+            $next = $intervals[$i];
+            if ($next['from']->lte($current['to'])) {
+                // Overlap: extend existing interval
+                if ($next['to']->gt($current['to'])) {
+                    $current['to'] = $next['to'];
+                }
+            } else {
+                // No overlap: push current and move to next
+                $merged[] = $current;
+                $current = $next;
+            }
         }
+        $merged[] = $current;
+
+        $total = 0.0;
+        foreach ($merged as $interval) {
+            $total += $interval['from']->floatDiffInYears($interval['to']);
+        }
+
         return round($total, 2);
     }
 
@@ -85,7 +135,6 @@ class Candidate extends Model
             'father_name', 'dob', 'gender', 'marital_status', 'religion',
             'domicile_city_id', 'address_city_id',
             'permanent_address', 'postal_address',
-            'photo_path', 'cnic_front_path',
         ];
         $filled = 0;
         $total  = count($fields) + 1; // +1 for education only

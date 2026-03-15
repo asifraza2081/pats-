@@ -27,6 +27,7 @@ class CityController extends Controller
             'is_test_center' => 'boolean',
         ]);
 
+        $data['is_test_center'] = $request->boolean('is_test_center');
         City::create($data);
 
         return redirect()->route('admin.cities.index')->with('success', 'City added successfully.');
@@ -45,6 +46,7 @@ class CityController extends Controller
             'is_test_center' => 'boolean',
         ]);
 
+        $data['is_test_center'] = $request->boolean('is_test_center');
         $city->update($data);
 
         return redirect()->route('admin.cities.index')->with('success', 'City updated.');

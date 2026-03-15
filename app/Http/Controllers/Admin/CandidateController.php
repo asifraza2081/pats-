@@ -10,7 +10,7 @@ class CandidateController extends Controller
 {
     public function index(Request $request)
     {
-        $query = Candidate::with(['user']);
+        $query = Candidate::with(['user'])->withCount('applications');
 
         if ($request->search) {
             $query->whereHas('user', function($q) use ($request) {

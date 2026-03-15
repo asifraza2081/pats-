@@ -15,7 +15,7 @@ class RollNumberController extends Controller
      */
     public function index(Request $request)
     {
-        $query = ExamRollno::with(['application.candidate.user', 'job.project', 'testCenter.city']);
+        $query = ExamRollno::with(['application.candidate.user', 'job.project', 'center.city']);
 
         if ($request->project_id) {
             $query->where('project_id', $request->project_id);
@@ -42,7 +42,7 @@ class RollNumberController extends Controller
      */
     public function slip(Application $app)
     {
-        $app->load(['candidate.user', 'job.project', 'examRollno.testCenter', 'examRollno.city']);
+        $app->load(['candidate.user', 'job.project', 'examRollno.center', 'examRollno.city']);
         $examRollno = $app->examRollno;
 
         abort_if(!$examRollno, 404, 'Roll number data not found for this application.');

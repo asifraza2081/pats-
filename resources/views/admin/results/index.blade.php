@@ -52,7 +52,7 @@
                                 'fail' => ['c'=>'danger', 'l'=>'Fail'],
                                 'absent' => ['c'=>'secondary', 'l'=>'Absent'],
                                 'withheld' => ['c'=>'warning', 'l'=>'Withheld'],
-                                default => ['c'=>'dark', 'l'=>strtoupper($result->result_status)]
+                                default => ['c'=>'dark', 'l'=>strtoupper((string)$result->result_status)]
                             };
                         @endphp
                         <span class="badge bg-{{ $st['c'] }}-lt text-{{ $st['c'] }}">{{ $st['l'] }}</span>

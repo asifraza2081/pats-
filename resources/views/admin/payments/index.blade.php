@@ -10,7 +10,7 @@
             <form action="{{ route('admin.payments.index') }}" method="GET" class="d-flex gap-2">
                 <select name="status" class="form-select form-select-sm w-auto" onchange="this.form.submit()">
                     <option value="">All Statuses</option>
-                    <option value="pending" {{ request('status') == 'pending' ? 'selected' : '' }}>Pending</option>
+                    <option value="unpaid" {{ request('status') == 'unpaid' ? 'selected' : '' }}>Pending</option>
                     <option value="paid" {{ request('status') == 'paid' ? 'selected' : '' }}>Verified (Paid)</option>
                     <option value="expired" {{ request('status') == 'expired' ? 'selected' : '' }}>Expired</option>
                 </select>
@@ -33,7 +33,7 @@
             <tbody class="divide-y divide-gray-100">
                 @forelse($payments as $payment)
                 <tr>
-                    <td class="px-4 py-3 font-mono text-sm">#{{ $payment->challan_number }}</td>
+                    <td class="px-4 py-3 font-mono text-sm">#{{ $payment->challan_ref }}</td>
                     <td class="px-4 py-3">
                         <div>{{ $payment->application->candidate->user->full_name }}</div>
                         <div class="text-xs text-gray-500">{{ $payment->application->candidate->user->cnic }}</div>
@@ -46,16 +46,8 @@
                         PKR {{ number_format($payment->amount) }}
                     </td>
                     <td class="px-4 py-3 text-center">
-                        @php
-                            $st = match($payment->status) {
-                                'pending' => ['c'=>'warning', 'l'=>'Pending Verification'],
-                                'paid' => ['c'=>'success', 'l'=>'Verified / Paid'],
-                                'expired' => ['c'=>'secondary', 'l'=>'Expired'],
-                                default => ['c'=>'dark', 'l'=>strtoupper($payment->status)]
-                            };
-                        @endphp
-                        <span class="badge bg-{{ $st['c'] }}-lt text-{{ $st['c'] }} py-1 px-2">
-                            {{ $st['l'] }}
+                        <span class="badge bg-{{ $payment->status->color() }}-lt text-{{ $payment->status->color() }} py-1 px-2">
+                            {{ $payment->status->label() }}
                         </span>
                     </td>
                     <td><span class="text-secondary small">{{ $payment->created_at->format('d M, Y') }}</span></td>

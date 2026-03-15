@@ -5,19 +5,17 @@
     <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover"/>
     <title>@yield('title', 'Dashboard') - PATS</title>
     <link rel="icon" href="{{ asset('favicon.png') }}" type="image/png">
-    <!-- Tabler Core -->
-    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@tabler/core@1.0.0-beta20/dist/css/tabler.min.css">
-    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@tabler/icons-webfont@latest/tabler-icons.min.css">
-    
-    <!-- Modern Components (Tom Select & Toastr) -->
-    <link href="https://cdn.jsdelivr.net/npm/tom-select@2.2.2/dist/css/tom-select.bootstrap5.min.css" rel="stylesheet">
-    <link href="https://cdnjs.cloudflare.com/ajax/libs/toastr.js/latest/toastr.min.css" rel="stylesheet">
+    <!-- Tabler Core & Vendor Assets -->
+    <link rel="stylesheet" href="{{ asset('assets/vendor/css/tabler.min.css') }}">
+    <link rel="stylesheet" href="{{ asset('assets/vendor/css/tabler-icons.min.css') }}">
+    <link rel="stylesheet" href="{{ asset('assets/vendor/css/tom-select.bootstrap5.min.css') }}">
+    <link rel="stylesheet" href="{{ asset('assets/vendor/css/toastr.min.css') }}">
+    <link rel="stylesheet" href="{{ asset('assets/vendor/css/inter.css') }}">
     
     <link href="{{ asset('assets/css/bootstrap-icons.min.css') }}" rel="stylesheet">
     <style>
-        @import url('https://rsms.me/inter/inter.css');
         :root {
-            --tblr-font-sans-serif: 'Inter Var', -apple-system, BlinkMacSystemFont, San Francisco, Segoe UI, Roboto, Helvetica Neue, sans-serif;
+            --tblr-font-sans-serif: 'InterVariable', -apple-system, BlinkMacSystemFont, San Francisco, Segoe UI, Roboto, Helvetica Neue, sans-serif;
         }
         body {
             font-feature-settings: "cv03", "cv04", "cv11";
@@ -25,7 +23,8 @@
     </style>
 </head>
 <body class="layout-fluid">
-    <script src="https://cdn.jsdelivr.net/npm/@tabler/core@1.0.0-beta20/dist/js/demo-theme.min.js"></script>
+    {{-- Theme script can be localized if needed, but it's small and often inlined or local already in some tabler setups --}}
+    {{-- For now, let's keep it local as well if we have it --}}
     <div class="page">
         <!-- Navbar: Top Header (Logo & User Menu) -->
         <header class="navbar navbar-expand-md d-print-none" data-bs-theme="dark">
@@ -235,17 +234,17 @@
             </footer>
         </div>
     </div>
-    <!-- Tabler Core & Modern Components -->
-    <script src="https://code.jquery.com/jquery-3.7.1.min.js"></script>
-    <script src="https://cdn.jsdelivr.net/npm/@tabler/core@1.0.0-beta20/dist/js/tabler.min.js"></script>
-    <script src="https://cdn.jsdelivr.net/npm/tom-select@2.2.2/dist/js/tom-select.complete.min.js"></script>
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/toastr.js/latest/toastr.min.js"></script>
+    <!-- Localized Core & Vendor Scripts -->
+    <script src="{{ asset('assets/vendor/js/jquery.min.js') }}"></script>
+    <script src="{{ asset('assets/vendor/js/tabler.min.js') }}"></script>
+    <script src="{{ asset('assets/vendor/js/tom-select.complete.min.js') }}"></script>
+    <script src="{{ asset('assets/vendor/js/toastr.min.js') }}"></script>
     
     <!-- Initialize Toastr & Global Components -->
     <script>
         toastr.options = { "positionClass": "toast-bottom-right", "progressBar": true };
-        @if(session('success')) toastr.success("{{ session('success') }}"); @endif
-        @if(session('error')) toastr.error("{{ session('error') }}"); @endif
+        @if(session('success')) toastr.success(@json(session('success'))); @endif
+        @if(session('error')) toastr.error(@json(session('error'))); @endif
 
         // Auto-initialize all .tom-select inputs globally (if not already handled)
         document.addEventListener("DOMContentLoaded", function () {

@@ -25,10 +25,10 @@
                     <td class="text-secondary">{{ $log->created_at->format('Y-m-d H:i:s') }}</td>
                     <td>
                         <div class="d-flex py-1 align-items-center">
-                            <span class="avatar me-2" style="background-image: url('https://ui-avatars.com/api/?name={{ urlencode($log->user->full_name) }}')"></span>
+                            <span class="avatar me-2" style="background-image: url('https://ui-avatars.com/api/?name={{ urlencode($log->user?->full_name ?? 'Deleted User') }}')"></span>
                             <div class="flex-fill">
-                                <div class="font-weight-medium">{{ $log->user->full_name }}</div>
-                                <div class="text-secondary"><a href="#" class="text-reset">{{ $log->user->email }}</a></div>
+                                <div class="font-weight-medium">{{ $log->user?->full_name ?? 'Deleted User' }}</div>
+                                <div class="text-secondary"><a href="#" class="text-reset">{{ $log->user?->email ?? '—' }}</a></div>
                             </div>
                         </div>
                     </td>

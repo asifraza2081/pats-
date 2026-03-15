@@ -2,6 +2,7 @@
 
 namespace App\Http\Controllers\Admin;
 
+use App\Http\Requests\ProjectRequest;
 use App\Http\Controllers\Controller;
 use App\Models\Project;
 use Illuminate\Http\Request;
@@ -18,17 +19,9 @@ class ProjectController extends Controller
 
     public function create() { return view('admin.projects.create'); }
 
-    public function store(Request $request)
+    public function store(ProjectRequest $request)
     {
-        $data = $request->validate([
-            'name'       => 'required|string|max:200',
-            'org_name'   => 'required|string|max:200',
-            'description'=> 'nullable|string',
-            'open_date'  => 'nullable|date',
-            'close_date' => 'nullable|date|after_or_equal:open_date',
-            'test_date'  => 'nullable|date',
-            'status'     => 'required|in:draft,open,closed,result_declared',
-        ]);
+        $data = $request->validated();
         if ($request->hasFile('logo')) {
             $data['logo_path'] = $request->file('logo')->store('logos', 'public');
         }
@@ -45,19 +38,11 @@ class ProjectController extends Controller
 
     public function edit(Project $project) { return view('admin.projects.edit', compact('project')); }
 
-    public function update(Request $request, Project $project)
+    public function update(ProjectRequest $request, Project $project)
     {
-        $data = $request->validate([
-            'name'       => 'required|string|max:200',
-            'org_name'   => 'required|string|max:200',
-            'description'=> 'nullable|string',
-            'open_date'  => 'nullable|date',
-            'close_date' => 'nullable|date|after_or_equal:open_date',
-            'test_date'  => 'nullable|date',
-            'status'     => 'required|in:draft,open,closed,result_declared',
-        ]);
+        $data = $request->validated();
         if ($request->hasFile('logo')) {
-            if ($project->logo_path) Storage::delete($project->logo_path);
+            if ($project->logo_path) \Illuminate\Support\Facades\Storage::disk('public')->delete($project->logo_path);
             $data['logo_path'] = $request->file('logo')->store('logos', 'public');
         }
         $project->update($data);

@@ -36,28 +36,18 @@
                                 <span><i class="ti ti-rosette me-1"></i> BPS-{{ $app->job->bps_grade }}</span>
                                 @endif
                                 @if($app->examRollno)
-                                <span><i class="ti ti-building-bank me-1"></i> {{ $app->examRollno->testCenter->name ?? 'N/A' }}</span>
+                                <span><i class="ti ti-building-bank me-1"></i> {{ $app->examRollno->center->name ?? 'N/A' }}</span>
                                 @endif
                             </div>
                         </div>
 
                         <div class="col-md-3 mb-3 mb-md-0">
                             <div class="text-muted small mb-1">Application Status</div>
-                            @php
-                                $statusColors = [
-                                    'submitted' => 'bg-secondary text-secondary-fg',
-                                    'fee_paid'  => 'bg-primary text-primary-fg',
-                                    'processed' => 'bg-info text-info-fg',
-                                    'appeared'  => 'bg-success text-success-fg',
-                                    'absent'    => 'bg-danger text-danger-fg',
-                                ];
-                                $color = $statusColors[$app->status] ?? 'bg-secondary text-secondary-fg';
-                            @endphp
-                            <span class="badge {{ $color }} px-3 py-2 text-uppercase tracking-wide fs-5">
-                                {{ str_replace('_', ' ', $app->status) }}
+                            <span class="badge bg-{{ $app->status->color() }} text-{{ $app->status->color() }}-fg px-3 py-2 text-uppercase tracking-wide fs-5">
+                                {{ $app->status->label() }}
                             </span>
                             
-                            @if($app->status === 'processed' && !$app->examRollno)
+                            @if($app->status === \App\Enums\ApplicationStatus::SCHEDULED && !$app->examRollno)
                             <div class="text-info small mt-1"><i class="ti ti-hourglass-empty me-1"></i> Assigning center...</div>
                             @endif
                         </div>
@@ -67,7 +57,7 @@
                                 <i class="ti ti-eye me-1"></i> View Details
                             </a>
                             
-                            @if($app->status === 'submitted' && $app->payment)
+                            @if($app->status === \App\Enums\ApplicationStatus::SUBMITTED && $app->payment)
                             <a href="{{ route('candidate.challan', $app) }}" class="btn btn-warning btn-sm" target="_blank">
                                 <i class="ti ti-download me-1"></i> Download Challan
                             </a>

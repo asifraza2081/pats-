@@ -60,21 +60,21 @@
                         <label class="form-label">Opening Date</label>
                         <div class="input-icon">
                             <span class="input-icon-addon"><i class="ti ti-calendar-event"></i></span>
-                            <input type="date" name="open_date" class="form-control" value="{{ old('open_date', $project->open_date?->format('Y-m-d')) }}">
+                            <input type="date" name="open_date" class="form-control" value="{{ old('open_date', $project->open_date?->format('Y-m-d')) }}" max="2099-12-31">
                         </div>
                     </div>
                     <div class="col-md-4">
                         <label class="form-label">Closing Date</label>
                         <div class="input-icon">
                             <span class="input-icon-addon"><i class="ti ti-calendar-event"></i></span>
-                            <input type="date" name="close_date" class="form-control" value="{{ old('close_date', $project->close_date?->format('Y-m-d')) }}">
+                            <input type="date" name="close_date" class="form-control" value="{{ old('close_date', $project->close_date?->format('Y-m-d')) }}" max="2099-12-31">
                         </div>
                     </div>
                     <div class="col-md-4">
                         <label class="form-label">Test Date (Target)</label>
                         <div class="input-icon">
                             <span class="input-icon-addon"><i class="ti ti-calendar-event"></i></span>
-                            <input type="date" name="test_date" class="form-control" value="{{ old('test_date', $project->test_date?->format('Y-m-d')) }}">
+                            <input type="date" name="test_date" class="form-control" value="{{ old('test_date', $project->test_date?->format('Y-m-d')) }}" max="2099-12-31">
                         </div>
                     </div>
                     

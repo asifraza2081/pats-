@@ -18,7 +18,7 @@ class DashboardController extends Controller
 
         $sessions = Batch::with(['project', 'center.city'])
             ->whereIn('center_id', $assignedCenterIds)
-            ->where('test_date', '>=', now()->toDateString())
+            ->where('test_date', '>=', now()->startOfDay())
             ->orderBy('test_date')
             ->get();
 

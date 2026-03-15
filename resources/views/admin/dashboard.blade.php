@@ -138,8 +138,8 @@
                                         'result_declared'=>'info'
                                     ]; 
                                 @endphp
-                                <span class="badge bg-{{ $colors[$app->status] ?? 'secondary' }} text-{{ $colors[$app->status] ?? 'secondary' }}-fg text-capitalize">
-                                    {{ str_replace('_',' ',$app->status) }}
+                                <span class="badge bg-{{ $colors[$app->status->value] ?? 'secondary' }} text-{{ $colors[$app->status->value] ?? 'secondary' }}-fg text-capitalize">
+                                    {{ str_replace('_',' ',$app->status->value) }}
                                 </span>
                             </td>
                             <td class="text-secondary">{{ $app->applied_at->format('d M Y') }}</td>

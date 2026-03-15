@@ -7,14 +7,14 @@
     <title>@yield('title', 'PATS — Prime Assessment & Testing Services')</title>
     <meta name="description" content="@yield('meta_description', 'PATS — Official recruitment testing platform.')">
     
-    <!-- Tabler Core -->
-    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@tabler/core@1.0.0-beta20/dist/css/tabler.min.css">
-    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@tabler/icons-webfont@latest/tabler-icons.min.css">
+    <!-- Tabler Core & Vendor -->
+    <link rel="stylesheet" href="{{ asset('assets/vendor/css/tabler.min.css') }}">
+    <link rel="stylesheet" href="{{ asset('assets/vendor/css/tabler-icons.min.css') }}">
+    <link rel="stylesheet" href="{{ asset('assets/vendor/css/inter.css') }}">
     <link href="{{ asset('assets/css/bootstrap-icons.min.css') }}" rel="stylesheet">
     <style>
-        @import url('https://rsms.me/inter/inter.css');
         :root {
-            --tblr-font-sans-serif: 'Inter Var', -apple-system, BlinkMacSystemFont, San Francisco, Segoe UI, Roboto, Helvetica Neue, sans-serif;
+            --tblr-font-sans-serif: 'InterVariable', -apple-system, BlinkMacSystemFont, San Francisco, Segoe UI, Roboto, Helvetica Neue, sans-serif;
             --pats-primary: #0a3d62;
             --pats-accent: #e84118;
             --pats-gold: #f9ca24;
@@ -29,7 +29,7 @@
     @stack('styles')
 </head>
 <body class="layout-fluid">
-    <script src="https://cdn.jsdelivr.net/npm/@tabler/core@1.0.0-beta20/dist/js/demo-theme.min.js"></script>
+    {{-- Theme script localized --}}
     <div class="page">
         <!-- Navbar -->
         <header class="navbar navbar-expand-md d-print-none bg-pats-primary" data-bs-theme="dark">
@@ -162,9 +162,9 @@
         </div>
     </div>
     
-    <!-- Tabler Core -->
-    <script src="https://cdn.jsdelivr.net/npm/@tabler/core@1.0.0-beta20/dist/js/tabler.min.js"></script>
-    <script src="https://code.jquery.com/jquery-3.7.1.min.js"></script>
+    <!-- Localized Core Scripts -->
+    <script src="{{ asset('assets/vendor/js/tabler.min.js') }}"></script>
+    <script src="{{ asset('assets/vendor/js/jquery.min.js') }}"></script>
     @stack('scripts')
 </body>
 </html>

@@ -5,9 +5,10 @@
     <meta name="viewport" content="width=device-width, initial-scale=1">
     <title>@yield('title', 'PATS') - Professional Assessment & Testing Services</title>
     <link rel="icon" href="{{ asset('favicon.png') }}" type="image/png">
-    <!-- Tabler Core -->
-    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@tabler/core@1.0.0-beta20/dist/css/tabler.min.css">
-    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@tabler/icons-webfont@latest/tabler-icons.min.css">
+    <!-- Tabler Core & Vendor -->
+    <link rel="stylesheet" href="{{ asset('assets/vendor/css/tabler.min.css') }}">
+    <link rel="stylesheet" href="{{ asset('assets/vendor/css/tabler-icons.min.css') }}">
+    <link rel="stylesheet" href="{{ asset('assets/vendor/css/inter.css') }}">
     <!-- Core Styles -->
     <link rel="stylesheet" href="{{ asset('assets/css/pats-core.css') }}">
 </head>
@@ -170,8 +171,8 @@
             </div>
         </footer>
     </div>
-    <!-- Tabler Core -->
-    <script src="https://cdn.jsdelivr.net/npm/@tabler/core@1.0.0-beta20/dist/js/tabler.min.js"></script>
+    <!-- Localized Core Script -->
+    <script src="{{ asset('assets/vendor/js/tabler.min.js') }}"></script>
     <script>
         const navbar = document.getElementById('navbar');
         window.onscroll = () => {
@@ -185,9 +186,6 @@
         const currentTheme = localStorage.getItem('pats-theme') || 'light';
         document.body.setAttribute('data-bs-theme', currentTheme);
     </script>
-    @stack('scripts')
-</body>
-</html>
     @stack('scripts')
 </body>
 </html>

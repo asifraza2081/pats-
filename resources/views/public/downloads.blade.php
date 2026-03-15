@@ -9,7 +9,7 @@
         <p class="text-secondary">Access standard forms, sample papers, and candidate instructions from the repository below.</p>
         
         <div class="list-group list-group-flush">
-            <a href="{{ asset('assets/docs/form.pdf') }}" target="_blank" class="list-group-item list-group-item-action d-flex align-items-center py-3">
+            <a href="{{ URL::temporarySignedRoute('public.download.signed', now()->addMinutes(30), ['file' => 'form.pdf']) }}" target="_blank" class="list-group-item list-group-item-action d-flex align-items-center py-3">
                 <div class="me-3">
                     <span class="bg-blue-100 text-blue p-2 rounded">
                         <i class="ti ti-file-text fs-3"></i>
@@ -23,7 +23,7 @@
                     <i class="ti ti-download text-muted"></i>
                 </div>
             </a>
-            <a href="{{ asset('assets/docs/instructions.pdf') }}" target="_blank" class="list-group-item list-group-item-action d-flex align-items-center py-3">
+            <a href="{{ URL::temporarySignedRoute('public.download.signed', now()->addMinutes(30), ['file' => 'instructions.pdf']) }}" target="_blank" class="list-group-item list-group-item-action d-flex align-items-center py-3">
                 <div class="me-3">
                     <span class="bg-purple-100 text-purple p-2 rounded">
                         <i class="ti ti-info-circle fs-3"></i>
@@ -54,19 +54,19 @@
                         <td>General Instructions for Candidate</td>
                         <td class="text-muted">Guidelines</td>
                         <td><span class="badge bg-red-lt">PDF</span></td>
-                        <td><a href="{{ asset('storage/downloads/syllabi.pdf') }}" class="btn btn-sm btn-outline-primary"><i class="ti ti-download me-1"></i> Download</a></td>
+                        <td><a href="{{ URL::temporarySignedRoute('public.download.signed', now()->addMinutes(30), ['file' => 'syllabi.pdf']) }}" class="btn btn-sm btn-outline-primary"><i class="ti ti-download me-1"></i> Download</a></td>
                     </tr>
                     <tr>
                         <td>Sample Paper - Data Entry Operator</td>
                         <td class="text-muted">Study Material</td>
                         <td><span class="badge bg-red-lt">PDF</span></td>
-                        <td><a href="{{ asset('storage/downloads/sample_papers.pdf') }}" class="btn btn-sm btn-outline-primary"><i class="ti ti-download me-1"></i> Download</a></td>
+                        <td><a href="{{ URL::temporarySignedRoute('public.download.signed', now()->addMinutes(30), ['file' => 'sample_papers.pdf']) }}" class="btn btn-sm btn-outline-primary"><i class="ti ti-download me-1"></i> Download</a></td>
                     </tr>
                     <tr>
                         <td>Sample Paper - Assistant Manager (Admin)</td>
                         <td class="text-muted">Study Material</td>
                         <td><span class="badge bg-red-lt">PDF</span></td>
-                        <td><a href="{{ asset('storage/downloads/sample_papers.pdf') }}" class="btn btn-sm btn-outline-primary"><i class="ti ti-download me-1"></i> Download</a></td>
+                        <td><a href="{{ URL::temporarySignedRoute('public.download.signed', now()->addMinutes(30), ['file' => 'sample_papers.pdf']) }}" class="btn btn-sm btn-outline-primary"><i class="ti ti-download me-1"></i> Download</a></td>
                     </tr>
                     <tr>
                         <td>Undertaking Form for Errors/Omissions</td>

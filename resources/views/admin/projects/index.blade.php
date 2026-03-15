@@ -41,16 +41,8 @@
                         <span class="badge bg-blue-lt text-blue py-1 px-2 fs-5"><i class="ti ti-briefcase me-1"></i> {{ $project->jobs_count }}</span>
                     </td>
                     <td>
-                        @php 
-                            $sc = [
-                                'draft'=>'secondary',
-                                'open'=>'success',
-                                'closed'=>'dark',
-                                'result_declared'=>'info'
-                            ]; 
-                        @endphp
-                        <span class="badge bg-{{ $sc[$project->status] ?? 'secondary' }} text-{{ $sc[$project->status] ?? 'secondary' }}-fg text-capitalize">
-                            {{ str_replace('_', ' ', $project->status) }}
+                        <span class="badge bg-{{ $project->status->color() }}-lt text-{{ $project->status->color() }} text-capitalize">
+                            {{ $project->status->label() }}
                         </span>
                     </td>
                     <td>

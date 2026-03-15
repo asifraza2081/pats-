@@ -30,7 +30,7 @@ class Result extends Model
 
     public function publisher()
     {
-        return $this->belongsTo(User::class, 'published_by');
+        return $this->belongsTo(User::class, 'uploaded_by');
     }
 
     public function isPublished(): bool

@@ -3,10 +3,14 @@
 namespace App\Models;
 
 use App\Services\EligibilityService;
+use App\Traits\Auditable;
+use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 
 class PatsJob extends Model
 {
+    use HasFactory, Auditable;
+
     protected $table = 'pats_jobs';
 
     protected $fillable = [

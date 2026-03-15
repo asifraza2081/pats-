@@ -40,7 +40,7 @@ return new class extends Migration {
             $table->date('deposit_date')->nullable();
             $table->foreignId('verified_by')->nullable()->constrained('users')->nullOnDelete();
             $table->timestamp('verified_at')->nullable();
-            $table->enum('status', ['pending', 'paid', 'failed'])->default('pending');
+            $table->enum('status', ['unpaid', 'paid', 'rejected'])->default('unpaid');
             $table->timestamps();
         });
     }

@@ -85,11 +85,11 @@
                                     <td>
                                         <div class="d-flex gap-3 justify-content-center">
                                             <label class="form-check form-check-inline m-0">
-                                                <input class="form-check-input" type="radio" name="attendance[{{ $roll->application_id }}]" value="appeared" {{ $roll->application->status === 'appeared' ? 'checked' : '' }}>
+                                                <input class="form-check-input" type="radio" name="attendance[{{ $roll->application_id }}]" value="appeared" {{ $roll->application->status === \App\Enums\ApplicationStatus::APPEARED ? 'checked' : '' }}>
                                                 <span class="form-check-label text-success fw-bold">Present</span>
                                             </label>
                                             <label class="form-check form-check-inline m-0">
-                                                <input class="form-check-input" type="radio" name="attendance[{{ $roll->application_id }}]" value="absent" {{ $roll->application->status === 'absent' ? 'checked' : '' }}>
+                                                <input class="form-check-input" type="radio" name="attendance[{{ $roll->application_id }}]" value="absent" {{ $roll->application->status === \App\Enums\ApplicationStatus::ABSENT ? 'checked' : '' }}>
                                                 <span class="form-check-label text-danger fw-bold">Absent</span>
                                             </label>
                                         </div>

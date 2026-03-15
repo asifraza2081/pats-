@@ -18,7 +18,7 @@ class DashboardController extends Controller
                 'projects'     => Project::count(),
                 'jobs'          => PatsJob::count(),
                 'applications'  => Application::count(),
-                'pending_pay'   => Payment::where('status', 'pending')->count(),
+                'pending_pay'   => Payment::where('status', 'unpaid')->count(),
                 'verified_pay'  => Payment::where('status', 'paid')->count(),
                 'appeared'      => Application::where('status', 'appeared')->count(),
             ];

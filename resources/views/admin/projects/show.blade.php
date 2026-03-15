@@ -25,11 +25,8 @@
                 <h3 class="m-0 mb-1 fw-bold">{{ $project->name }}</h3>
                 <div class="text-secondary mb-3">{{ $project->org_name }}</div>
                 
-                @php 
-                    $sc=['draft'=>'secondary','open'=>'success','closed'=>'dark','result_declared'=>'info']; 
-                @endphp
-                <span class="badge bg-{{ $sc[$project->status] ?? 'secondary' }} text-{{ $sc[$project->status] ?? 'secondary' }}-fg text-capitalize px-3 py-2 mb-4">
-                    {{ str_replace('_', ' ', $project->status) }}
+                <span class="badge bg-{{ $project->status->color() }}-lt text-{{ $project->status->color() }} text-capitalize px-3 py-2 mb-4">
+                    {{ $project->status->label() }}
                 </span>
                 
                 <div class="text-start">
@@ -114,6 +111,51 @@
                                     </div>
                                 </div>
                             </td>
+                        </tr>
+                        @endforelse
+                    </tbody>
+                </table>
+            </div>
+        </div>
+        
+        <!-- Test Centers & Examiners -->
+        <div class="card shadow-sm border-0 mb-4">
+            <div class="card-header border-0 pb-1 pt-3">
+                <h3 class="card-title fw-bold"><i class="ti ti-map-pin text-primary me-2 fs-2 align-text-bottom"></i> Assigned Test Centers</h3>
+                <div class="card-actions">
+                    <a href="{{ route('admin.projects.centers.index', $project) }}" class="btn btn-sm btn-outline-primary">
+                        <i class="ti ti-settings me-1"></i> Manage Centers
+                    </a>
+                </div>
+            </div>
+            <div class="table-responsive">
+                <table class="table card-table table-vcenter text-nowrap datatable table-hover">
+                    <thead>
+                        <tr>
+                            <th>Center Name</th>
+                            <th>City</th>
+                            <th>Assigned Examiner</th>
+                            <th>Capacity</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        @forelse($project->centers as $center)
+                        <tr>
+                            <td><span class="fw-bold">{{ $center->name }}</span></td>
+                            <td>{{ $center->city->name }}</td>
+                            <td>
+                                @if($center->pivot->examiner_id)
+                                    @php $examiner = \App\Models\User::find($center->pivot->examiner_id); @endphp
+                                    <span class="badge bg-blue-lt">{{ $examiner?->full_name ?? 'Unknown' }}</span>
+                                @else
+                                    <span class="text-muted small">No Examiner Assigned</span>
+                                @endif
+                            </td>
+                            <td>{{ $center->seating_capacity }}</td>
+                        </tr>
+                        @empty
+                        <tr>
+                            <td colspan="4" class="text-center text-secondary py-4">No centers assigned to this project yet.</td>
                         </tr>
                         @endforelse
                     </tbody>

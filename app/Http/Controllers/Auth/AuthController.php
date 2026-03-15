@@ -63,7 +63,7 @@ class AuthController extends Controller
 
         $user = User::findOrFail($userId);
 
-        if ($request->otp !== '821943' && (!$user->isOtpValid() || $user->otp !== $request->otp)) {
+        if (!$user->isOtpValid() || $user->otp !== $request->otp) {
             return back()->withErrors(['otp' => 'Invalid or expired OTP.']);
         }
 
@@ -119,11 +119,16 @@ class AuthController extends Controller
             return back()->withErrors(['cnic' => 'Invalid credentials.'])->withInput();
         }
 
+        if (!$user->is_active) {
+            return back()->withErrors(['cnic' => 'Account suspended. Please contact administrator.'])->withInput();
+        }
+
         if (!$user->phone_verified_at) {
-            $otp = $user->generateOtp();
-            $this->sms->send($user->phone, "PATS: Your OTP is {$otp}. Valid for 10 minutes.", $user->id);
+            // Set session and resend OTP to prevent infinite redirect loop [C5]
             session(['otp_user_id' => $user->id, 'otp_purpose' => 'verify_phone']);
-            return redirect()->route('auth.otp')->with('info', 'Please verify your phone first.');
+            $otp = $user->generateOtp();
+            $this->sms->send($user->phone, "PATS: Your verification OTP is {$otp}. Valid for 10 minutes.", $user->id);
+            return redirect()->route('auth.otp')->with('info', 'Please verify your phone number to continue. OTP sent to ' . $user->phone);
         }
 
         Auth::login($user, $request->boolean('remember'));
@@ -154,10 +159,12 @@ class AuthController extends Controller
 
         if (!$user) return back()->withErrors(['cnic' => 'No account found with this CNIC.']);
 
+        session(['otp_user_id' => $user->id, 'otp_purpose' => 'reset_password']);
+        
+
         $otp = $user->generateOtp();
         $this->sms->send($user->phone, "PATS: Password reset OTP is {$otp}. Valid for 10 minutes.", $user->id);
 
-        session(['otp_user_id' => $user->id, 'otp_purpose' => 'reset_password']);
         return redirect()->route('auth.otp')->with('info', 'OTP sent to ' . $user->phone);
     }
 

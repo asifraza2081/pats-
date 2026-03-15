@@ -32,9 +32,10 @@
                             'withheld' => 'bg-warning text-warning-fg'
                         ];
                         $rl = ['pass' => 'PASS', 'fail' => 'FAIL', 'absent' => 'ABSENT', 'withheld' => 'WITHHELD'];
+                        $curStatus = (string)$result->result_status;
                     @endphp
-                    <span class="badge {{ $rc[$result->result_status] ?? 'bg-secondary' }} px-5 py-3 fs-3 tracking-wide">
-                        {{ $rl[$result->result_status] ?? strtoupper($result->result_status) }}
+                    <span class="badge {{ $rc[$curStatus] ?? 'bg-secondary' }} px-5 py-3 fs-3 tracking-wide">
+                        {{ $rl[$curStatus] ?? strtoupper($curStatus) }}
                     </span>
                     @if($result->result_status === 'pass')
                     <div class="text-success fw-bold fs-4 mt-3">

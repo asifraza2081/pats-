@@ -74,7 +74,9 @@
                         </div>
                         <div class="col-md-3">
                             <label class="form-label required">Date of Birth</label>
-                            <input type="date" name="dob" class="form-control" value="{{ old('dob', $candidate->dob?->format('Y-m-d')) }}" {{ $candidate->profile_locked ? 'readonly' : '' }}>
+                            <input type="date" name="dob" class="form-control" value="{{ old('dob', $candidate->dob?->format('Y-m-d')) }}" 
+                                   min="1900-01-01" max="{{ now()->subYears(16)->format('Y-m-d') }}"
+                                   {{ $candidate->profile_locked ? 'readonly' : '' }}>
                         </div>
                         <div class="col-md-3">
                             <label class="form-label required">Gender</label>
@@ -326,8 +328,8 @@
                                         <span class="form-check-label small">Currently working</span>
                                     </label>
                                 </div>
-                                <div class="col-md-2"><label class="form-label small required">Start Date</label><input type="date" name="from_date" class="form-control form-control-sm" required></div>
-                                <div class="col-md-2" id="toDateWrap"><label class="form-label small">End Date</label><input type="date" name="to_date" class="form-control form-control-sm"></div>
+                                <div class="col-md-2"><label class="form-label small required">Start Date</label><input type="date" name="from_date" class="form-control form-control-sm" required min="1950-01-01" max="{{ now()->toDateString() }}"></div>
+                                <div class="col-md-2" id="toDateWrap"><label class="form-label small">End Date</label><input type="date" name="to_date" class="form-control form-control-sm" min="1950-01-01" max="{{ now()->toDateString() }}"></div>
                                 <div class="col-md-4 d-flex align-items-end"><button type="submit" class="btn btn-sm btn-secondary w-100"><i class="ti ti-check me-1"></i> Save Experience</button></div>
                             </div>
                         </form>

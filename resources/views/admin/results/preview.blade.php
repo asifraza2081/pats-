@@ -67,10 +67,11 @@
                         <tr>
                             <td><span class="text-primary fw-bold">{{ $row['roll_number'] }}</span></td>
                             <td>
-                                <div class="font-weight-medium text-body">{{ $row['application']['candidate']['user']['full_name'] }}</div>
-                                <div class="text-secondary small">{{ $row['application']['candidate']['user']['cnic'] }}</div>
+                            <td>
+                                <div class="font-weight-medium text-body">{{ $row['candidate_name'] }}</div>
+                                <div class="text-secondary small">{{ $row['cnic'] }}</div>
                             </td>
-                            <td><span class="text-secondary small">{{ Str::limit($row['application']['job']['title'], 25) }}</span></td>
+                            <td><span class="text-secondary small">{{ Str::limit($row['job_title'], 25) }}</span></td>
                             <td><span class="fw-bold h4 mb-0 text-blue">{{ number_format($row['score'], 1) }}</span></td>
                             <td><span class="text-secondary fw-bold">{{ number_format($row['total_marks'], 0) }}</span></td>
                             <td>

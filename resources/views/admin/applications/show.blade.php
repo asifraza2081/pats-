@@ -24,18 +24,8 @@
                 <h3 class="m-0 mb-1 fw-bold text-body">{{ $app->candidate->user->full_name }}</h3>
                 <div class="text-secondary small mb-3"><i class="ti ti-id me-1"></i> {{ $app->candidate->user->cnic }}</div>
                 
-                @php
-                    $st = match($app->status) {
-                        'submitted' => ['c'=>'secondary', 'l'=>'Submitted'],
-                        'fee_paid' => ['c'=>'info', 'l'=>'Fee Paid'],
-                        'appeared' => ['c'=>'primary', 'l'=>'Appeared'],
-                        'absent' => ['c'=>'danger', 'l'=>'Absent'],
-                        'result_declared' => ['c'=>'success', 'l'=>'Graded'],
-                        default => ['c'=>'dark', 'l'=>strtoupper($app->status)]
-                    };
-                @endphp
-                <span class="badge bg-{{ $st['c'] }} text-{{ $st['c'] }}-fg px-3 py-2 mb-4">
-                    {{ $st['l'] }}
+                <span class="badge bg-{{ $app->status->color() }}-lt text-{{ $app->status->color() }} px-3 py-2 mb-4">
+                    {{ $app->status->label() }}
                 </span>
 
                 <div class="text-start">

@@ -90,8 +90,6 @@
                 'address_city_id' => 'Postal City',
                 'permanent_address' => 'Permanent Address', 
                 'postal_address' => 'Postal Address',
-                'photo_path' => 'Profile Picture', 
-                'cnic_front_path' => 'CNIC Front Image',
             ];
             foreach ($fields as $col => $label) {
                 if (empty($candidate->$col)) $missingFields[] = $label;
@@ -158,7 +156,7 @@
                                         'absent' => 'danger',
                                         'result_declared' => 'purple'
                                     ];
-                                    $color = $statusColors[$app->status] ?? 'secondary';
+                                    $color = $statusColors[$app->status->value] ?? 'secondary';
                                 @endphp
                                 <tr>
                                     <td data-label="Job Title">
@@ -175,14 +173,14 @@
                                         {{ $app->applied_at->format('d M Y') }}
                                     </td>
                                     <td data-label="Status">
-                                        <span class="badge bg-{{ $color }} me-1"></span> {{ str_replace('_', ' ', Str::title($app->status)) }}
+                                        <span class="badge bg-{{ $color }} me-1"></span> {{ str_replace('_', ' ', Str::title($app->status->value)) }}
                                         @if($app->examRollno)
                                             <div class="small fw-bold text-primary mt-1">Roll No: {{ $app->examRollno->roll_no }}</div>
                                         @endif
                                     </td>
                                     <td>
                                         <div class="btn-list flex-nowrap">
-                                            @if($app->payment && $app->payment->status === 'pending' && $app->job->project->isRegistrationOpen())
+                                            @if($app->payment && $app->payment->status->value === 'unpaid' && $app->job->project->isRegistrationOpen())
                                                 <a href="{{ route('candidate.challan', $app) }}" class="btn btn-sm btn-outline-dark" target="_blank">
                                                     <i class="ti ti-receipt me-1"></i> Challan
                                                 </a>

@@ -2,18 +2,17 @@
 
 namespace App\Http\Controllers\Admin;
 
+use App\Events\PaymentVerified;
 use App\Http\Controllers\Controller;
 use App\Models\Application;
 use App\Models\Payment;
-use App\Services\SmsService;
 use Illuminate\Http\Request;
+use Carbon\Carbon;
 use Illuminate\Support\Facades\Auth;
 
 class PaymentController extends Controller
 {
-    public function __construct(
-        private SmsService $sms,
-    ) {}
+    public function __construct() {}
 
     public function index(Request $request)
     {
@@ -36,8 +35,21 @@ class PaymentController extends Controller
             'bank_name'      => 'nullable|string|max:80',
             'branch_code'    => 'nullable|string|max:20',
             'transaction_id' => 'nullable|string|max:100',
-            'deposit_date'   => 'required|date',
+            'deposit_date'   => 'required|date_format:Y-m-d',
         ]);
+
+        $data['deposit_date'] = Carbon::parse($data['deposit_date'])->toDateString();
+
+        $project = $payment->application->job->project;
+        $boundary = $project->close_date
+            ? Carbon::parse($project->close_date)->copy()->addDays(3)
+            : Carbon::now()->addDays(3);
+
+        if (Carbon::parse($data['deposit_date'])->gt($boundary)) {
+            $closedOn = $project->close_date ? Carbon::parse($project->close_date)->toDateString() : '—';
+            $graceEnd = $boundary->toDateString();
+            return back()->with('error', "Payment rejected: The deposit date exceeds the grace period (Project closed on {$closedOn}, grace period ended on {$graceEnd}).");
+        }
 
         $payment->update([
             ...$data,
@@ -46,18 +58,14 @@ class PaymentController extends Controller
             'verified_at' => now(),
         ]);
 
-        // Update application status
+        // Update application status (Guard against restoring progress status)
         $application = $payment->application;
-        $application->update(['status' => 'fee_paid']);
+        if ($application->status->value === 'submitted') {
+            $application->update(['status' => 'fee_paid']);
+        }
 
         // Notify candidate
-        $candidate = $application->candidate;
-        $user      = $candidate->user;
-        $this->sms->send(
-            $user->phone,
-            "PATS: Your payment for {$application->job->title} has been verified. Roll No slip will be generated once registration closes.",
-            $user->id
-        );
+        PaymentVerified::dispatch($payment);
 
         return back()->with('success', "Payment verified and receipt confirmed.");
     }

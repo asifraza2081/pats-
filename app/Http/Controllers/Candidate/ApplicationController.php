@@ -9,6 +9,7 @@ use App\Models\City;
 use App\Models\Payment;
 use App\Services\EligibilityService;
 use Barryvdh\DomPDF\Facade\Pdf;
+use Carbon\Carbon;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\DB;
@@ -79,36 +80,45 @@ class ApplicationController extends Controller
         // Re-run eligibility
         $eligResult = $this->eligibility->check($candidate, $job);
 
-        DB::transaction(function () use ($candidate, $job, $data, $eligResult) {
-            $application = Application::create([
-                'candidate_id'          => $candidate->id,
-                'job_id'                => $job->id,
-                'project_id'            => $job->project_id,
-                'desired_test_city_id'  => $data['desired_test_city_id'],
-                'age_relaxation_type'   => $data['age_relaxation_type'] ?? null,
-                'age_relaxation_years'  => $data['age_relaxation_years'] ?? null,
-                'status'                => 'submitted',
-                'eligibility_warnings'  => $eligResult['warnings'],
-                'applied_at'            => now(),
-            ]);
+        try {
+            DB::transaction(function () use ($candidate, $job, $data, $eligResult) {
+                $application = Application::create([
+                    'candidate_id'          => $candidate->id,
+                    'job_id'                => $job->id,
+                    'project_id'            => $job->project_id,
+                    'desired_test_city_id'  => $data['desired_test_city_id'],
+                    'age_relaxation_type'   => $data['age_relaxation_type'] ?? null,
+                    'age_relaxation_years'  => $data['age_relaxation_years'] ?? null,
+                    'status'                => $job->fee > 0 ? 'submitted' : 'fee_paid',
+                    'eligibility_warnings'  => $eligResult['warnings'],
+                    'applied_at'            => now(),
+                ]);
 
-            Payment::create([
-                'application_id' => $application->id,
-                'challan_ref'    => Payment::generateRef(),
-                'amount'         => $job->fee,
-                'status'         => 'pending',
-            ]);
+                if ($job->fee > 0) {
+                    Payment::create([
+                        'application_id' => $application->id,
+                        'challan_ref'    => Payment::generateRef(),
+                        'amount'         => $job->fee,
+                        'status'         => 'unpaid',
+                    ]);
+                }
 
-            // Lock profile
-            $candidate->update(['profile_locked' => true]);
-        });
+                // Lock profile
+                $candidate->update(['profile_locked' => true]);
+            });
+        } catch (\Illuminate\Database\QueryException $e) {
+            if ($e->getCode() === '23000') { // Duplicate entry
+                return redirect()->route('candidate.applications')->with('info', 'You have already applied for this position.');
+            }
+            throw $e;
+        }
 
         return redirect()->route('candidate.applications')->with('success', 'Application submitted! Download your fee challan to proceed.');
     }
 
     public function show(Application $app)
     {
-        abort_if($app->candidate_id !== Auth::user()->candidate->id, 403);
+        $this->authorize('view', $app);
         $app->load(['job.project', 'batch.center', 'payment', 'examRollno', 'result']);
         return view('candidate.application-show', compact('app'));
     }
@@ -116,7 +126,7 @@ class ApplicationController extends Controller
     /** Download fee challan PDF */
     public function challan(Application $app)
     {
-        abort_if($app->candidate_id !== Auth::user()->candidate->id, 403);
+        $this->authorize('view', $app);
         abort_if(!$app->payment, 404, 'No payment record found.');
         
         // 3-day grace period for payment after project closing
@@ -133,13 +143,20 @@ class ApplicationController extends Controller
     /** Download roll number slip PDF */
     public function slip(Application $app)
     {
-        abort_if($app->candidate_id !== Auth::user()->candidate->id, 403);
-        $app->load(['job.project', 'examRollno.testCenter', 'examRollno.city']);
+        $this->authorize('view', $app);
+        $app->load(['job.project', 'examRollno.center', 'examRollno.city']);
         $examRollno = $app->examRollno;
 
         abort_if(!$examRollno || !$examRollno->roll_no, 403, 'Roll number slip is not yet generated.');
         abort_if(!$examRollno->slip_ready, 403, 'Roll number slip is not yet available for download. Please check back later.');
-        abort_if($examRollno->test_date && now()->isAfter(\Carbon\Carbon::parse($examRollno->test_date->format('Y-m-d') . ' ' . $examRollno->start_time)), 403, 'Slip download is disabled after the test has started.');
+        
+        if ($examRollno->test_date) {
+            $testDateTime = Carbon::createFromFormat(
+                'Y-m-d H:i:s',
+                $examRollno->test_date->toDateString() . ' ' . $examRollno->start_time
+            );
+            abort_if(now()->isAfter($testDateTime), 403, 'Slip download is disabled after the test has started.');
+        }
 
         $candidate = Auth::user()->candidate;
         $pdf = Pdf::loadView('pdf.slip', compact('app', 'candidate'));
@@ -149,7 +166,7 @@ class ApplicationController extends Controller
     /** View result card */
     public function result(Application $app)
     {
-        abort_if($app->candidate_id !== Auth::user()->candidate->id, 403);
+        $this->authorize('view', $app);
         $result = $app->result;
         abort_if(!$result || !$result->isPublished(), 404, 'Results are not yet published.');
         $app->load(['job.project', 'examRollno.center']);

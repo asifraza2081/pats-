@@ -24,7 +24,7 @@
                 </select>
             </div>
             <div class="col-md-3"><label class="form-label fw-semibold">Session No. *</label><input type="number" name="batch_number" class="form-control" value="{{ old('batch_number',$batch->batch_number) }}" min="1" required></div>
-            <div class="col-md-3"><label class="form-label fw-semibold">Test Date *</label><input type="date" name="test_date" class="form-control" value="{{ old('test_date',$batch->test_date->format('Y-m-d')) }}" required></div>
+            <div class="col-md-3"><label class="form-label fw-semibold">Test Date *</label><input type="date" name="test_date" class="form-control" value="{{ old('test_date',$batch->test_date->format('Y-m-d')) }}" required min="{{ now()->toDateString() }}" max="2099-12-31"></div>
             <div class="col-md-3"><label class="form-label fw-semibold">Reporting Time *</label><input type="time" name="reporting_time" class="form-control" value="{{ old('reporting_time',substr($batch->reporting_time,0,5)) }}" required></div>
             <div class="col-md-3"><label class="form-label fw-semibold">Start Time *</label><input type="time" name="start_time" class="form-control" value="{{ old('start_time',substr($batch->start_time,0,5)) }}" required></div>
             <div class="col-md-4"><label class="form-label fw-semibold">Total Seats *</label><input type="number" name="total_seats" class="form-control" value="{{ old('total_seats',$batch->total_seats) }}" min="1" required></div>

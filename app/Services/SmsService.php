@@ -8,7 +8,7 @@ use Illuminate\Support\Facades\Log;
 
 class SmsService
 {
-    public function send(string $phone, string $message, int $userId = null): bool
+    public function send(string $phone, string $message, ?int $userId = null, string $eventType = 'general'): bool
     {
         $baseUrl  = config('services.sms.base_url');
         $username = config('services.sms.username');
@@ -43,7 +43,7 @@ class SmsService
             'user_id'    => $userId,
             'channel'    => 'sms',
             'recipient'  => $phone,
-            'event_type' => 'sms',
+            'event_type' => $eventType,
             'message'    => $message,
             'status'     => $status,
             'sent_at'    => $sent ? now() : null,

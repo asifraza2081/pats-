@@ -34,15 +34,13 @@
     </style>
 </head>
 <body>
-@php
-    // No generator needed, using pre-stored base64 barcodes
-@endphp
-
 @foreach($roster as $roll)
     @php
         $app = $roll->application;
         $candidate = $app->candidate;
         $user = $candidate->user;
+        $generator = new \Picqer\Barcode\BarcodeGeneratorPNG();
+        $barcode = base64_encode($generator->getBarcode($roll->roll_no, $generator::TYPE_CODE_128, 2, 50));
     @endphp
     <div class="sheet">
         <div style="float: left; width: 80%;">
@@ -60,7 +58,7 @@
         <div style="clear: both;"></div>
 
         <div class="barcode-area">
-            <div><img src="data:image/png;base64,{{ $roll->barcode }}" style="width: 200px; height: 50px;"></div>
+            <div><img src="data:image/png;base64,{{ $barcode }}" style="width: 200px; height: 50px;"></div>
             <div style="font-size: 12px; font-weight: bold; margin-top: 5px; letter-spacing: 2px;">{{ $roll->roll_no }}</div>
         </div>
 

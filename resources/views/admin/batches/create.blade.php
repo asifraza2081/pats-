@@ -11,7 +11,6 @@
 @section('content')
 <div class="row justify-content-center">
     <div class="col-lg-12">
-        <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/flatpickr/dist/flatpickr.min.css">
         <form method="POST" action="{{ route('admin.batches.store') }}" class="card shadow-sm border-0" id="batchForm">
             @csrf
             <div class="card-header border-0 pb-1 pt-3 d-flex justify-content-between align-items-center">
@@ -90,16 +89,17 @@
                                         <label class="form-label required">Test Date</label>
                                         <div class="input-icon">
                                             <span class="input-icon-addon"><i class="ti ti-calendar"></i></span>
-                                            <input type="text" name="test_date" id="test_date" class="form-control" required placeholder="Select a date">
+                                            <input type="date" name="test_date" id="test_date" class="form-control" required
+                                                   min="{{ now()->toDateString() }}" max="2099-12-31" placeholder="Select a date">
                                         </div>
                                     </div>
                                     <div class="col-6">
                                         <label class="form-label required">Reporting Time</label>
-                                        <input type="text" name="reporting_time" id="reporting_time" class="form-control" value="08:00" required>
+                                        <input type="time" name="reporting_time" id="reporting_time" class="form-control" value="08:00" required>
                                     </div>
                                     <div class="col-6">
                                         <label class="form-label required">Test Start Time</label>
-                                        <input type="text" name="start_time" id="start_time" class="form-control" value="09:00" required>
+                                        <input type="time" name="start_time" id="start_time" class="form-control" value="09:00" required>
                                     </div>
                                     <div class="col-12">
                                         <label class="form-label required">Envelope Group Size</label>
@@ -226,12 +226,8 @@
 @endsection
 
 @push('scripts')
-<script src="https://cdn.jsdelivr.net/npm/flatpickr"></script>
 <script>
 document.addEventListener('DOMContentLoaded', () => {
-    flatpickr("#test_date", { dateFormat: "Y-m-d" });
-    flatpickr("#reporting_time", { enableTime: true, noCalendar: true, dateFormat: "H:i", time_24hr: true });
-    flatpickr("#start_time", { enableTime: true, noCalendar: true, dateFormat: "H:i", time_24hr: true });
 
     let rawStats = [];
     let projectTotals = { total: 0, unallocated: 0 };
@@ -276,7 +272,7 @@ document.addEventListener('DOMContentLoaded', () => {
         plugins: ['remove_button'],
         placeholder: "Select test city restriction...",
         onChange: (cids) => {
-            tsCenter.clear(true);
+            const currentCenters = tsCenter.getValue();
             tsCenter.clearOptions();
             const cityArray = typeof cids === 'string' ? (cids ? [cids] : []) : cids;
             const tempDiv = document.createElement('div');
@@ -288,6 +284,10 @@ document.addEventListener('DOMContentLoaded', () => {
                 }
             });
             tsCenter.refreshOptions(false);
+            // Restore centers that are still valid options
+            const centerArray = typeof currentCenters === 'string' ? (currentCenters ? [currentCenters] : []) : currentCenters;
+            const validCenters = centerArray.filter(id => tsCenter.options[id]);
+            tsCenter.setValue(validCenters);
             renderStats();
         }
     });
@@ -328,13 +328,19 @@ document.addEventListener('DOMContentLoaded', () => {
         if(tsProject.getValue()) refreshStats();
     });
 
+    let refreshTimeout;
     function refreshStats() {
-        const pid = tsProject.getValue();
-        const testDate = document.getElementById('test_date').value;
-        if(!pid) return;
+        clearTimeout(refreshTimeout);
+        refreshTimeout = setTimeout(() => {
+            const pid = tsProject.getValue();
+            const testDate = document.getElementById('test_date').value;
+            if(!pid) return;
 
-        fetch(`{{ route('admin.batches.stats') }}?project_id=${pid}&test_date=${testDate}`)
-            .then(res => res.json())
+            fetch(`{{ route('admin.batches.stats') }}?project_id=${pid}&test_date=${testDate}`)
+                .then(res => {
+                    if (!res.ok) throw new Error('Network response was not ok');
+                    return res.json();
+                })
                 .then(data => {
                     rawStats = data.stats || [];
                     projectTotals = { total: data.project_total || 0, unallocated: data.project_unallocated || 0 };
@@ -345,32 +351,74 @@ document.addEventListener('DOMContentLoaded', () => {
                     progressBar.style.width = percent + '%';
                     progressPercent.innerText = percent + '%';
 
-                    tsJobs.clear(true); tsJobs.clearOptions();
-                    (originalJobsOptions[pid] || []).forEach(j => {
-                        const jobStat = (data.job_stats || []).find(js => js.id == j.id);
-                        const isPending = jobStat ? jobStat.pending > 0 : false;
-                        tsJobs.addOption({
-                            value: j.id, 
-                            text: j.title + (isPending ? '' : ' (Fully Allocated)'),
-                            disabled: !isPending
-                        });
-                    });
-                    tsJobs.refreshOptions(false);
+                    const projectChanged = (tsJobs.lastPid !== pid);
+                    tsJobs.lastPid = pid;
+                    tsCity.lastPid  = pid;
 
+                    // ── JOBS ────────────────────────────────────────────────
+                    if (projectChanged) {
+                        // Project changed: full rebuild, then restore any prior selection
+                        tsJobs.clearOptions();
+                        (originalJobsOptions[pid] || []).forEach(j => {
+                            const jobStat = (data.job_stats || []).find(js => js.id == j.id);
+                            const isPending = jobStat ? jobStat.pending > 0 : false;
+                            tsJobs.addOption({
+                                value: j.id,
+                                text: j.title + (isPending ? '' : ' (Fully Allocated)'),
+                                disabled: !isPending
+                            });
+                        });
+                        tsJobs.refreshOptions(false);
+                    } else {
+                        // Date changed only: mutate option data IN-PLACE — no removeOption/addOption
+                        // cycle, so the items (selected pills) are never touched and stay intact.
+                        (originalJobsOptions[pid] || []).forEach(j => {
+                            const jobStat = (data.job_stats || []).find(js => js.id == j.id);
+                            const isPending = jobStat ? jobStat.pending > 0 : false;
+                            const newLabel = j.title + (isPending ? '' : ' (Fully Allocated)');
+
+                            if (tsJobs.options[j.id]) {
+                                // Mutate the option object directly — preserves items/selection
+                                tsJobs.options[j.id].text     = newLabel;
+                                tsJobs.options[j.id].disabled = !isPending;
+                                // Bust render cache so the dropdown re-draws with new label
+                                if (tsJobs.renderCache && tsJobs.renderCache['option']) delete tsJobs.renderCache['option'][j.id];
+                                if (tsJobs.renderCache && tsJobs.renderCache['item']) delete tsJobs.renderCache['item'][j.id];
+                            } else {
+                                tsJobs.addOption({
+                                    value: j.id,
+                                    text: newLabel,
+                                    disabled: !isPending
+                                });
+                            }
+                        });
+                        tsJobs.refreshOptions(false);
+                    }
+
+                    // ── CITIES ──────────────────────────────────────────────
                     const tempDiv = document.createElement('div');
                     tempDiv.innerHTML = `<select>${originalCentersHTML}</select>`;
                     const uniqueCitiesMap = new Map();
                     tempDiv.querySelectorAll('option').forEach(opt => {
-                        const cityNameText = opt.innerText.match(/\((.*?)\)/);
-                        if(cityNameText) uniqueCitiesMap.set(opt.dataset.city, cityNameText[1]);
+                        const m = opt.innerText.match(/\((.*?)\)/);
+                        if (m) uniqueCitiesMap.set(opt.dataset.city, m[1]);
                     });
 
-                    tsCity.clear(); tsCity.clearOptions();
-                    uniqueCitiesMap.forEach((name, id) => tsCity.addOption({value: id, text: name}));
+                    if (projectChanged) {
+                        // Project changed: rebuild city options and clear selection
+                        tsCity.clearOptions();
+                        uniqueCitiesMap.forEach((name, id) => tsCity.addOption({ value: id, text: name }));
+                    }
                     renderStats();
+                })
+                .catch(err => {
+                    console.error('Stats Fetch Error:', err);
+                    if (err.message && err.message !== 'Network response was not ok') {
+                        toastr.error('Stats failed: ' + err.message);
+                    }
                 });
-        }
-    });
+        }, 500);
+    }
 
     function renderStats() {
         if(rawStats.length === 0) {

@@ -2,6 +2,8 @@
 
 namespace App\Http\Controllers\Admin;
 
+use App\Http\Requests\StoreCenterRequest;
+use App\Http\Requests\UpdateCenterRequest;
 use App\Http\Controllers\Controller;
 use App\Models\TestCenter;
 use Illuminate\Http\Request;
@@ -20,16 +22,9 @@ class TestCenterController extends Controller
         return view('admin.centers.create', compact('cities')); 
     }
 
-    public function store(Request $request)
+    public function store(StoreCenterRequest $request)
     {
-        $data = $request->validate([
-            'tcid'             => 'required|string|max:10|unique:test_centers,tcid',
-            'name'             => 'required|string|max:150',
-            'city_id'          => 'required|exists:cities,id',
-            'seating_capacity' => 'required|integer|min:1',
-            'address'          => 'required|string',
-            'map_url'          => 'nullable|url',
-        ]);
+        $data = $request->validated();
         TestCenter::create($data);
         return redirect()->route('admin.centers.index')->with('success', 'Test Center added.');
     }
@@ -40,23 +35,19 @@ class TestCenterController extends Controller
         return view('admin.centers.edit', compact('center', 'cities')); 
     }
 
-    public function update(Request $request, TestCenter $center)
+    public function update(UpdateCenterRequest $request, TestCenter $center)
     {
-        $data = $request->validate([
-            'tcid'             => "required|string|max:10|unique:test_centers,tcid,{$center->id}",
-            'name'             => 'required|string|max:150',
-            'city_id'          => 'required|exists:cities,id',
-            'seating_capacity' => 'required|integer|min:1',
-            'address'          => 'required|string',
-            'map_url'          => 'nullable|url',
-            'is_active'        => 'boolean',
-        ]);
+        $data = $request->validated();
         $center->update($data);
         return redirect()->route('admin.centers.index')->with('success', 'Test Center updated.');
     }
 
     public function destroy(TestCenter $center)
     {
+        if ($center->batches()->exists()) {
+            return back()->with('error', 'Cannot delete test center with associated exam sessions/batches.');
+        }
+
         $center->delete();
         return redirect()->route('admin.centers.index')->with('success', 'Test Center deleted.');
     }

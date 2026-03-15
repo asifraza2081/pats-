@@ -1,5 +1,5 @@
 @extends('layouts.dashboard')
-@section('title', 'Payment Verification — ' . $payment->challan_number)
+@section('title', 'Payment Verification — ' . $payment->challan_ref)
 @section('page-title', 'Payment Review')
 
 @section('page-actions')
@@ -18,23 +18,15 @@
             </div>
             <div class="card-body">
                 <div class="mb-3">
-                    @php
-                        $st = match($payment->status) {
-                            'pending' => ['c'=>'warning', 'l'=>'Pending Verification'],
-                            'paid' => ['c'=>'success', 'l'=>'Verified / Paid'],
-                            'expired' => ['c'=>'secondary', 'l'=>'Expired'],
-                            default => ['c'=>'dark', 'l'=>strtoupper($payment->status)]
-                        };
-                    @endphp
-                    <span class="badge bg-{{ $st['c'] }}-lt text-{{ $st['c'] }} px-3 py-2 fs-4">
-                        {{ $st['l'] }}
+                    <span class="badge bg-{{ $payment->status->color() }}-lt text-{{ $payment->status->color() }} px-3 py-2 fs-4">
+                        {{ $payment->status->label() }}
                     </span>
                 </div>
 
                 <div class="datagrid">
                     <div class="datagrid-item">
                         <div class="datagrid-title">Challan Number</div>
-                        <div class="datagrid-content fw-bold">{{ $payment->challan_number }}</div>
+                        <div class="datagrid-content fw-bold">{{ $payment->challan_ref }}</div>
                     </div>
                     <div class="datagrid-item">
                         <div class="datagrid-title">Amount (PKR)</div>
@@ -52,7 +44,7 @@
                     @endif
                 </div>
 
-                @if($payment->status === 'paid')
+                @if($payment->status === \App\Enums\PaymentStatus::PAID)
                 <div class="mt-4 border-top pt-3">
                     <h4 class="fw-bold mb-2">Deposit Proof</h4>
                     <div class="datagrid">
@@ -99,7 +91,7 @@
                 <h3 class="card-title fw-bold text-primary"><i class="ti ti-checkup-list me-2"></i> Verification Portal</h3>
             </div>
             <div class="card-body">
-                @if($payment->status === 'pending')
+                @if($payment->status === \App\Enums\PaymentStatus::UNPAID)
                 <div class="alert alert-info bg-info-lt mb-4 border-0">
                     <div class="d-flex">
                         <div><i class="ti ti-info-circle fs-2 me-2"></i></div>
@@ -110,7 +102,7 @@
                     </div>
                 </div>
 
-                <form method="POST" action="{{ route('admin.payments.verify', $payment) }}" onsubmit="return confirm('Confirm payment verification?')">
+                <form method="POST" action="{{ route('admin.payments.verify', $payment) }}">
                     @csrf
                     <div class="row g-3">
                         <div class="col-md-6">
@@ -127,7 +119,7 @@
                         </div>
                         <div class="col-md-6">
                             <label class="form-label required">Actual Deposit Date</label>
-                            <input type="date" name="deposit_date" class="form-control" required value="{{ date('Y-m-d') }}">
+                            <input type="date" name="deposit_date" class="form-control" required value="{{ date('Y-m-d') }}" min="2020-01-01" max="{{ date('Y-m-d') }}">
                         </div>
                         <div class="col-12 mt-4 text-end">
                             <button type="submit" class="btn btn-success">
@@ -136,7 +128,7 @@
                         </div>
                     </div>
                 </form>
-                @elseif($payment->status === 'paid')
+                @elseif($payment->status === \App\Enums\PaymentStatus::PAID)
                 <div class="text-center py-4">
                     <div class="mb-3">
                         <i class="ti ti-circle-check text-success fs-1"></i>
