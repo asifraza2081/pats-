@@ -20,14 +20,10 @@ class ExamRollno extends Model
         'roll_no',
         'barcode',
         'batch_no',
-        'test_date',
-        'reporting_time',
-        'start_time',
         'slip_ready',
     ];
 
     protected $casts = [
-        'test_date' => 'date',
         'slip_ready' => 'boolean',
     ];
 

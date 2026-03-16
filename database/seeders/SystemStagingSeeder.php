@@ -123,54 +123,37 @@ class SystemStagingSeeder extends Seeder
         }
 
         // 5. Candidate Generation (Bulk Insert Strategy)
-        $this->command->info("Seeding 500 Candidates and Applications... (This may take a moment)");
+        $this->command->info("Seeding 500 Candidates and Applications...");
         
-        $users = [];
-        $candidates = [];
-        $educations = [];
-        $applications = [];
+        $proBar = $this->command->getOutput()->createProgressBar(500);
 
         for ($i = 0; $i < 500; $i++) {
-            $email = "test.candidate." . ($i + 1) . "@example.com";
-            $cnic = '55555' . str_pad($i, 8, '0', STR_PAD_LEFT);
-            $userId = ($i + 4000); // Offset to avoid collisions with static seeds
-
-            $users[] = [
-                'id' => $userId,
+            $user = User::create([
                 'first_name' => 'Candidate',
                 'last_name' => '#' . ($i + 1),
-                'email' => $email,
-                'cnic' => $cnic,
+                'email' => "candidate." . ($i + 1) . "@example.com",
+                'cnic' => '55555' . str_pad($i, 8, '0', STR_PAD_LEFT),
                 'phone' => '0300' . str_pad($i, 7, '0', STR_PAD_LEFT),
                 'password' => Hash::make('password'),
                 'nationality' => 'Pakistani',
                 'phone_verified_at' => now(),
                 'email_verified_at' => now(),
-                'created_at' => now(),
-                'updated_at' => now(),
-            ];
+            ]);
+            $user->assignRole('candidate');
 
-            $candId = ($i + 4000);
-            $gender = rand(0, 1) ? 'Male' : 'Female';
-            $city = $cities[array_rand($cities)];
-
-            $candidates[] = [
-                'id' => $candId,
-                'user_id' => $userId,
+            $candidate = Candidate::create([
+                'user_id' => $user->id,
                 'father_name' => "Father of " . ($i + 1),
-                'gender' => $gender,
+                'gender' => rand(0, 1) ? 'Male' : 'Female',
                 'dob' => Carbon::now()->subYears(rand(22, 40))->format('Y-m-d'),
-                'domicile_city_id' => $city->id,
-                'address_city_id' => $city->id,
+                'domicile_city_id' => $cities[array_rand($cities)]->id,
+                'address_city_id' => $cities[array_rand($cities)]->id,
                 'postal_address' => "Address of candidate " . ($i + 1),
                 'profile_locked' => true,
-                'created_at' => now(),
-                'updated_at' => now(),
-            ];
+            ]);
 
-            // Add High Education (Degree level 4 = Masters)
-            $educations[] = [
-                'candidate_id' => $candId,
+            EducationHistory::create([
+                'candidate_id' => $candidate->id,
                 'degree_level' => 4,
                 'degree_name' => 'Master of Science',
                 'subject_major' => 'General Studies',
@@ -179,42 +162,24 @@ class SystemStagingSeeder extends Seeder
                 'marks_type' => 'CGPA',
                 'obtained_marks' => 3.5,
                 'total_marks' => 4.0,
-                'created_at' => now(),
-                'updated_at' => now(),
-            ];
+            ]);
 
-            // Apply to 2 random jobs from different projects
+            // Apply to 2 random jobs
             $chosenJobs = array_rand($jobs, 2);
             foreach ($chosenJobs as $jIdx) {
                 $job = $jobs[$jIdx];
-                $applications[] = [
-                    'candidate_id' => $candId,
+                Application::create([
+                    'candidate_id' => $candidate->id,
                     'project_id' => $job->project_id,
                     'job_id' => $job->id,
-                    'desired_test_city_id' => $city->id,
-                    'status' => 'fee_paid', // Majority as paid for testing
+                    'desired_test_city_id' => $candidate->domicile_city_id,
+                    'status' => 'fee_paid',
                     'applied_at' => now()->subDays(rand(1, 10)),
-                    'created_at' => now(),
-                    'updated_at' => now(),
-                ];
+                ]);
             }
+            $proBar->advance();
         }
-
-        // Fast Batch Inserts
-        DB::table('users')->insert($users);
-        DB::table('candidates')->insert($candidates);
-        DB::table('education_history')->insert($educations);
-        DB::table('applications')->insert($applications);
-
-        // Assign Roles to dummy users
-        $roleCandidate = Role::whereName('candidate')->first();
-        DB::table('model_has_roles')->insert(
-            array_map(fn($u) => [
-                'role_id' => $roleCandidate->id,
-                'model_type' => 'App\Models\User',
-                'model_id' => $u['id']
-            ], $users)
-        );
+        $proBar->finish();
 
         echo "\n✅ System Staging Seeder Complete!\n";
         echo "   Candidates generated: 500\n";

@@ -82,8 +82,9 @@ class AuthController extends Controller
         }
 
         if ($purpose === 'reset_password') {
+            session(['otp_user_id' => $userId]); // Keep consistent with resetPassword() reading reset_user_id below
             session(['reset_user_id' => $userId]);
-            session()->forget(['otp_user_id', 'otp_purpose']);
+            session()->forget(['otp_purpose']);
             return redirect()->route('auth.reset-password');
         }
 
@@ -95,9 +96,19 @@ class AuthController extends Controller
         $userId = session('otp_user_id');
         if (!$userId) return redirect()->route('login');
 
+        // Simple Rate Limit: Check last sent time if we added one (future improvement)
+        // For now, just ensure the user exists
         $user = User::findOrFail($userId);
+        
+        // Prevent abuse: only allow resend every 60 seconds (simulated via session)
+        if (session('last_otp_resend') && now()->diffInSeconds(session('last_otp_resend')) < 60) {
+            return back()->with('error', 'Please wait 60 seconds before requesting another OTP.');
+        }
+
         $otp  = $user->generateOtp();
         $this->sms->send($user->phone, "PATS: Your OTP is {$otp}. Valid for 10 minutes.", $user->id);
+        
+        session(['last_otp_resend' => now()]);
 
         return back()->with('success', 'OTP resent to ' . $user->phone);
     }

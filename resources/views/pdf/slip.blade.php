@@ -65,8 +65,9 @@
     <tr><td class="lbl">Candidate Name</td><td class="val">{{ $user->full_name }}</td><td class="lbl">Father's Name</td><td class="val">{{ $candidate->father_name }}</td></tr>
     <tr><td class="lbl">CNIC / NIC No.</td><td class="val">{{ $user->cnic }}</td><td class="lbl">Gender</td><td class="val">{{ $candidate->gender }}</td></tr>
     <tr><td class="lbl">Post Applied For</td><td class="val" colspan="3">{{ $app->job->title }} {{ $app->job->department ? '('.$app->job->department.')' : '' }}</td></tr>
-    <tr><td class="lbl">Test Date</td><td class="val">{{ $examRollno->test_date ? \Carbon\Carbon::parse($examRollno->test_date)->format('l, d M Y') : 'TBD' }}</td><td class="lbl">Reporting Time</td><td class="val">{{ $examRollno->reporting_time ? \Carbon\Carbon::parse($examRollno->reporting_time)->format('h:i A') : 'TBD' }}</td></tr>
-    <tr><td class="lbl">Test Start Time</td><td class="val">{{ $examRollno->start_time ? \Carbon\Carbon::parse($examRollno->start_time)->format('h:i A') : 'TBD' }}</td><td class="lbl">Batch No.</td><td class="val">BATCH-{{ $examRollno->batch_no ?? '01' }}</td></tr>
+    @php $batch = $examRollno->batch; @endphp
+    <tr><td class="lbl">Test Date</td><td class="val">{{ $batch->test_date ? \Carbon\Carbon::parse($batch->test_date)->format('l, d M Y') : 'TBD' }}</td><td class="lbl">Reporting Time</td><td class="val">{{ $batch->reporting_time ? \Carbon\Carbon::parse($batch->reporting_time)->format('h:i A') : 'TBD' }}</td></tr>
+    <tr><td class="lbl">Test Start Time</td><td class="val">{{ $batch->start_time ? \Carbon\Carbon::parse($batch->start_time)->format('h:i A') : 'TBD' }}</td><td class="lbl">Batch No.</td><td class="val">BATCH-{{ $examRollno->batch_no ?? '01' }}</td></tr>
     <tr><td class="lbl">Test Center</td><td class="val" colspan="3">{{ $center->name ?? 'TBD' }}</td></tr>
     <tr><td class="lbl">Center Address</td><td class="val" colspan="3">{{ $center->address ?? 'TBD' }}</td></tr>
     <tr><td class="lbl">City / TCID</td><td class="val">{{ $city->name ?? 'TBD' }}</td><td class="lbl">TCID</td><td class="val">{{ $center->tcid ?? 'TBD' }}</td></tr>

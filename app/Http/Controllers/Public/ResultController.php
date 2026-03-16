@@ -21,8 +21,13 @@ class ResultController extends Controller
         $results = collect();
         if ($query) {
             $results = Result::with(['application.candidate.user', 'application.job.project'])
-                ->whereNotNull('published_at') // ONLY SHOW PUBLISHED RESULTS
-                ->where('roll_no', $query)
+                ->where('published_at', '<=', now()) // ONLY SHOW PUBLISHED RESULTS
+                ->where(function($q) use ($query) {
+                    $q->where('roll_no', $query)
+                      ->orWhereHas('application.candidate.user', function($u) use ($query) {
+                          $u->where('cnic', $query);
+                      });
+                })
                 ->get();
         }
 

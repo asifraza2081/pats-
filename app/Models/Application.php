@@ -57,13 +57,33 @@ class Application extends Model
             ? Carbon::parse($project->close_date)->year
             : Carbon::now()->year;
 
-        return $query->join('candidates', 'applications.candidate_id', '=', 'candidates.id')
+        $query = $query->join('candidates', 'applications.candidate_id', '=', 'candidates.id')
             ->join('pats_jobs', 'applications.job_id', '=', 'pats_jobs.id')
             ->whereRaw('(pats_jobs.min_degree_level IS NULL OR pats_jobs.min_degree_level <= (
                 SELECT MAX(degree_level) FROM education_history 
                 WHERE candidate_id = candidates.id 
                 AND passing_year <= ?
-            ))', [$closeYear])
-            ->whereRaw('(pats_jobs.age_min IS NULL OR (TIMESTAMPDIFF(YEAR, candidates.dob, ?) >= pats_jobs.age_min AND (pats_jobs.age_max IS NULL OR TIMESTAMPDIFF(YEAR, candidates.dob, ?) <= pats_jobs.age_max)))', [$closeDate, $closeDate]);
+            ))', [$closeYear]);
+
+        // Portable Age Calculation [FIXED]
+        // Instead of MySQL TIMESTAMPDIFF, we calculate the date boundaries in PHP
+        $carbonClose = Carbon::parse($closeDate);
+        
+        return $query->where(function($q) use ($carbonClose) {
+            $q->where(function($sq) use ($carbonClose) {
+                // age_min check: dob must be before or on (closeDate - age_min years)
+                $sq->whereNull('pats_jobs.age_min')
+                   ->orWhere('candidates.dob', '<=', function($sub) use ($carbonClose) {
+                       $sub->selectRaw('DATE_SUB(?, INTERVAL pats_jobs.age_min YEAR)', [$carbonClose]);
+                   });
+            })->where(function($sq) use ($carbonClose) {
+                // age_max check: dob must be after or on (closeDate - (age_max + 1) years + 1 day)
+                // Roughly: dob >= (closeDate - age_max years)
+                $sq->whereNull('pats_jobs.age_max')
+                   ->orWhere('candidates.dob', '>=', function($sub) use ($carbonClose) {
+                       $sub->selectRaw('DATE_SUB(?, INTERVAL (pats_jobs.age_max + 1) YEAR)', [$carbonClose]);
+                   });
+            });
+        });
     }
 }

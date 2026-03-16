@@ -62,26 +62,20 @@ class ApplicationController extends Controller
 
         abort_if(!$project->isRegistrationOpen(), 403);
 
-        // EXTRA GUARD: Atomic check for existing application to prevent race conditions during concurrent POST
-        $existing = Application::where('candidate_id', $candidate->id)
-            ->where('job_id', $job->id)
-            ->first();
-            
-        if ($existing) {
-            return redirect()->route('candidate.applications')->with('info', 'You have already applied for this position.');
-        }
-
-        $data = $request->validate([
-            'desired_test_city_id' => 'required|exists:cities,id',
-            'age_relaxation_type'  => 'nullable|string|max:80',
-            'age_relaxation_years' => 'nullable|integer|min:1|max:10',
-        ]);
-
-        // Re-run eligibility
-        $eligResult = $this->eligibility->check($candidate, $job);
-
         try {
             DB::transaction(function () use ($candidate, $job, $data, $eligResult) {
+                // LOCK CANDIDATE and re-check application to prevent race conditions
+                $candidateLocked = \App\Models\Candidate::where('id', $candidate->id)->lockForUpdate()->first();
+                
+                $existing = Application::where('candidate_id', $candidate->id)
+                    ->where('job_id', $job->id)
+                    ->lockForUpdate()
+                    ->first();
+                    
+                if ($existing) {
+                    throw new \Exception('DUPLICATE_APPLICATION');
+                }
+
                 $application = Application::create([
                     'candidate_id'          => $candidate->id,
                     'job_id'                => $job->id,
@@ -106,8 +100,8 @@ class ApplicationController extends Controller
                 // Lock profile
                 $candidate->update(['profile_locked' => true]);
             });
-        } catch (\Illuminate\Database\QueryException $e) {
-            if ($e->getCode() === '23000') { // Duplicate entry
+        } catch (\Exception $e) {
+            if ($e->getMessage() === 'DUPLICATE_APPLICATION') {
                 return redirect()->route('candidate.applications')->with('info', 'You have already applied for this position.');
             }
             throw $e;

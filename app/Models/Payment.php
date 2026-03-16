@@ -49,7 +49,7 @@ class Payment extends Model
             if ($attempts >= $maxAttempts) {
                 throw new \RuntimeException("Failed to generate a unique challan reference after {$maxAttempts} attempts.");
             }
-            $ref = 'PATS-' . strtoupper(substr(md5(uniqid(mt_rand(), true)), 0, 8));
+            $ref = 'PATS-' . strtoupper(bin2hex(random_bytes(5)));
             $attempts++;
         } while (static::where('challan_ref', $ref)->exists());
 

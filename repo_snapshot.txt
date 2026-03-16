@@ -2877,6 +2877,7 @@ enum ApplicationStatus: string
     case REJECTED = 'rejected';
     case SHORTLISTED = 'shortlisted';
     case NOT_SHORTLISTED = 'not_shortlisted';
+    case RESULT_DECLARED = 'result_declared';
 
     public function label(): string
     {
@@ -2889,6 +2890,22 @@ enum ApplicationStatus: string
             self::REJECTED => 'Rejected',
             self::SHORTLISTED => 'Shortlisted',
             self::NOT_SHORTLISTED => 'Not Shortlisted',
+            self::RESULT_DECLARED => 'Result Declared',
+        };
+    }
+
+    public function color(): string
+    {
+        return match($this) {
+            self::SUBMITTED => 'secondary',
+            self::FEE_PAID => 'primary',
+            self::SCHEDULED => 'info',
+            self::APPEARED => 'success',
+            self::ABSENT => 'danger',
+            self::REJECTED => 'danger',
+            self::SHORTLISTED => 'success',
+            self::NOT_SHORTLISTED => 'warning',
+            self::RESULT_DECLARED => 'dark',
         };
     }
 }
@@ -2914,6 +2931,15 @@ enum PaymentStatus: string
             self::REJECTED => 'Rejected',
         };
     }
+
+    public function color(): string
+    {
+        return match($this) {
+            self::UNPAID => 'warning',
+            self::PAID => 'success',
+            self::REJECTED => 'danger',
+        };
+    }
 }
 
 
@@ -2937,6 +2963,16 @@ enum ProjectStatus: string
             self::OPEN => 'Open',
             self::CLOSED => 'Closed',
             self::RESULT_DECLARED => 'Result Declared',
+        };
+    }
+
+    public function color(): string
+    {
+        return match($this) {
+            self::DRAFT => 'secondary',
+            self::OPEN => 'success',
+            self::CLOSED => 'danger',
+            self::RESULT_DECLARED => 'info',
         };
     }
 }
@@ -3396,7 +3432,6 @@ class BatchController extends Controller
     /** AJAX endpoint to get real-time pending candidate counts */
     public function stats(Request $request)
     {
-        \Log::info('Batch stats request received', ['all' => $request->all()]);
         $data = $request->validate([
             'project_id' => 'required|exists:projects,id',
             'test_date'  => 'nullable|date_format:Y-m-d|after:2000-01-01|before:2100-01-01',
@@ -6662,7 +6697,7 @@ class ApplicationPolicy
             return true;
         }
         return $user->candidate && $user->candidate->id === $application->candidate_id 
-               && $application->status === 'submitted';
+               && $application->status === \App\Enums\ApplicationStatus::SUBMITTED;
     }
 }
 
@@ -6834,11 +6869,15 @@ class AppServiceProvider extends ServiceProvider
     public function boot(): void
     {
         \Illuminate\Support\Facades\Gate::define('view-session', function ($user, \App\Models\Batch $batch) {
-            if ($user->hasAnyRole(['admin', 'super_admin'])) return true;
+            if ($user->hasAnyRole(['admin', 'super_admin', 'data_entry'])) return true;
             if ($user->hasRole('examiner')) {
                 return $user->assignedCenters()->where('test_centers.id', $batch->center_id)->exists();
             }
             return false;
+        });
+
+        \Illuminate\Support\Facades\Gate::define('publish results', function ($user) {
+            return $user->hasAnyRole(['admin', 'super_admin', 'data_entry']);
         });
         // @active('pattern' or 'route.name') — adds 'active' class when URL or Route name matches
         Blade::directive('active', function ($expression) {
@@ -6869,7 +6908,7 @@ class AllocationStatsService
      */
     public function getStats(Project $project, ?string $testDate = null): array
     {
-        \Log::info('AllocationStatsService@getStats', ['testDate' => $testDate]);
+
 
         if ($testDate !== null && $testDate !== '') {
             try {
@@ -6924,11 +6963,16 @@ class AllocationStatsService
             ->groupByRaw('cities.id, cities.name, pats_jobs.id, pats_jobs.title')
             ->get();
 
-        // 5. Job-specific totals
-        $jobStats = $project->jobs->map(function($j) use ($baseQuery) {
+        // 5. Job-specific totals (Optimized: Single query instead of per-job loop)
+        $jobCounts = (clone $baseQuery)
+            ->selectRaw('job_id, count(*) as total')
+            ->groupBy('job_id')
+            ->pluck('total', 'job_id');
+
+        $jobStats = $project->jobs->map(function($j) use ($jobCounts) {
             return [
                 'id' => $j->id,
-                'pending' => (clone $baseQuery)->where('applications.job_id', $j->id)->count()
+                'pending' => $jobCounts[$j->id] ?? 0
             ];
         });
 
@@ -7161,6 +7205,7 @@ class RollNumberService
      */
     public function markBatchReady(Batch $batch): int
     {
+        $batch->update(['is_ready' => true]);
         return ExamRollno::where('batch_id', $batch->id)
             ->update(['slip_ready' => true]);
     }
@@ -10114,6 +10159,8 @@ return new class extends Migration
             $table->index(['project_id', 'status', 'job_id'], 'idx_app_project_status_job');
             // Speed up city-based allocation logic
             $table->index(['project_id', 'status', 'desired_test_city_id'], 'idx_app_project_status_city');
+            // Speed up recent applications sorting
+            $table->index('applied_at');
         });
 
         Schema::table('users', function (Blueprint $table) {
@@ -10126,6 +10173,16 @@ return new class extends Migration
             // Add center_id to existing composite to speed up serial counting if still needed
             $table->index(['project_id', 'job_id', 'city_id', 'center_id'], 'idx_roll_lookup');
         });
+
+        Schema::table('batches', function (Blueprint $table) {
+            // Speed up allocation stats collision check
+            $table->index('test_date');
+        });
+
+        Schema::table('pats_jobs', function (Blueprint $table) {
+            // Speed up project-wise job lookups
+            $table->index('project_id');
+        });
     }
 
     public function down(): void
@@ -10133,6 +10190,7 @@ return new class extends Migration
         Schema::table('applications', function (Blueprint $table) {
             $table->dropIndex('idx_app_project_status_job');
             $table->dropIndex('idx_app_project_status_city');
+            $table->dropIndex(['applied_at']);
         });
 
         Schema::table('users', function (Blueprint $table) {
@@ -10142,6 +10200,14 @@ return new class extends Migration
 
         Schema::table('exam_rollnos', function (Blueprint $table) {
             $table->dropIndex('idx_roll_lookup');
+        });
+
+        Schema::table('batches', function (Blueprint $table) {
+            $table->dropIndex(['test_date']);
+        });
+
+        Schema::table('pats_jobs', function (Blueprint $table) {
+            $table->dropIndex(['project_id']);
         });
     }
 };
@@ -10299,6 +10365,54 @@ return new class extends Migration
         Schema::table('users', function (Blueprint $table) {
             $table->dropColumn('is_active');
         });
+    }
+};
+
+
+
+===== FILE: .\database\migrations\2026_03_15_000001_fix_application_status_enum.php =====
+<?php
+
+use Illuminate\Database\Migrations\Migration;
+use Illuminate\Support\Facades\DB;
+
+return new class extends Migration
+{
+    public function up(): void
+    {
+        // MySQL requires a full MODIFY COLUMN to change an ENUM definition.
+        // This adds the missing values: scheduled, rejected, shortlisted,
+        // not_shortlisted — and keeps result_declared which is already in use.
+        DB::statement("
+            ALTER TABLE applications
+            MODIFY COLUMN status ENUM(
+                'submitted',
+                'fee_paid',
+                'scheduled',
+                'appeared',
+                'absent',
+                'rejected',
+                'shortlisted',
+                'not_shortlisted',
+                'result_declared'
+            ) NOT NULL DEFAULT 'submitted'
+        ");
+    }
+
+    public function down(): void
+    {
+        // Revert to original 5-value ENUM.
+        // WARNING: any rows with the new values will be truncated to ''.
+        DB::statement("
+            ALTER TABLE applications
+            MODIFY COLUMN status ENUM(
+                'submitted',
+                'fee_paid',
+                'appeared',
+                'absent',
+                'result_declared'
+            ) NOT NULL DEFAULT 'submitted'
+        ");
     }
 };
 
@@ -10714,6 +10828,235 @@ class DatabaseSeeder extends Seeder
         echo "   Candidate: candidate@pats.test / password\n";
         echo "   Examiner: examiner@pats.test / password\n";
 
+    }
+}
+
+
+
+===== FILE: .\database\seeders\SystemStagingSeeder.php =====
+<?php
+
+namespace Database\Seeders;
+
+use App\Models\User;
+use App\Models\City;
+use App\Models\Project;
+use App\Models\PatsJob;
+use App\Models\TestCenter;
+use App\Models\Candidate;
+use App\Models\Application;
+use App\Models\EducationHistory;
+use App\Models\WorkExperience;
+use Illuminate\Database\Seeder;
+use Illuminate\Support\Facades\Hash;
+use Illuminate\Support\Facades\DB;
+use Spatie\Permission\Models\Permission;
+use Spatie\Permission\Models\Role;
+use Carbon\Carbon;
+
+class SystemStagingSeeder extends Seeder
+{
+    public function run(): void
+    {
+        // 1. Roles & Permissions Base
+        $this->call(DatabaseSeeder::class);
+
+        // 2. Geography Expansion
+        $provinces = [
+            'Punjab' => ['Lahore', 'Faisalabad', 'Multan', 'Rawalpindi'],
+            'Sindh' => ['Karachi', 'Hyderabad', 'Sukkur'],
+            'KPK' => ['Peshawar', 'Abbottabad', 'Swat'],
+            'Balochistan' => ['Quetta', 'Gwadar'],
+            'Federal' => ['Islamabad']
+        ];
+
+        $cities = [];
+        foreach ($provinces as $province => $cityNames) {
+            foreach ($cityNames as $cityName) {
+                $cities[] = City::firstOrCreate(['name' => $cityName], ['province' => $province, 'is_test_center' => true]);
+            }
+        }
+
+        // 3. Infrastructure: Test Centers & Examiners
+        $centers = [];
+        $examiners = [];
+        foreach ($cities as $index => $city) {
+            $center = TestCenter::create([
+                'tcid' => str_pad($index + 8000, 4, '0', STR_PAD_LEFT),
+                'name' => "PATS Excellence Center " . $city->name,
+                'city_id' => $city->id,
+                'address' => "Main Street, " . $city->name,
+                'seating_capacity' => rand(500, 2000),
+                'is_active' => true,
+            ]);
+            $centers[] = $center;
+
+            // Create Examiner for this city/center
+            $examinerUser = User::create([
+                'first_name' => 'Examiner',
+                'last_name' => $city->name,
+                'email' => "examiner." . strtolower(str_replace(' ', '', $city->name)) . "@pats.test",
+                'cnic' => '77777' . str_pad($index, 8, '0', STR_PAD_LEFT),
+                'phone' => '0377' . str_pad($index, 7, '0', STR_PAD_LEFT),
+                'password' => Hash::make('password'),
+                'phone_verified_at' => now(),
+                'email_verified_at' => now(),
+            ]);
+            $examinerUser->assignRole('examiner');
+            $examiners[$center->id] = $examinerUser;
+        }
+
+        // 4. Recruitment Projects
+        $projectsData = [
+            ['name' => 'National Health Program 2026', 'org' => 'Ministry of Health', 'type' => 'Medical'],
+            ['name' => 'KPK Education Recruitment', 'org' => 'Secondary Education Dept', 'type' => 'Educational'],
+            ['name' => 'Punjab Power & Tech Drive', 'org' => 'Energy Department', 'type' => 'Technical'],
+            ['name' => 'Sindh Revenue Authority Board', 'org' => 'Sindh Revenue Board', 'type' => 'Administrative'],
+            ['name' => 'National Security Guard Force', 'org' => 'Home Department', 'type' => 'Security'],
+        ];
+
+        $projects = [];
+        $admin = User::role('super_admin')->first();
+
+        foreach ($projectsData as $index => $data) {
+            $projects[] = Project::create([
+                'name' => $data['name'],
+                'org_name' => $data['org'],
+                'description' => "Large scale recruitment drive for " . $data['type'] . " professionals across Pakistan.",
+                'status' => 'open',
+                'open_date' => now()->subDays(15),
+                'close_date' => now()->addDays(30),
+                'created_by' => $admin->id,
+            ]);
+        }
+
+        // Create Jobs for each project
+        $jobs = [];
+        foreach ($projects as $project) {
+            $jobConfigs = [
+                ['title' => 'Senior Officer', 'grade' => 'BPS-17', 'fee' => 1200, 'min_deg' => 4, 'age' => [25, 45]], // Master+
+                ['title' => 'Junior Associate', 'grade' => 'BPS-14', 'fee' => 850, 'min_deg' => 3, 'age' => [21, 35]],  // Bachelor
+                ['title' => 'Technical Supervisor', 'grade' => 'BPS-16', 'fee' => 1000, 'min_deg' => 3, 'age' => [23, 40]],
+            ];
+
+            foreach ($jobConfigs as $c) {
+                $jobs[] = PatsJob::create([
+                    'project_id' => $project->id,
+                    'job_code' => rand(10, 99),
+                    'title' => $c['title'] . " — " . $project->name,
+                    'department' => 'Operations',
+                    'bps_grade' => $c['grade'],
+                    'total_seats' => rand(50, 200),
+                    'fee' => $c['fee'],
+                    'min_degree_level' => $c['min_deg'],
+                    'age_min' => $c['age'][0],
+                    'age_max' => $c['age'][1],
+                ]);
+            }
+
+            // Sync all centers to all projects for broad availability
+            $project->centers()->attach(array_column($centers, 'id'));
+        }
+
+        // 5. Candidate Generation (Bulk Insert Strategy)
+        $this->command->info("Seeding 500 Candidates and Applications... (This may take a moment)");
+        
+        $users = [];
+        $candidates = [];
+        $educations = [];
+        $applications = [];
+
+        for ($i = 0; $i < 500; $i++) {
+            $email = "test.candidate." . ($i + 1) . "@example.com";
+            $cnic = '55555' . str_pad($i, 8, '0', STR_PAD_LEFT);
+            $userId = ($i + 4000); // Offset to avoid collisions with static seeds
+
+            $users[] = [
+                'id' => $userId,
+                'first_name' => 'Candidate',
+                'last_name' => '#' . ($i + 1),
+                'email' => $email,
+                'cnic' => $cnic,
+                'phone' => '0300' . str_pad($i, 7, '0', STR_PAD_LEFT),
+                'password' => Hash::make('password'),
+                'nationality' => 'Pakistani',
+                'phone_verified_at' => now(),
+                'email_verified_at' => now(),
+                'created_at' => now(),
+                'updated_at' => now(),
+            ];
+
+            $candId = ($i + 4000);
+            $gender = rand(0, 1) ? 'Male' : 'Female';
+            $city = $cities[array_rand($cities)];
+
+            $candidates[] = [
+                'id' => $candId,
+                'user_id' => $userId,
+                'father_name' => "Father of " . ($i + 1),
+                'gender' => $gender,
+                'dob' => Carbon::now()->subYears(rand(22, 40))->format('Y-m-d'),
+                'domicile_city_id' => $city->id,
+                'address_city_id' => $city->id,
+                'postal_address' => "Address of candidate " . ($i + 1),
+                'profile_locked' => true,
+                'created_at' => now(),
+                'updated_at' => now(),
+            ];
+
+            // Add High Education (Degree level 4 = Masters)
+            $educations[] = [
+                'candidate_id' => $candId,
+                'degree_level' => 4,
+                'degree_name' => 'Master of Science',
+                'subject_major' => 'General Studies',
+                'institution' => 'University of Pakistan',
+                'passing_year' => 2021,
+                'marks_type' => 'CGPA',
+                'obtained_marks' => 3.5,
+                'total_marks' => 4.0,
+                'created_at' => now(),
+                'updated_at' => now(),
+            ];
+
+            // Apply to 2 random jobs from different projects
+            $chosenJobs = array_rand($jobs, 2);
+            foreach ($chosenJobs as $jIdx) {
+                $job = $jobs[$jIdx];
+                $applications[] = [
+                    'candidate_id' => $candId,
+                    'project_id' => $job->project_id,
+                    'job_id' => $job->id,
+                    'desired_test_city_id' => $city->id,
+                    'status' => 'fee_paid', // Majority as paid for testing
+                    'applied_at' => now()->subDays(rand(1, 10)),
+                    'created_at' => now(),
+                    'updated_at' => now(),
+                ];
+            }
+        }
+
+        // Fast Batch Inserts
+        DB::table('users')->insert($users);
+        DB::table('candidates')->insert($candidates);
+        DB::table('education_history')->insert($educations);
+        DB::table('applications')->insert($applications);
+
+        // Assign Roles to dummy users
+        $roleCandidate = Role::whereName('candidate')->first();
+        DB::table('model_has_roles')->insert(
+            array_map(fn($u) => [
+                'role_id' => $roleCandidate->id,
+                'model_type' => 'App\Models\User',
+                'model_id' => $u['id']
+            ], $users)
+        );
+
+        echo "\n✅ System Staging Seeder Complete!\n";
+        echo "   Candidates generated: 500\n";
+        echo "   Applications generated: 1000\n";
+        echo "   Projects: 5 active recruitment drives.\n";
+        echo "   Admin Login: admin@pats.test / Admin@1234\n";
     }
 }
 
@@ -11449,17 +11792,9 @@ window.axios.defaults.headers.common['X-Requested-With'] = 'XMLHttpRequest';
                         @endif
                     </td>
                     <td>
-                        @php
-                            $st = match($app->status->value) {
-                                'submitted' => ['c'=>'secondary', 'l'=>'Submitted'],
-                                'fee_paid' => ['c'=>'info', 'l'=>'Fee Paid'],
-                                'appeared' => ['c'=>'primary', 'l'=>'Appeared'],
-                                'absent' => ['c'=>'danger', 'l'=>'Absent'],
-                                'result_declared' => ['c'=>'success', 'l'=>'Graded'],
-                                default => ['c'=>'dark', 'l'=>strtoupper($app->status->value)]
-                            };
-                        @endphp
-                        <span class="badge bg-{{ $st['c'] }} text-{{ $st['c'] }}-fg">{{ $st['l'] }}</span>
+                        <span class="badge bg-{{ $app->status->color() }}-lt text-{{ $app->status->color() }}">
+                            {{ $app->status->label() }}
+                        </span>
                     </td>
                     <td><span class="text-secondary small">{{ $app->applied_at->format('d M, Y H:i') }}</span></td>
                     <td>
@@ -11518,18 +11853,8 @@ window.axios.defaults.headers.common['X-Requested-With'] = 'XMLHttpRequest';
                 <h3 class="m-0 mb-1 fw-bold text-body">{{ $app->candidate->user->full_name }}</h3>
                 <div class="text-secondary small mb-3"><i class="ti ti-id me-1"></i> {{ $app->candidate->user->cnic }}</div>
                 
-                @php
-                    $st = match($app->status->value) {
-                        'submitted' => ['c'=>'secondary', 'l'=>'Submitted'],
-                        'fee_paid' => ['c'=>'info', 'l'=>'Fee Paid'],
-                        'appeared' => ['c'=>'primary', 'l'=>'Appeared'],
-                        'absent' => ['c'=>'danger', 'l'=>'Absent'],
-                        'result_declared' => ['c'=>'success', 'l'=>'Graded'],
-                        default => ['c'=>'dark', 'l'=>strtoupper($app->status->value)]
-                    };
-                @endphp
-                <span class="badge bg-{{ $st['c'] }} text-{{ $st['c'] }}-fg px-3 py-2 mb-4">
-                    {{ $st['l'] }}
+                <span class="badge bg-{{ $app->status->color() }}-lt text-{{ $app->status->color() }} px-3 py-2 mb-4">
+                    {{ $app->status->label() }}
                 </span>
 
                 <div class="text-start">
@@ -12229,11 +12554,11 @@ window.axios.defaults.headers.common['X-Requested-With'] = 'XMLHttpRequest';
                                     <td>
                                         <div class="d-flex gap-3 justify-content-center">
                                             <label class="form-check form-check-inline m-0">
-                                                <input class="form-check-input" type="radio" name="attendance[{{ $roll->application_id }}]" value="appeared" {{ $roll->application->status === 'appeared' ? 'checked' : '' }}>
+                                                <input class="form-check-input" type="radio" name="attendance[{{ $roll->application_id }}]" value="appeared" {{ $roll->application->status === \App\Enums\ApplicationStatus::APPEARED ? 'checked' : '' }}>
                                                 <span class="form-check-label text-success fw-bold">Present</span>
                                             </label>
                                             <label class="form-check form-check-inline m-0">
-                                                <input class="form-check-input" type="radio" name="attendance[{{ $roll->application_id }}]" value="absent" {{ $roll->application->status === 'absent' ? 'checked' : '' }}>
+                                                <input class="form-check-input" type="radio" name="attendance[{{ $roll->application_id }}]" value="absent" {{ $roll->application->status === \App\Enums\ApplicationStatus::ABSENT ? 'checked' : '' }}>
                                                 <span class="form-check-label text-danger fw-bold">Absent</span>
                                             </label>
                                         </div>
@@ -12623,48 +12948,64 @@ document.addEventListener('DOMContentLoaded', () => {
                     progressBar.style.width = percent + '%';
                     progressPercent.innerText = percent + '%';
 
-                    // Preserve current selections
-                    const currentJobs = tsJobs.getValue();
-                    const currentCities = tsCity.getValue();
+                    const projectChanged = (tsJobs.lastPid !== pid);
+                    tsJobs.lastPid = pid;
+                    tsCity.lastPid  = pid;
 
-                    // Only clear options if the project has changed
-                    if (tsJobs.lastPid !== pid) {
+                    // ── JOBS ────────────────────────────────────────────────
+                    if (projectChanged) {
+                        // Project changed: full rebuild, then restore any prior selection
                         tsJobs.clearOptions();
-                        tsJobs.lastPid = pid;
+                        (originalJobsOptions[pid] || []).forEach(j => {
+                            const jobStat = (data.job_stats || []).find(js => js.id == j.id);
+                            const isPending = jobStat ? jobStat.pending > 0 : false;
+                            tsJobs.addOption({
+                                value: j.id,
+                                text: j.title + (isPending ? '' : ' (Fully Allocated)'),
+                                disabled: !isPending
+                            });
+                        });
+                        tsJobs.refreshOptions(false);
+                    } else {
+                        // Date changed only: mutate option data IN-PLACE — no removeOption/addOption
+                        // cycle, so the items (selected pills) are never touched and stay intact.
+                        (originalJobsOptions[pid] || []).forEach(j => {
+                            const jobStat = (data.job_stats || []).find(js => js.id == j.id);
+                            const isPending = jobStat ? jobStat.pending > 0 : false;
+                            const newLabel = j.title + (isPending ? '' : ' (Fully Allocated)');
+
+                            if (tsJobs.options[j.id]) {
+                                // Mutate the option object directly — preserves items/selection
+                                tsJobs.options[j.id].text     = newLabel;
+                                tsJobs.options[j.id].disabled = !isPending;
+                                // Bust render cache so the dropdown re-draws with new label
+                                if (tsJobs.renderCache && tsJobs.renderCache['option']) delete tsJobs.renderCache['option'][j.id];
+                                if (tsJobs.renderCache && tsJobs.renderCache['item']) delete tsJobs.renderCache['item'][j.id];
+                            } else {
+                                tsJobs.addOption({
+                                    value: j.id,
+                                    text: newLabel,
+                                    disabled: !isPending
+                                });
+                            }
+                        });
+                        tsJobs.refreshOptions(false);
                     }
 
-                    // Update Job Options surgically
-                    (originalJobsOptions[pid] || []).forEach(j => {
-                        const jobStat = (data.job_stats || []).find(js => js.id == j.id);
-                        const isPending = jobStat ? jobStat.pending > 0 : true; // Default to true if not found
-                        const label = j.title + (isPending ? '' : ' (Fully Allocated)');
-                        
-                        if (tsJobs.options[j.id]) {
-                            tsJobs.updateOption(j.id, { value: j.id, text: label, disabled: !isPending });
-                        } else {
-                            tsJobs.addOption({ value: j.id, text: label, disabled: !isPending });
-                        }
-                    });
-                    tsJobs.refreshOptions(false);
-                    tsJobs.setValue(currentJobs, true);
-
-                    // Update City Options surgically
+                    // ── CITIES ──────────────────────────────────────────────
                     const tempDiv = document.createElement('div');
                     tempDiv.innerHTML = `<select>${originalCentersHTML}</select>`;
                     const uniqueCitiesMap = new Map();
                     tempDiv.querySelectorAll('option').forEach(opt => {
-                        const cityNameText = opt.innerText.match(/\((.*?)\)/);
-                        if(cityNameText) uniqueCitiesMap.set(opt.dataset.city, cityNameText[1]);
+                        const m = opt.innerText.match(/\((.*?)\)/);
+                        if (m) uniqueCitiesMap.set(opt.dataset.city, m[1]);
                     });
 
-                    // Only clear cities if they actually changed (or project changed)
-                    if (tsCity.lastPid !== pid) {
+                    if (projectChanged) {
+                        // Project changed: rebuild city options and clear selection
                         tsCity.clearOptions();
-                        tsCity.lastPid = pid;
-                        uniqueCitiesMap.forEach((name, id) => tsCity.addOption({value: id, text: name}));
+                        uniqueCitiesMap.forEach((name, id) => tsCity.addOption({ value: id, text: name }));
                     }
-                    
-                    tsCity.setValue(currentCities, true);
                     renderStats();
                 })
                 .catch(err => {
@@ -13149,16 +13490,9 @@ document.addEventListener('DOMContentLoaded', () => {
                             </td>
                             <td><span class="text-secondary small">{{ Str::limit($roll->job->title, 30) }}</span></td>
                             <td>
-                                @php
-                                    $st = match($roll->application->status) {
-                                        'submitted' => ['c'=>'secondary', 'l'=>'Pending'],
-                                        'fee_paid' => ['c'=>'primary', 'l'=>'Paid'],
-                                        'appeared' => ['c'=>'success', 'l'=>'Appeared'],
-                                        'absent' => ['c'=>'danger', 'l'=>'Absent'],
-                                        default => ['c'=>'dark', 'l'=>strtoupper($roll->application->status)]
-                                    };
-                                @endphp
-                                <span class="badge bg-{{ $st['c'] }}-lt text-{{ $st['c'] }}">{{ $st['l'] }}</span>
+                                <span class="badge bg-{{ $roll->application->status->color() }}-lt text-{{ $roll->application->status->color() }}">
+                                    {{ $roll->application->status->label() }}
+                                </span>
                             </td>
                             <td>
                                 @if($roll->slip_ready)
@@ -14391,16 +14725,8 @@ document.addEventListener('DOMContentLoaded', () => {
                         PKR {{ number_format($payment->amount) }}
                     </td>
                     <td class="px-4 py-3 text-center">
-                        @php
-                            $st = match($payment->status->value) {
-                                'unpaid' => ['c'=>'warning', 'l'=>'Pending Verification'],
-                                'paid' => ['c'=>'success', 'l'=>'Verified / Paid'],
-                                'expired' => ['c'=>'secondary', 'l'=>'Expired'],
-                                default => ['c'=>'dark', 'l'=>strtoupper($payment->status->value)]
-                            };
-                        @endphp
-                        <span class="badge bg-{{ $st['c'] }}-lt text-{{ $st['c'] }} py-1 px-2">
-                            {{ $st['l'] }}
+                        <span class="badge bg-{{ $payment->status->color() }}-lt text-{{ $payment->status->color() }} py-1 px-2">
+                            {{ $payment->status->label() }}
                         </span>
                     </td>
                     <td><span class="text-secondary small">{{ $payment->created_at->format('d M, Y') }}</span></td>
@@ -14455,16 +14781,8 @@ document.addEventListener('DOMContentLoaded', () => {
             </div>
             <div class="card-body">
                 <div class="mb-3">
-                    @php
-                        $st = match($payment->status->value) {
-                            'unpaid' => ['c'=>'warning', 'l'=>'Pending Verification'],
-                            'paid' => ['c'=>'success', 'l'=>'Verified / Paid'],
-                            'expired' => ['c'=>'secondary', 'l'=>'Expired'],
-                            default => ['c'=>'dark', 'l'=>strtoupper($payment->status->value)]
-                        };
-                    @endphp
-                    <span class="badge bg-{{ $st['c'] }}-lt text-{{ $st['c'] }} px-3 py-2 fs-4">
-                        {{ $st['l'] }}
+                    <span class="badge bg-{{ $payment->status->color() }}-lt text-{{ $payment->status->color() }} px-3 py-2 fs-4">
+                        {{ $payment->status->label() }}
                     </span>
                 </div>
 
@@ -14489,7 +14807,7 @@ document.addEventListener('DOMContentLoaded', () => {
                     @endif
                 </div>
 
-                @if($payment->status->value === 'paid')
+                @if($payment->status === \App\Enums\PaymentStatus::PAID)
                 <div class="mt-4 border-top pt-3">
                     <h4 class="fw-bold mb-2">Deposit Proof</h4>
                     <div class="datagrid">
@@ -14536,7 +14854,7 @@ document.addEventListener('DOMContentLoaded', () => {
                 <h3 class="card-title fw-bold text-primary"><i class="ti ti-checkup-list me-2"></i> Verification Portal</h3>
             </div>
             <div class="card-body">
-                @if($payment->status->value === 'unpaid')
+                @if($payment->status === \App\Enums\PaymentStatus::UNPAID)
                 <div class="alert alert-info bg-info-lt mb-4 border-0">
                     <div class="d-flex">
                         <div><i class="ti ti-info-circle fs-2 me-2"></i></div>
@@ -14573,7 +14891,7 @@ document.addEventListener('DOMContentLoaded', () => {
                         </div>
                     </div>
                 </form>
-                @elseif($payment->status->value === 'paid')
+                @elseif($payment->status === \App\Enums\PaymentStatus::PAID)
                 <div class="text-center py-4">
                     <div class="mb-3">
                         <i class="ti ti-circle-check text-success fs-1"></i>
@@ -14939,16 +15257,8 @@ document.addEventListener('DOMContentLoaded', () => {
                         <span class="badge bg-blue-lt text-blue py-1 px-2 fs-5"><i class="ti ti-briefcase me-1"></i> {{ $project->jobs_count }}</span>
                     </td>
                     <td>
-                        @php 
-                            $sc = [
-                                'draft'=>'secondary',
-                                'open'=>'success',
-                                'closed'=>'dark',
-                                'result_declared'=>'info'
-                            ]; 
-                        @endphp
-                        <span class="badge bg-{{ $sc[$project->status->value] ?? 'secondary' }} text-{{ $sc[$project->status->value] ?? 'secondary' }}-fg text-capitalize">
-                            {{ str_replace('_', ' ', $project->status->value) }}
+                        <span class="badge bg-{{ $project->status->color() }}-lt text-{{ $project->status->color() }} text-capitalize">
+                            {{ $project->status->label() }}
                         </span>
                     </td>
                     <td>
@@ -15028,11 +15338,8 @@ document.addEventListener('DOMContentLoaded', () => {
                 <h3 class="m-0 mb-1 fw-bold">{{ $project->name }}</h3>
                 <div class="text-secondary mb-3">{{ $project->org_name }}</div>
                 
-                @php 
-                    $sc=['draft'=>'secondary','open'=>'success','closed'=>'dark','result_declared'=>'info']; 
-                @endphp
-                <span class="badge bg-{{ $sc[$project->status->value] ?? 'secondary' }} text-{{ $sc[$project->status->value] ?? 'secondary' }}-fg text-capitalize px-3 py-2 mb-4">
-                    {{ str_replace('_', ' ', $project->status->value) }}
+                <span class="badge bg-{{ $project->status->color() }}-lt text-{{ $project->status->color() }} text-capitalize px-3 py-2 mb-4">
+                    {{ $project->status->label() }}
                 </span>
                 
                 <div class="text-start">
@@ -15245,7 +15552,7 @@ document.addEventListener('DOMContentLoaded', () => {
                                 'fail' => ['c'=>'danger', 'l'=>'Fail'],
                                 'absent' => ['c'=>'secondary', 'l'=>'Absent'],
                                 'withheld' => ['c'=>'warning', 'l'=>'Withheld'],
-                                default => ['c'=>'dark', 'l'=>strtoupper($result->result_status)]
+                                default => ['c'=>'dark', 'l'=>strtoupper((string)$result->result_status)]
                             };
                         @endphp
                         <span class="badge bg-{{ $st['c'] }}-lt text-{{ $st['c'] }}">{{ $st['l'] }}</span>
@@ -16377,29 +16684,10 @@ document.addEventListener('DOMContentLoaded', () => {
         </div>
 
         <!-- Application Status Header -->
-        @php 
-            $statusColors = [
-                'submitted' => 'bg-secondary',
-                'fee_paid'  => 'bg-primary',
-                'processed' => 'bg-info',
-                'appeared'  => 'bg-success',
-                'absent'    => 'bg-danger'
-            ];
-            $statusColor = $statusColors[$app->status->value] ?? 'bg-secondary';
-        @endphp
-        
-        <div class="card mb-4 border-0 shadow-sm overflow-hidden">
-            <div class="card-status-top {{ str_replace('bg-', '', $statusColor) }}"></div>
-            <div class="card-body p-4 p-md-5">
-                <div class="row align-items-center">
-                    <div class="col-md-8">
-                        <div class="text-muted text-uppercase tracking-wide small fw-bold mb-2">
-                            <i class="ti ti-building me-1"></i> {{ $app->job->project->org_name }} &bull; {{ $app->job->project->name }}
-                        </div>
                         <h2 class="h1 fw-bold mb-3 text-pats-primary">{{ $app->job->title }}</h2>
                         <div class="d-flex flex-wrap gap-2">
-                            <span class="badge {{ $statusColor }} text-white px-3 py-2 text-uppercase tracking-wide fs-5">
-                                {{ str_replace('_', ' ', $app->status->value) }}
+                            <span class="badge bg-{{ $app->status->color() }} text-white px-3 py-2 text-uppercase tracking-wide fs-5">
+                                {{ $app->status->label() }}
                             </span>
                             @if($app->job->bps_grade)
                             <span class="badge bg-secondary-lt px-3 py-2 fs-5">BPS-{{ $app->job->bps_grade }}</span>
@@ -16417,7 +16705,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
         <!-- Action Buttons -->
         <div class="d-flex flex-wrap gap-2 mb-4">
-            @if($app->payment && $app->status->value === 'submitted')
+            @if($app->payment && $app->status === \App\Enums\ApplicationStatus::SUBMITTED)
             <a href="{{ route('candidate.challan', $app) }}" class="btn btn-warning" target="_blank">
                 <i class="ti ti-download me-2"></i> Download Fee Challan
             </a>
@@ -16456,13 +16744,12 @@ document.addEventListener('DOMContentLoaded', () => {
                             </div>
                             <div class="col-md-4">
                                 <div class="text-muted small">Payment Status</div>
-                                @php 
-                                    $pc = ['unpaid' => 'bg-warning text-warning-fg', 'paid' => 'bg-success text-success-fg', 'failed' => 'bg-danger text-danger-fg']; 
-                                @endphp
-                                <span class="badge {{ $pc[$app->payment->status->value] ?? 'bg-secondary' }} px-2 py-1 text-uppercase">{{ $app->payment->status->value }}</span>
+                                <span class="badge bg-{{ $app->payment->status->color() }} text-{{ $app->payment->status->color() }}-fg px-2 py-1 text-uppercase">
+                                    {{ $app->payment->status->label() }}
+                                </span>
                             </div>
                             
-                            @if($app->payment->status === 'paid')
+                            @if($app->payment->status === \App\Enums\PaymentStatus::PAID)
                             <div class="col-md-4">
                                 <div class="text-muted small">Bank Name</div>
                                 <div class="fw-semibold">{{ $app->payment->bank_name ?? '—' }}</div>
@@ -16478,7 +16765,7 @@ document.addEventListener('DOMContentLoaded', () => {
                             @endif
                         </div>
                         
-                        @if($app->payment->status->value === 'unpaid')
+                        @if($app->payment->status === \App\Enums\PaymentStatus::UNPAID)
                         <div class="alert alert-important alert-warning mt-4 mb-0" role="alert">
                             <div class="d-flex">
                                 <div><i class="ti ti-alert-triangle fs-2 me-3"></i></div>
@@ -16628,21 +16915,11 @@ document.addEventListener('DOMContentLoaded', () => {
 
                         <div class="col-md-3 mb-3 mb-md-0">
                             <div class="text-muted small mb-1">Application Status</div>
-                            @php
-                                $statusColors = [
-                                    'submitted' => 'bg-secondary text-secondary-fg',
-                                    'fee_paid'  => 'bg-primary text-primary-fg',
-                                    'processed' => 'bg-info text-info-fg',
-                                    'appeared'  => 'bg-success text-success-fg',
-                                    'absent'    => 'bg-danger text-danger-fg',
-                                ];
-                                $color = $statusColors[$app->status->value] ?? 'bg-secondary text-secondary-fg';
-                            @endphp
-                            <span class="badge {{ $color }} px-3 py-2 text-uppercase tracking-wide fs-5">
-                                {{ str_replace('_', ' ', $app->status->value) }}
+                            <span class="badge bg-{{ $app->status->color() }} text-{{ $app->status->color() }}-fg px-3 py-2 text-uppercase tracking-wide fs-5">
+                                {{ $app->status->label() }}
                             </span>
                             
-                            @if($app->status->value === 'processed' && !$app->examRollno)
+                            @if($app->status === \App\Enums\ApplicationStatus::SCHEDULED && !$app->examRollno)
                             <div class="text-info small mt-1"><i class="ti ti-hourglass-empty me-1"></i> Assigning center...</div>
                             @endif
                         </div>
@@ -16652,7 +16929,7 @@ document.addEventListener('DOMContentLoaded', () => {
                                 <i class="ti ti-eye me-1"></i> View Details
                             </a>
                             
-                            @if($app->status->value === 'submitted' && $app->payment)
+                            @if($app->status === \App\Enums\ApplicationStatus::SUBMITTED && $app->payment)
                             <a href="{{ route('candidate.challan', $app) }}" class="btn btn-warning btn-sm" target="_blank">
                                 <i class="ti ti-download me-1"></i> Download Challan
                             </a>
@@ -17706,9 +17983,10 @@ document.addEventListener('DOMContentLoaded', () => {
                             'withheld' => 'bg-warning text-warning-fg'
                         ];
                         $rl = ['pass' => 'PASS', 'fail' => 'FAIL', 'absent' => 'ABSENT', 'withheld' => 'WITHHELD'];
+                        $curStatus = (string)$result->result_status;
                     @endphp
-                    <span class="badge {{ $rc[$result->result_status] ?? 'bg-secondary' }} px-5 py-3 fs-3 tracking-wide">
-                        {{ $rl[$result->result_status] ?? strtoupper($result->result_status) }}
+                    <span class="badge {{ $rc[$curStatus] ?? 'bg-secondary' }} px-5 py-3 fs-3 tracking-wide">
+                        {{ $rl[$curStatus] ?? strtoupper($curStatus) }}
                     </span>
                     @if($result->result_status === 'pass')
                     <div class="text-success fw-bold fs-4 mt-3">
@@ -17891,10 +18169,10 @@ document.addEventListener('DOMContentLoaded', () => {
                             </td>
                             <td>
                                 <div class="btn-list flex-nowrap">
-                                    <a href="{{ route('admin.batches.attendance-sheet', $session) }}" target="_blank" class="btn btn-outline-dark btn-sm" title="Print Attendance">
+                                    <a href="{{ route('examiner.sessions.attendance-sheet', $session) }}" target="_blank" class="btn btn-outline-dark btn-sm" title="Print Attendance">
                                         <i class="ti ti-file-text"></i>
                                     </a>
-                                    <a href="{{ route('admin.batches.answer-sheets', $session) }}" target="_blank" class="btn btn-outline-info btn-sm" title="Print Answer Sheets">
+                                    <a href="{{ route('examiner.sessions.answer-sheets', $session) }}" target="_blank" class="btn btn-outline-info btn-sm" title="Print Answer Sheets">
                                         <i class="ti ti-forms"></i>
                                     </a>
                                     <a href="{{ route('examiner.sessions.show', $session) }}" class="btn btn-primary btn-sm">
@@ -20381,10 +20659,10 @@ Route::middleware(['auth', 'role:admin|data_entry|super_admin', \App\Http\Middle
     Route::get('batches/stats', [Admin\BatchController::class, 'stats'])->name('batches.stats');
     Route::resource('batches', Admin\BatchController::class);
     Route::post('batches/{batch}/ready', [Admin\BatchController::class, 'markReady'])->name('batches.ready');
-    Route::get('batches/{batch}/summary', [Admin\BatchController::class, 'summary'])->name('batches.summary')->middleware('signed');
+    Route::get('batches/{batch}/summary', [Admin\BatchController::class, 'summary'])->name('batches.summary');
     Route::get('batches/{batch}/attendance', [Admin\BatchController::class, 'attendance'])->name('batches.attendance');
-    Route::get('batches/{batch}/attendance-sheet', [Admin\BatchController::class, 'attendanceSheet'])->name('batches.attendance-sheet')->middleware('signed');
-    Route::get('batches/{batch}/answer-sheets', [Admin\BatchController::class, 'answerSheets'])->name('batches.answer-sheets')->middleware('signed');
+    Route::get('batches/{batch}/attendance-sheet', [Admin\BatchController::class, 'attendanceSheet'])->name('batches.attendance-sheet');
+    Route::get('batches/{batch}/answer-sheets', [Admin\BatchController::class, 'answerSheets'])->name('batches.answer-sheets');
     Route::post('batches/{batch}/scans', [Admin\BatchController::class, 'uploadScan'])->name('batches.scans.upload');
     Route::post('batches/{batch}/mark-attendance', [Admin\BatchController::class, 'markAttendance'])->name('batches.attendance.mark');
     Route::post('batches/{batch}/toggle-results', [Admin\BatchController::class, 'toggleResults'])->name('batches.toggle-results');
@@ -20415,7 +20693,7 @@ Route::middleware(['auth', 'role:admin|data_entry|super_admin', \App\Http\Middle
 
     // Attendance Sheets
     Route::get('attendance', [Admin\AttendanceController::class, 'index'])->name('attendance.index');
-    Route::get('attendance/print/{batch}', [Admin\AttendanceController::class, 'print'])->name('attendance.print')->middleware('signed');
+    Route::get('attendance/print/{batch}', [Admin\AttendanceController::class, 'print'])->name('attendance.print');
 
     // User Management (super_admin only)
     Route::middleware('role:super_admin')->group(function () {

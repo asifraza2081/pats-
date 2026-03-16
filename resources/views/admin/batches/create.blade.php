@@ -451,14 +451,25 @@ document.addEventListener('DOMContentLoaded', () => {
             const isSelectedCity = cityArray.length === 0 || cityArray.includes(cid);
             if (isSelectedCity) currentSelectionTotal += group.pending;
 
-            poolCitiesList.innerHTML += `
-                <div class="p-3 border-bottom ${isSelectedCity ? 'border-start border-4 border-success' : ''}" style="opacity: ${isSelectedCity ? '1' : '0.4'}">
-                    <div class="d-flex justify-content-between align-items-center mb-1">
-                        <span class="fw-bold">${group.name}</span>
-                        <span class="badge ${isSelectedCity ? 'bg-success' : 'bg-secondary'} text-white">${group.pending}</span>
-                    </div>
-                </div>
-            `;
+            const div = document.createElement('div');
+            div.className = `p-3 border-bottom ${isSelectedCity ? 'border-start border-4 border-success' : ''}`;
+            div.style.opacity = isSelectedCity ? '1' : '0.4';
+            
+            const inner = document.createElement('div');
+            inner.className = 'd-flex justify-content-between align-items-center mb-1';
+            
+            const nameSpan = document.createElement('span');
+            nameSpan.className = 'fw-bold';
+            nameSpan.textContent = group.name;
+            
+            const badgeSpan = document.createElement('span');
+            badgeSpan.className = `badge ${isSelectedCity ? 'bg-success' : 'bg-secondary'} text-white`;
+            badgeSpan.textContent = group.pending;
+            
+            inner.appendChild(nameSpan);
+            inner.appendChild(badgeSpan);
+            div.appendChild(inner);
+            poolCitiesList.appendChild(div);
         });
 
         totalPendingBadge.innerText = currentSelectionTotal;

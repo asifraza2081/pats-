@@ -39,6 +39,19 @@ class ProjectCenterController extends Controller
             'examiner.*' => 'nullable|exists:users,id',
         ]);
 
+        // Validate that all selected examiners actually have the 'examiner' role [S5]
+        $examinerIds = array_filter($request->examiner ?? []);
+        if (!empty($examinerIds)) {
+            $invalidCount = \App\Models\User::whereIn('id', $examinerIds)
+                ->whereDoesntHave('roles', function($q) {
+                    $q->where('name', 'examiner');
+                })->count();
+            
+            if ($invalidCount > 0) {
+                return back()->with('error', 'One or more selected users do not have the examiner role.');
+            }
+        }
+
         $syncData = [];
         foreach ($request->centers as $centerId) {
             $syncData[$centerId] = [

@@ -20,9 +20,12 @@ class InactivityLogout
             $lastActivity = session('last_activity');
             // Convert minutes to seconds
 
-            // default to 15 mins if not set specifically, but session.lifetime is usually 120
-            // We want stricter 15m for examiners/admins
-            $inactivityLimit = 15 * 60; 
+            // Role-based inactivity limits
+            if (Auth::user()->hasAnyRole(['admin', 'super_admin', 'data_entry', 'examiner'])) {
+                $inactivityLimit = 15 * 60; // 15 mins for staff
+            } else {
+                $inactivityLimit = 60 * 60; // 60 mins for candidates
+            }
 
             if ($lastActivity && (time() - $lastActivity > $inactivityLimit)) {
                 Auth::logout();

@@ -100,9 +100,6 @@ class RollNumberService
                     'roll_no'        => $rollNo,
                     'barcode'        => $rollNo, // Using roll_no as barcode for integrity and uniqueness
                     'batch_no'       => (string)$batch->batch_number,
-                    'test_date'      => $testDateStr,
-                    'reporting_time' => $batch->reporting_time,
-                    'start_time'     => $batch->start_time,
                     'slip_ready'     => 0,
                     'created_at'     => now(),
                     'updated_at'     => now(),

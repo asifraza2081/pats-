@@ -12,12 +12,14 @@ class DashboardController extends Controller
     public function index()
     {
         $user = Auth::user();
-        
-        // Fetch centers assigned to this examiner
-        $assignedCenterIds = $user->assignedCenters()->pluck('test_centers.id');
+        // Fetch centers AND projects assigned to this examiner via project_centers table
+        $assignments = $user->assignedCenters()->get();
+        $centerIds = $assignments->pluck('id')->unique();
+        $projectIds = $assignments->pluck('pivot.project_id')->unique();
 
         $sessions = Batch::with(['project', 'center.city'])
-            ->whereIn('center_id', $assignedCenterIds)
+            ->whereIn('center_id', $centerIds)
+            ->whereIn('project_id', $projectIds)
             ->where('test_date', '>=', now()->startOfDay())
             ->orderBy('test_date')
             ->get();

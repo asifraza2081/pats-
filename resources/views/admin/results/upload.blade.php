@@ -51,6 +51,12 @@
                     </div>
 
                     <div class="mb-4">
+                        <label class="form-label required">Score Sheet (CSV/Excel)</label>
+                        <input type="file" name="file" class="form-control @error('file') is-invalid @enderror" accept=".csv,.xlsx,.xls" required>
+                        @error('file') <div class="invalid-feedback">{{ $message }}</div> @enderror
+                    </div>
+
+                    <div class="mb-4">
                         <label class="form-label">Scanned Answer Sheets (Optional)</label>
                         <input type="file" name="scans[]" class="form-control" multiple accept="image/*,.pdf">
                         <div class="form-hint">Tip: Name files as roll_number (e.g., 764420.jpg) for auto-matching.</div>

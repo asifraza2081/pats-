@@ -72,9 +72,11 @@ class BatchController extends Controller
             foreach ($centerIds as $centerId) {
                 $center = TestCenter::findOrFail($centerId);
                 
-                // 1. Physical Capacity Check
+                // 1. Physical Capacity Check [FIXED]
+                // Each center in the loop gets a batch. The 'total_seats' in request represents 
+                // the capacity for EACH session/center selected.
                 if ($data['total_seats'] > $center->seating_capacity) {
-                    throw new \Exception("Center '{$center->name}' only has {$center->seating_capacity} seats, but {$data['total_seats']} were requested.");
+                    throw new \Exception("Center '{$center->name}' only has {$center->seating_capacity} seats, but {$data['total_seats']} were requested per center.");
                 }
 
                 // 2. Conflict Detection (Same center, same date, overlapping time)
