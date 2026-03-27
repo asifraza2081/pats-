@@ -2,7 +2,7 @@
 @section('title', 'Sign In — PATS')
 
 @section('content')
-<div class="page page-center h-100 bg-white">
+<div class="page page-center h-100">
     <div class="container container-tight py-4" style="max-width: 400px;">
         <div class="text-center mb-4">
             <a href="{{ route('home') }}" class="navbar-brand navbar-brand-autodark">

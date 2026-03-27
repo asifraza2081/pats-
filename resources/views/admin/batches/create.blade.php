@@ -37,6 +37,23 @@
                             </ul>
                         </div>
                         @endif
+                        
+                        <div class="alert alert-primary-lt border-0 shadow-sm mb-4">
+                            <div class="d-flex">
+                                <div><i class="ti ti-info-circle fs-2 me-2"></i></div>
+                                <div>
+                                    <h4 class="alert-title fw-bold">Dumbproof Tip: Automation Logic</h4>
+                                    <div class="text-secondary small">
+                                        The allocation engine automatically selects candidates who match <strong>ALL</strong> of the following:
+                                        <ul class="mb-0 mt-1">
+                                            <li><strong>Verified Payment</strong>: Only candidates with confirmed receipts.</li>
+                                            <li><strong>City Match</strong>: Their "Desired Test City" must match the City of the selected Test Center.</li>
+                                            <li><strong>Unique Assignment</strong>: Candidates already assigned to <em>any</em> other session for this project are automatically skipped.</li>
+                                        </ul>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
 
                         <div class="row g-4">
                             <!-- Step 1: Project -->
@@ -84,6 +101,7 @@
                                     <div class="col-6">
                                         <label class="form-label required">Session Number</label>
                                         <input type="number" name="batch_number" class="form-control" value="1" min="1" required>
+                                        <div class="form-hint">e.g. 1 for Morning, 2 for Evening shift.</div>
                                     </div>
                                     <div class="col-6">
                                         <label class="form-label required">Test Date</label>

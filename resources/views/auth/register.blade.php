@@ -2,7 +2,7 @@
 @section('title', 'Candidate Registration — PATS')
 
 @section('content')
-<div class="page page-center h-100 bg-white">
+<div class="page page-center h-100">
     <div class="container container-tight py-4" style="max-width: 550px;">
         <div class="text-center mb-4">
             <a href="{{ route('home') }}" class="navbar-brand navbar-brand-autodark">
@@ -93,7 +93,7 @@
                     </div>
                     
                     <div class="form-footer mt-4">
-                        <button type="submit" class="btn btn-primary w-100 fw-bold fs-3 py-2"><i class="ti ti-mail-forward me-2"></i> Register & Get OTP</button>
+                        <button type="submit" class="btn btn-primary w-100 fw-bold fs-3 py-2"><i class="ti ti-user-plus me-2"></i> Create Account</button>
                     </div>
                 </form>
             </div>

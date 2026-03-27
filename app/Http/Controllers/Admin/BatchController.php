@@ -21,6 +21,7 @@ use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Storage;
+use Illuminate\Support\Str;
 
 class BatchController extends Controller
 {
@@ -33,7 +34,8 @@ class BatchController extends Controller
     public function index()
     {
         $batches = Batch::with(['project', 'center.city'])->latest()->paginate(25);
-        return view('admin.batches.index', compact('batches'));
+        $projects = Project::whereHas('batches')->orderBy('name')->get();
+        return view('admin.batches.index', compact('batches', 'projects'));
     }
 
     public function create()
@@ -192,6 +194,7 @@ class BatchController extends Controller
 
     public function update(UpdateBatchRequest $request, Batch $batch)
     {
+        abort_if($batch->results_published, 403, 'Cannot update a test session after results have been published.');
         $data = $request->validated();
         $batch->update($data);
         return back()->with('success', 'Test Session updated.');
@@ -209,12 +212,13 @@ class BatchController extends Controller
     /** Mark all roll numbers in batch as slip_ready and SMS all candidates */
     public function markReady(Batch $batch)
     {
+        abort_if($batch->results_published, 403, 'Cannot publish slips for a session that already has results declared.');
         $count = $this->rollNumbers->markBatchReady($batch);
 
         \App\Models\ActivityLog::log('publish_slips', $batch, ['count' => $count]);
 
         // Dispatch event for notifications
-        SlipsPublished::dispatch($batch);
+        event(new SlipsPublished($batch));
 
         return back()->with('success', "{$count} roll number slips marked ready. Candidates notified.");
     }
@@ -227,34 +231,109 @@ class BatchController extends Controller
         return view('admin.batches.summary-print', compact('batch', 'summary'));
     }
 
+    /**
+     * Internal helper to save PDF to a structured hierarchical repository
+     */
+    private function savePdfToHierarchy($pdf, $batch, $type)
+    {
+        $date = $batch->test_date->toDateString();
+        $projectSlug = Str::slug($batch->project->name);
+        $centerSlug = Str::slug($batch->center->name);
+        
+        $directory = "exports/{$date}/{$projectSlug}/{$centerSlug}";
+        $filename = "{$type}_B{$batch->id}_" . now()->format('His') . ".pdf";
+        $path = "{$directory}/{$filename}";
+        
+        Storage::disk('public')->put($path, $pdf->output());
+        return $path;
+    }
+
     /** Printable attendance sheet for this batch (Image 2 equivalent) */
     public function attendanceSheet(Batch $batch)
     {
         if ($batch->booked_seats == 0) {
             return back()->with('error', 'Cannot generate Attendance Sheet for an empty batch.');
         }
-        $batch->load(['project', 'center.city']);
-        // Flatten roster for attendance sheet
-        $roster = $this->rollNumbers->batchRoster($batch);
-        $pdf = Pdf::loadView('pdf.attendance', compact('batch', 'roster'))->setPaper('a4', 'portrait');
-        return $pdf->stream("Attendance_{$batch->center->tcid}_{$batch->test_date->format('Ymd')}.pdf");
+
+        // Technical Guards for Bulk Generation
+        ini_set('memory_limit', '1G');
+        set_time_limit(300);
+
+        try {
+            $batch->load(['project', 'center.city']);
+            $roster = $this->rollNumbers->batchRoster($batch);
+            
+            $pdf = Pdf::loadView('pdf.attendance', compact('batch', 'roster'))->setPaper('a4', 'portrait');
+            
+            // IRONMAN: Save to hierarchy
+            $this->savePdfToHierarchy($pdf, $batch, 'attendance');
+            
+            return $pdf->stream("Attendance_{$batch->center->tcid}_{$batch->test_date->format('Ymd')}.pdf");
+        } catch (\Exception $e) {
+            \Log::error("Attendance Sheet Generation Failed: " . $e->getMessage());
+            return back()->with('error', 'Document generation failed: ' . $e->getMessage());
+        }
     }
 
     /** NTS-style printable Answer Sheets for all candidates in batch */
     public function answerSheets(Batch $batch)
     {
-        if ($batch->booked_seats > 500) {
-            return back()->with('error', 'Batch too large for bulk generation (Max 500). Please download post-wise or in smaller sessions.');
+        if ($batch->booked_seats > 750) {
+            return back()->with('error', 'Batch too large for bulk generation (Max 750). Please download in smaller sessions.');
         }
-        $batch->load(['project.jobs', 'center.city']);
-        // Get all roll numbers in one flat list for bulk PDF
-        $roster = ExamRollno::where('batch_id', $batch->id)
-            ->with(['application.candidate.user', 'job'])
-            ->orderBy('roll_no')
-            ->get();
 
-        $pdf = Pdf::loadView('pdf.answer-sheet', compact('batch', 'roster'))->setPaper('a4', 'portrait');
-        return $pdf->stream("AnswerSheets_{$batch->center->tcid}.pdf");
+        // Technical Guards for Bulk Generation
+        ini_set('memory_limit', '1G');
+        set_time_limit(300);
+
+        try {
+            $batch->load(['project.jobs', 'center.city']);
+            // Get all roll numbers in one flat list for bulk PDF
+            $roster = ExamRollno::where('batch_id', $batch->id)
+                ->with(['application.candidate.user', 'job'])
+                ->orderBy('roll_no')
+                ->get();
+
+            $pdf = Pdf::loadView('pdf.answer-sheet', compact('batch', 'roster'))->setPaper('a4', 'portrait');
+            
+            // IRONMAN: Save to hierarchy
+            $this->savePdfToHierarchy($pdf, $batch, 'answer_sheets');
+            
+            return $pdf->stream("AnswerSheets_{$batch->center->tcid}.pdf");
+        } catch (\Exception $e) {
+            \Log::error("Answer Sheet Generation Failed: " . $e->getMessage());
+            return back()->with('error', 'Bulk answer sheet generation failed: ' . $e->getMessage());
+        }
+    }
+
+    /** Bulk Print Roll Number Slips for the entire batch */
+    public function bulkSlips(Batch $batch)
+    {
+        if ($batch->booked_seats > 750) {
+            return back()->with('error', 'Batch too large for bulk generation (Max 750). Please download in smaller sessions.');
+        }
+
+        // Technical Guards
+        ini_set('memory_limit', '1G');
+        set_time_limit(300);
+
+        try {
+            $batch->load(['project', 'center.city']);
+            $roster = ExamRollno::where('batch_id', $batch->id)
+                ->with(['application.candidate.user', 'job.project', 'center.city'])
+                ->orderBy('roll_no')
+                ->get();
+
+            $pdf = Pdf::loadView('pdf.bulk-slips', compact('batch', 'roster'))->setPaper('a4', 'portrait');
+            
+            // IRONMAN: Save to hierarchy
+            $this->savePdfToHierarchy($pdf, $batch, 'bulk_slips');
+            
+            return $pdf->stream("RollNoSlips_{$batch->center->tcid}.pdf");
+        } catch (\Exception $e) {
+            \Log::error("Bulk Slips Generation Failed: " . $e->getMessage());
+            return back()->with('error', 'Bulk slip generation failed: ' . $e->getMessage());
+        }
     }
 
     /** Show attendance management (upload scans + mark appeared/absent) */
@@ -280,7 +359,12 @@ class BatchController extends Controller
 
         $uploaded = 0;
         foreach ($request->file('scans') as $i => $file) {
-            $path = $file->store("attendance_scans/batch_{$batch->id}", 'public');
+            // New Hierarchical Structure: attendance_scans/YYYY-MM-DD/project_ID/batch_ID/
+            $dateFolder = $batch->test_date->toDateString();
+            $targetPath = "attendance_scans/{$dateFolder}/project_{$batch->project_id}/batch_{$batch->id}";
+            
+            $path = $file->store($targetPath, 'public');
+            
             AttendanceScan::create([
                 'batch_id'    => $batch->id,
                 'project_id'  => $batch->project_id,
@@ -343,5 +427,37 @@ class BatchController extends Controller
         $batch->update(['results_published' => !$batch->results_published]);
         $status = $batch->results_published ? 'published' : 'unpublished';
         return back()->with('success', "Results for this session are now {$status}.");
+    }
+
+    /** AJAX: Get centers and batches for a specific project (Print Portal) */
+    public function centersForProject(Project $project)
+    {
+        $centers = TestCenter::whereHas('batches', function ($q) use ($project) {
+            $q->where('project_id', $project->id);
+        })
+        ->with(['city', 'batches' => function ($q) use ($project) {
+            $q->where('project_id', $project->id)->orderBy('batch_number');
+        }])
+        ->get();
+
+        $data = $centers->map(function ($center) {
+            return [
+                'id' => $center->id,
+                'name' => $center->name,
+                'city' => $center->city->name,
+                'batches' => $center->batches->map(function ($batch) {
+                    return [
+                        'id' => $batch->id,
+                        'batch_number' => $batch->batch_number,
+                        'booked_seats' => $batch->booked_seats,
+                        'slips_url' => route('admin.batches.bulk-slips', $batch),
+                        'attendance_url' => route('admin.batches.attendance-sheet', $batch),
+                        'omr_url' => route('admin.batches.answer-sheets', $batch),
+                    ];
+                })
+            ];
+        });
+
+        return response()->json($data);
     }
 }

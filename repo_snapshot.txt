@@ -94,54 +94,6 @@
 
 
 
-===== FILE: .\debug_examiner.php =====
-<?php
-use App\Models\User;
-use App\Models\Batch;
-use Illuminate\Support\Facades\DB;
-
-require __DIR__ . '/vendor/autoload.php';
-$app = require_once __DIR__ . '/bootstrap/app.php';
-$kernel = $app->make(Illuminate\Contracts\Console\Kernel::class);
-$kernel->bootstrap();
-
-$email = 'examiner@pats.test';
-$user = User::where('email', $email)->first();
-
-if (!$user) {
-    echo "User not found\n";
-    exit;
-}
-
-echo "User: " . $user->full_name . " (ID: " . $user->id . ")\n";
-
-$centers = $user->assignedCenters;
-echo "Assigned Centers Count: " . $centers->count() . "\n";
-foreach ($centers as $center) {
-    echo " - Center: " . $center->name . " (ID: " . $center->id . ") [Project ID: " . $center->pivot->project_id . "]\n";
-}
-
-$assignedCenterIds = $centers->pluck('id')->toArray();
-echo "Center IDs: " . implode(', ', $assignedCenterIds) . "\n";
-
-$sessions = Batch::whereIn('center_id', $assignedCenterIds)
-    ->where('test_date', '>=', now()->toDateString())
-    ->get();
-
-echo "Sessions visible to Examiner: " . $sessions->count() . "\n";
-foreach ($sessions as $s) {
-    echo " - Session ID: " . $s->id . " | Project: " . $s->project->name . " | Center: " . $s->center->name . " | Date: " . $s->test_date . "\n";
-}
-
-// Check if there are ANY sessions in the system
-$allSessions = Batch::all();
-echo "Total Sessions in system: " . $allSessions->count() . "\n";
-foreach ($allSessions as $s) {
-    echo " - System Session ID: " . $s->id . " | Center ID: " . $s->center_id . " | Date: " . $s->test_date . "\n";
-}
-
-
-
 ===== FILE: .\package-lock.json =====
 {
     "name": "pats",
@@ -3350,9 +3302,11 @@ class BatchController extends Controller
             foreach ($centerIds as $centerId) {
                 $center = TestCenter::findOrFail($centerId);
                 
-                // 1. Physical Capacity Check
+                // 1. Physical Capacity Check [FIXED]
+                // Each center in the loop gets a batch. The 'total_seats' in request represents 
+                // the capacity for EACH session/center selected.
                 if ($data['total_seats'] > $center->seating_capacity) {
-                    throw new \Exception("Center '{$center->name}' only has {$center->seating_capacity} seats, but {$data['total_seats']} were requested.");
+                    throw new \Exception("Center '{$center->name}' only has {$center->seating_capacity} seats, but {$data['total_seats']} were requested per center.");
                 }
 
                 // 2. Conflict Detection (Same center, same date, overlapping time)
@@ -3931,6 +3885,19 @@ class ProjectCenterController extends Controller
             'examiner' => 'nullable|array',
             'examiner.*' => 'nullable|exists:users,id',
         ]);
+
+        // Validate that all selected examiners actually have the 'examiner' role [S5]
+        $examinerIds = array_filter($request->examiner ?? []);
+        if (!empty($examinerIds)) {
+            $invalidCount = \App\Models\User::whereIn('id', $examinerIds)
+                ->whereDoesntHave('roles', function($q) {
+                    $q->where('name', 'examiner');
+                })->count();
+            
+            if ($invalidCount > 0) {
+                return back()->with('error', 'One or more selected users do not have the examiner role.');
+            }
+        }
 
         $syncData = [];
         foreach ($request->centers as $centerId) {
@@ -4559,8 +4526,9 @@ class AuthController extends Controller
         }
 
         if ($purpose === 'reset_password') {
+            session(['otp_user_id' => $userId]); // Keep consistent with resetPassword() reading reset_user_id below
             session(['reset_user_id' => $userId]);
-            session()->forget(['otp_user_id', 'otp_purpose']);
+            session()->forget(['otp_purpose']);
             return redirect()->route('auth.reset-password');
         }
 
@@ -4572,9 +4540,19 @@ class AuthController extends Controller
         $userId = session('otp_user_id');
         if (!$userId) return redirect()->route('login');
 
+        // Simple Rate Limit: Check last sent time if we added one (future improvement)
+        // For now, just ensure the user exists
         $user = User::findOrFail($userId);
+        
+        // Prevent abuse: only allow resend every 60 seconds (simulated via session)
+        if (session('last_otp_resend') && now()->diffInSeconds(session('last_otp_resend')) < 60) {
+            return back()->with('error', 'Please wait 60 seconds before requesting another OTP.');
+        }
+
         $otp  = $user->generateOtp();
         $this->sms->send($user->phone, "PATS: Your OTP is {$otp}. Valid for 10 minutes.", $user->id);
+        
+        session(['last_otp_resend' => now()]);
 
         return back()->with('success', 'OTP resent to ' . $user->phone);
     }
@@ -4730,26 +4708,20 @@ class ApplicationController extends Controller
 
         abort_if(!$project->isRegistrationOpen(), 403);
 
-        // EXTRA GUARD: Atomic check for existing application to prevent race conditions during concurrent POST
-        $existing = Application::where('candidate_id', $candidate->id)
-            ->where('job_id', $job->id)
-            ->first();
-            
-        if ($existing) {
-            return redirect()->route('candidate.applications')->with('info', 'You have already applied for this position.');
-        }
-
-        $data = $request->validate([
-            'desired_test_city_id' => 'required|exists:cities,id',
-            'age_relaxation_type'  => 'nullable|string|max:80',
-            'age_relaxation_years' => 'nullable|integer|min:1|max:10',
-        ]);
-
-        // Re-run eligibility
-        $eligResult = $this->eligibility->check($candidate, $job);
-
         try {
             DB::transaction(function () use ($candidate, $job, $data, $eligResult) {
+                // LOCK CANDIDATE and re-check application to prevent race conditions
+                $candidateLocked = \App\Models\Candidate::where('id', $candidate->id)->lockForUpdate()->first();
+                
+                $existing = Application::where('candidate_id', $candidate->id)
+                    ->where('job_id', $job->id)
+                    ->lockForUpdate()
+                    ->first();
+                    
+                if ($existing) {
+                    throw new \Exception('DUPLICATE_APPLICATION');
+                }
+
                 $application = Application::create([
                     'candidate_id'          => $candidate->id,
                     'job_id'                => $job->id,
@@ -4774,8 +4746,8 @@ class ApplicationController extends Controller
                 // Lock profile
                 $candidate->update(['profile_locked' => true]);
             });
-        } catch (\Illuminate\Database\QueryException $e) {
-            if ($e->getCode() === '23000') { // Duplicate entry
+        } catch (\Exception $e) {
+            if ($e->getMessage() === 'DUPLICATE_APPLICATION') {
                 return redirect()->route('candidate.applications')->with('info', 'You have already applied for this position.');
             }
             throw $e;
@@ -5009,12 +4981,14 @@ class DashboardController extends Controller
     public function index()
     {
         $user = Auth::user();
-        
-        // Fetch centers assigned to this examiner
-        $assignedCenterIds = $user->assignedCenters()->pluck('test_centers.id');
+        // Fetch centers AND projects assigned to this examiner via project_centers table
+        $assignments = $user->assignedCenters()->get();
+        $centerIds = $assignments->pluck('id')->unique();
+        $projectIds = $assignments->pluck('pivot.project_id')->unique();
 
         $sessions = Batch::with(['project', 'center.city'])
-            ->whereIn('center_id', $assignedCenterIds)
+            ->whereIn('center_id', $centerIds)
+            ->whereIn('project_id', $projectIds)
             ->where('test_date', '>=', now()->startOfDay())
             ->orderBy('test_date')
             ->get();
@@ -5132,8 +5106,13 @@ class ResultController extends Controller
         $results = collect();
         if ($query) {
             $results = Result::with(['application.candidate.user', 'application.job.project'])
-                ->whereNotNull('published_at') // ONLY SHOW PUBLISHED RESULTS
-                ->where('roll_no', $query)
+                ->where('published_at', '<=', now()) // ONLY SHOW PUBLISHED RESULTS
+                ->where(function($q) use ($query) {
+                    $q->where('roll_no', $query)
+                      ->orWhereHas('application.candidate.user', function($u) use ($query) {
+                          $u->where('cnic', $query);
+                      });
+                })
                 ->get();
         }
 
@@ -5149,6 +5128,39 @@ class ResultController extends Controller
 
         // Used by QR Code scans on result cards
         return view('public.results', compact('result'));
+    }
+}
+
+
+
+===== FILE: .\app\Http\Middleware\AccountStatusMiddleware.php =====
+<?php
+
+namespace App\Http\Middleware;
+
+use Closure;
+use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Auth;
+use Symfony\Component\HttpFoundation\Response;
+
+class AccountStatusMiddleware
+{
+    /**
+     * Handle an incoming request.
+     *
+     * @param  \Closure(\Illuminate\Http\Request): (\Symfony\Component\HttpFoundation\Response)  $next
+     */
+    public function handle(Request $request, Closure $next): Response
+    {
+        if (Auth::check() && !Auth::user()->is_active) {
+            Auth::logout();
+            $request->session()->invalidate();
+            $request->session()->regenerateToken();
+            
+            return redirect()->route('login')->withErrors(['cnic' => 'Your account has been suspended. Please contact the administrator.']);
+        }
+
+        return $next($request);
     }
 }
 
@@ -5177,9 +5189,12 @@ class InactivityLogout
             $lastActivity = session('last_activity');
             // Convert minutes to seconds
 
-            // default to 15 mins if not set specifically, but session.lifetime is usually 120
-            // We want stricter 15m for examiners/admins
-            $inactivityLimit = 15 * 60; 
+            // Role-based inactivity limits
+            if (Auth::user()->hasAnyRole(['admin', 'super_admin', 'data_entry', 'examiner'])) {
+                $inactivityLimit = 15 * 60; // 15 mins for staff
+            } else {
+                $inactivityLimit = 60 * 60; // 60 mins for candidates
+            }
 
             if ($lastActivity && (time() - $lastActivity > $inactivityLimit)) {
                 Auth::logout();
@@ -5825,14 +5840,34 @@ class Application extends Model
             ? Carbon::parse($project->close_date)->year
             : Carbon::now()->year;
 
-        return $query->join('candidates', 'applications.candidate_id', '=', 'candidates.id')
+        $query = $query->join('candidates', 'applications.candidate_id', '=', 'candidates.id')
             ->join('pats_jobs', 'applications.job_id', '=', 'pats_jobs.id')
             ->whereRaw('(pats_jobs.min_degree_level IS NULL OR pats_jobs.min_degree_level <= (
                 SELECT MAX(degree_level) FROM education_history 
                 WHERE candidate_id = candidates.id 
                 AND passing_year <= ?
-            ))', [$closeYear])
-            ->whereRaw('(pats_jobs.age_min IS NULL OR (TIMESTAMPDIFF(YEAR, candidates.dob, ?) >= pats_jobs.age_min AND (pats_jobs.age_max IS NULL OR TIMESTAMPDIFF(YEAR, candidates.dob, ?) <= pats_jobs.age_max)))', [$closeDate, $closeDate]);
+            ))', [$closeYear]);
+
+        // Portable Age Calculation [FIXED]
+        // Instead of MySQL TIMESTAMPDIFF, we calculate the date boundaries in PHP
+        $carbonClose = Carbon::parse($closeDate);
+        
+        return $query->where(function($q) use ($carbonClose) {
+            $q->where(function($sq) use ($carbonClose) {
+                // age_min check: dob must be before or on (closeDate - age_min years)
+                $sq->whereNull('pats_jobs.age_min')
+                   ->orWhere('candidates.dob', '<=', function($sub) use ($carbonClose) {
+                       $sub->selectRaw('DATE_SUB(?, INTERVAL pats_jobs.age_min YEAR)', [$carbonClose]);
+                   });
+            })->where(function($sq) use ($carbonClose) {
+                // age_max check: dob must be after or on (closeDate - (age_max + 1) years + 1 day)
+                // Roughly: dob >= (closeDate - age_max years)
+                $sq->whereNull('pats_jobs.age_max')
+                   ->orWhere('candidates.dob', '>=', function($sub) use ($carbonClose) {
+                       $sub->selectRaw('DATE_SUB(?, INTERVAL (pats_jobs.age_max + 1) YEAR)', [$carbonClose]);
+                   });
+            });
+        });
     }
 }
 
@@ -6200,14 +6235,10 @@ class ExamRollno extends Model
         'roll_no',
         'barcode',
         'batch_no',
-        'test_date',
-        'reporting_time',
-        'start_time',
         'slip_ready',
     ];
 
     protected $casts = [
-        'test_date' => 'date',
         'slip_ready' => 'boolean',
     ];
 
@@ -6382,7 +6413,7 @@ class Payment extends Model
             if ($attempts >= $maxAttempts) {
                 throw new \RuntimeException("Failed to generate a unique challan reference after {$maxAttempts} attempts.");
             }
-            $ref = 'PATS-' . strtoupper(substr(md5(uniqid(mt_rand(), true)), 0, 8));
+            $ref = 'PATS-' . strtoupper(bin2hex(random_bytes(5)));
             $attempts++;
         } while (static::where('challan_ref', $ref)->exists());
 
@@ -6568,6 +6599,7 @@ class User extends Authenticatable
     protected $fillable = [
         'first_name', 'last_name', 'email', 'cnic', 'phone',
         'nationality', 'password', 'otp', 'otp_expires_at', 'is_active',
+        'phone_verified_at', 'email_verified_at',
     ];
 
     protected $hidden = ['password', 'remember_token', 'otp'];
@@ -7176,9 +7208,6 @@ class RollNumberService
                     'roll_no'        => $rollNo,
                     'barcode'        => $rollNo, // Using roll_no as barcode for integrity and uniqueness
                     'batch_no'       => (string)$batch->batch_number,
-                    'test_date'      => $testDateStr,
-                    'reporting_time' => $batch->reporting_time,
-                    'start_time'     => $batch->start_time,
                     'slip_ready'     => 0,
                     'created_at'     => now(),
                     'updated_at'     => now(),
@@ -7367,6 +7396,7 @@ return Application::configure(basePath: dirname(__DIR__))
     )
     ->withMiddleware(function (Middleware $middleware): void {
         $middleware->append(\App\Http\Middleware\SecurityHeaders::class);
+        $middleware->append(\App\Http\Middleware\AccountStatusMiddleware::class);
         $middleware->alias([
             'role' => \Spatie\Permission\Middleware\RoleMiddleware::class,
             'permission' => \Spatie\Permission\Middleware\PermissionMiddleware::class,
@@ -10418,6 +10448,40 @@ return new class extends Migration
 
 
 
+===== FILE: .\database\migrations\2026_03_16_012254_normalize_exam_rollnos_table.php =====
+<?php
+
+use Illuminate\Database\Migrations\Migration;
+use Illuminate\Database\Schema\Blueprint;
+use Illuminate\Support\Facades\Schema;
+
+return new class extends Migration
+{
+    /**
+     * Run the migrations.
+     */
+    public function up(): void
+    {
+        Schema::table('exam_rollnos', function (Blueprint $table) {
+            $table->dropColumn(['test_date', 'reporting_time', 'start_time']);
+        });
+    }
+
+    /**
+     * Reverse the migrations.
+     */
+    public function down(): void
+    {
+        Schema::table('exam_rollnos', function (Blueprint $table) {
+            $table->date('test_date')->nullable();
+            $table->time('reporting_time')->nullable();
+            $table->time('start_time')->nullable();
+        });
+    }
+};
+
+
+
 ===== FILE: .\database\seeders\AdminExaminerFlowSeeder.php =====
 <?php
 
@@ -10959,54 +11023,37 @@ class SystemStagingSeeder extends Seeder
         }
 
         // 5. Candidate Generation (Bulk Insert Strategy)
-        $this->command->info("Seeding 500 Candidates and Applications... (This may take a moment)");
+        $this->command->info("Seeding 500 Candidates and Applications...");
         
-        $users = [];
-        $candidates = [];
-        $educations = [];
-        $applications = [];
+        $proBar = $this->command->getOutput()->createProgressBar(500);
 
         for ($i = 0; $i < 500; $i++) {
-            $email = "test.candidate." . ($i + 1) . "@example.com";
-            $cnic = '55555' . str_pad($i, 8, '0', STR_PAD_LEFT);
-            $userId = ($i + 4000); // Offset to avoid collisions with static seeds
-
-            $users[] = [
-                'id' => $userId,
+            $user = User::create([
                 'first_name' => 'Candidate',
                 'last_name' => '#' . ($i + 1),
-                'email' => $email,
-                'cnic' => $cnic,
+                'email' => "candidate." . ($i + 1) . "@example.com",
+                'cnic' => '55555' . str_pad($i, 8, '0', STR_PAD_LEFT),
                 'phone' => '0300' . str_pad($i, 7, '0', STR_PAD_LEFT),
                 'password' => Hash::make('password'),
                 'nationality' => 'Pakistani',
                 'phone_verified_at' => now(),
                 'email_verified_at' => now(),
-                'created_at' => now(),
-                'updated_at' => now(),
-            ];
+            ]);
+            $user->assignRole('candidate');
 
-            $candId = ($i + 4000);
-            $gender = rand(0, 1) ? 'Male' : 'Female';
-            $city = $cities[array_rand($cities)];
-
-            $candidates[] = [
-                'id' => $candId,
-                'user_id' => $userId,
+            $candidate = Candidate::create([
+                'user_id' => $user->id,
                 'father_name' => "Father of " . ($i + 1),
-                'gender' => $gender,
+                'gender' => rand(0, 1) ? 'Male' : 'Female',
                 'dob' => Carbon::now()->subYears(rand(22, 40))->format('Y-m-d'),
-                'domicile_city_id' => $city->id,
-                'address_city_id' => $city->id,
+                'domicile_city_id' => $cities[array_rand($cities)]->id,
+                'address_city_id' => $cities[array_rand($cities)]->id,
                 'postal_address' => "Address of candidate " . ($i + 1),
                 'profile_locked' => true,
-                'created_at' => now(),
-                'updated_at' => now(),
-            ];
+            ]);
 
-            // Add High Education (Degree level 4 = Masters)
-            $educations[] = [
-                'candidate_id' => $candId,
+            EducationHistory::create([
+                'candidate_id' => $candidate->id,
                 'degree_level' => 4,
                 'degree_name' => 'Master of Science',
                 'subject_major' => 'General Studies',
@@ -11015,42 +11062,24 @@ class SystemStagingSeeder extends Seeder
                 'marks_type' => 'CGPA',
                 'obtained_marks' => 3.5,
                 'total_marks' => 4.0,
-                'created_at' => now(),
-                'updated_at' => now(),
-            ];
+            ]);
 
-            // Apply to 2 random jobs from different projects
+            // Apply to 2 random jobs
             $chosenJobs = array_rand($jobs, 2);
             foreach ($chosenJobs as $jIdx) {
                 $job = $jobs[$jIdx];
-                $applications[] = [
-                    'candidate_id' => $candId,
+                Application::create([
+                    'candidate_id' => $candidate->id,
                     'project_id' => $job->project_id,
                     'job_id' => $job->id,
-                    'desired_test_city_id' => $city->id,
-                    'status' => 'fee_paid', // Majority as paid for testing
+                    'desired_test_city_id' => $candidate->domicile_city_id,
+                    'status' => 'fee_paid',
                     'applied_at' => now()->subDays(rand(1, 10)),
-                    'created_at' => now(),
-                    'updated_at' => now(),
-                ];
+                ]);
             }
+            $proBar->advance();
         }
-
-        // Fast Batch Inserts
-        DB::table('users')->insert($users);
-        DB::table('candidates')->insert($candidates);
-        DB::table('education_history')->insert($educations);
-        DB::table('applications')->insert($applications);
-
-        // Assign Roles to dummy users
-        $roleCandidate = Role::whereName('candidate')->first();
-        DB::table('model_has_roles')->insert(
-            array_map(fn($u) => [
-                'role_id' => $roleCandidate->id,
-                'model_type' => 'App\Models\User',
-                'model_id' => $u['id']
-            ], $users)
-        );
+        $proBar->finish();
 
         echo "\n✅ System Staging Seeder Complete!\n";
         echo "   Candidates generated: 500\n";
@@ -13048,14 +13077,25 @@ document.addEventListener('DOMContentLoaded', () => {
             const isSelectedCity = cityArray.length === 0 || cityArray.includes(cid);
             if (isSelectedCity) currentSelectionTotal += group.pending;
 
-            poolCitiesList.innerHTML += `
-                <div class="p-3 border-bottom ${isSelectedCity ? 'border-start border-4 border-success' : ''}" style="opacity: ${isSelectedCity ? '1' : '0.4'}">
-                    <div class="d-flex justify-content-between align-items-center mb-1">
-                        <span class="fw-bold">${group.name}</span>
-                        <span class="badge ${isSelectedCity ? 'bg-success' : 'bg-secondary'} text-white">${group.pending}</span>
-                    </div>
-                </div>
-            `;
+            const div = document.createElement('div');
+            div.className = `p-3 border-bottom ${isSelectedCity ? 'border-start border-4 border-success' : ''}`;
+            div.style.opacity = isSelectedCity ? '1' : '0.4';
+            
+            const inner = document.createElement('div');
+            inner.className = 'd-flex justify-content-between align-items-center mb-1';
+            
+            const nameSpan = document.createElement('span');
+            nameSpan.className = 'fw-bold';
+            nameSpan.textContent = group.name;
+            
+            const badgeSpan = document.createElement('span');
+            badgeSpan.className = `badge ${isSelectedCity ? 'bg-success' : 'bg-secondary'} text-white`;
+            badgeSpan.textContent = group.pending;
+            
+            inner.appendChild(nameSpan);
+            inner.appendChild(badgeSpan);
+            div.appendChild(inner);
+            poolCitiesList.appendChild(div);
         });
 
         totalPendingBadge.innerText = currentSelectionTotal;
@@ -15869,6 +15909,12 @@ document.addEventListener('DOMContentLoaded', () => {
                             <option value="{{ $p->id }}" {{ old('project_id') == $p->id ? 'selected' : '' }}>{{ $p->name }}</option>
                             @endforeach
                         </select>
+                    </div>
+
+                    <div class="mb-4">
+                        <label class="form-label required">Score Sheet (CSV/Excel)</label>
+                        <input type="file" name="file" class="form-control @error('file') is-invalid @enderror" accept=".csv,.xlsx,.xls" required>
+                        @error('file') <div class="invalid-feedback">{{ $message }}</div> @enderror
                     </div>
 
                     <div class="mb-4">
@@ -19455,8 +19501,9 @@ document.addEventListener('DOMContentLoaded', () => {
     <tr><td class="lbl">Candidate Name</td><td class="val">{{ $user->full_name }}</td><td class="lbl">Father's Name</td><td class="val">{{ $candidate->father_name }}</td></tr>
     <tr><td class="lbl">CNIC / NIC No.</td><td class="val">{{ $user->cnic }}</td><td class="lbl">Gender</td><td class="val">{{ $candidate->gender }}</td></tr>
     <tr><td class="lbl">Post Applied For</td><td class="val" colspan="3">{{ $app->job->title }} {{ $app->job->department ? '('.$app->job->department.')' : '' }}</td></tr>
-    <tr><td class="lbl">Test Date</td><td class="val">{{ $examRollno->test_date ? \Carbon\Carbon::parse($examRollno->test_date)->format('l, d M Y') : 'TBD' }}</td><td class="lbl">Reporting Time</td><td class="val">{{ $examRollno->reporting_time ? \Carbon\Carbon::parse($examRollno->reporting_time)->format('h:i A') : 'TBD' }}</td></tr>
-    <tr><td class="lbl">Test Start Time</td><td class="val">{{ $examRollno->start_time ? \Carbon\Carbon::parse($examRollno->start_time)->format('h:i A') : 'TBD' }}</td><td class="lbl">Batch No.</td><td class="val">BATCH-{{ $examRollno->batch_no ?? '01' }}</td></tr>
+    @php $batch = $examRollno->batch; @endphp
+    <tr><td class="lbl">Test Date</td><td class="val">{{ $batch->test_date ? \Carbon\Carbon::parse($batch->test_date)->format('l, d M Y') : 'TBD' }}</td><td class="lbl">Reporting Time</td><td class="val">{{ $batch->reporting_time ? \Carbon\Carbon::parse($batch->reporting_time)->format('h:i A') : 'TBD' }}</td></tr>
+    <tr><td class="lbl">Test Start Time</td><td class="val">{{ $batch->start_time ? \Carbon\Carbon::parse($batch->start_time)->format('h:i A') : 'TBD' }}</td><td class="lbl">Batch No.</td><td class="val">BATCH-{{ $examRollno->batch_no ?? '01' }}</td></tr>
     <tr><td class="lbl">Test Center</td><td class="val" colspan="3">{{ $center->name ?? 'TBD' }}</td></tr>
     <tr><td class="lbl">Center Address</td><td class="val" colspan="3">{{ $center->address ?? 'TBD' }}</td></tr>
     <tr><td class="lbl">City / TCID</td><td class="val">{{ $city->name ?? 'TBD' }}</td><td class="lbl">TCID</td><td class="val">{{ $center->tcid ?? 'TBD' }}</td></tr>
@@ -20792,75 +20839,6 @@ class ExampleTest extends TestCase
         $this->assertTrue(true);
     }
 }
-
-
-
-===== FILE: .\tmp\repro_date_error.php =====
-<?php
-
-use App\Models\Project;
-use App\Services\AllocationStatsService;
-use Illuminate\Support\Facades\DB;
-
-require __DIR__ . '/../vendor/autoload.php';
-$app = require_once __DIR__ . '/../bootstrap/app.php';
-$kernel = $app->make(Illuminate\Contracts\Http\Kernel::class);
-$kernel->boot();
-
-$project = Project::first();
-if (!$project) {
-    echo "No project found.\n";
-    exit;
-}
-
-$service = new AllocationStatsService();
-
-$dates = [
-    '2026-03-15',
-    '15-03-2026',
-    '03-15-2026',
-    '15032026',
-    '03152026',
-];
-
-foreach ($dates as $date) {
-    echo "Testing date: {$date}\n";
-    try {
-        DB::enableQueryLog();
-        $service->getStats($project, $date);
-        $queries = DB::getQueryLog();
-        DB::disableQueryLog();
-        echo "Success.\n";
-        // echo "SQL: " . $queries[count($queries)-1]['query'] . "\n";
-    } catch (\Exception $e) {
-        echo "Error: " . $e->getMessage() . "\n";
-    }
-    echo "-------------------\n";
-}
-
-
-
-===== FILE: .\tmp\verify_csp.php =====
-<?php
-
-require __DIR__ . '/../vendor/autoload.php';
-$app = require_once __DIR__ . '/../bootstrap/app.php';
-$kernel = $app->make(Illuminate\Contracts\Console\Kernel::class);
-$kernel->bootstrap();
-
-use Illuminate\Http\Request;
-use App\Http\Middleware\SecurityHeaders;
-
-$middleware = new SecurityHeaders();
-$request = Request::create('/', 'GET');
-
-$response = $middleware->handle($request, function ($req) {
-    return new \Illuminate\Http\Response('OK');
-});
-
-echo "CSP Header Output:\n";
-echo $response->headers->get('Content-Security-Policy');
-echo "\n";
 
 
 

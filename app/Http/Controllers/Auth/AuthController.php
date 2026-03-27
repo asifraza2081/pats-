@@ -42,12 +42,11 @@ class AuthController extends Controller
 
         $user->assignRole('candidate');
 
-        // Send OTP
-        $otp = $user->generateOtp();
-        $this->sms->send($user->phone, "PATS: Your OTP is {$otp}. Valid for 10 minutes.", $user->id);
+        // Auto-verify and Login
+        $user->update(['phone_verified_at' => now()]);
+        Auth::login($user);
 
-        session(['otp_user_id' => $user->id, 'otp_purpose' => 'verify_phone']);
-        return redirect()->route('auth.otp')->with('info', 'Please enter the OTP sent to ' . $user->phone);
+        return redirect()->route('candidate.dashboard')->with('success', 'Registration successful! Welcome to PATS.');
     }
 
     // ── OTP Verification ─────────────────────────────────────
@@ -135,11 +134,7 @@ class AuthController extends Controller
         }
 
         if (!$user->phone_verified_at) {
-            // Set session and resend OTP to prevent infinite redirect loop [C5]
-            session(['otp_user_id' => $user->id, 'otp_purpose' => 'verify_phone']);
-            $otp = $user->generateOtp();
-            $this->sms->send($user->phone, "PATS: Your verification OTP is {$otp}. Valid for 10 minutes.", $user->id);
-            return redirect()->route('auth.otp')->with('info', 'Please verify your phone number to continue. OTP sent to ' . $user->phone);
+            $user->update(['phone_verified_at' => now()]);
         }
 
         Auth::login($user, $request->boolean('remember'));
@@ -170,13 +165,8 @@ class AuthController extends Controller
 
         if (!$user) return back()->withErrors(['cnic' => 'No account found with this CNIC.']);
 
-        session(['otp_user_id' => $user->id, 'otp_purpose' => 'reset_password']);
-        
-
-        $otp = $user->generateOtp();
-        $this->sms->send($user->phone, "PATS: Password reset OTP is {$otp}. Valid for 10 minutes.", $user->id);
-
-        return redirect()->route('auth.otp')->with('info', 'OTP sent to ' . $user->phone);
+        session(['reset_user_id' => $user->id]);
+        return redirect()->route('auth.reset-password')->with('info', 'Please set your new password.');
     }
 
     public function showResetPassword() { return view('auth.reset-password'); }

@@ -3,7 +3,7 @@
 <head>
     <meta charset="utf-8">
     <meta name="viewport" content="width=device-width, initial-scale=1">
-    <title>@yield('title', 'PATS') - Professional Assessment & Testing Services</title>
+    <title>@yield('title', 'PATS') - Prime Assessment & Testing Services</title>
     <link rel="icon" href="{{ asset('favicon.png') }}" type="image/png">
     <!-- Tabler Core & Vendor -->
     <link rel="stylesheet" href="{{ asset('assets/vendor/css/tabler.min.css') }}">
@@ -11,26 +11,47 @@
     <link rel="stylesheet" href="{{ asset('assets/vendor/css/inter.css') }}">
     <!-- Core Styles -->
     <link rel="stylesheet" href="{{ asset('assets/css/pats-core.css') }}">
+    <style>
+        html[data-bs-theme='dark'] .hide-theme-dark { display: none !important; }
+        html[data-bs-theme='light'] .hide-theme-light { display: none !important; }
+    </style>
+
+    <!-- Theme Persistence Script (Instant Apply) -->
+    <script>
+        (function() {
+            const theme = localStorage.getItem('pats-theme') || 'light';
+            document.documentElement.setAttribute('data-bs-theme', theme);
+        })();
+        window.setTheme = function(theme) {
+            localStorage.setItem('pats-theme', theme);
+            document.documentElement.setAttribute('data-bs-theme', theme);
+            window.dispatchEvent(new Event('theme-changed'));
+        };
+
+        document.addEventListener('DOMContentLoaded', () => {
+            setTheme(localStorage.getItem('pats-theme') || 'light');
+        });
+    </script>
 </head>
 <body class="layout-fluid">
     <div class="page">
         <!-- Top Info Bar -->
-        <div class="top-bar d-none d-md-block">
+        <div class="top-bar d-none d-md-block glass-panel border-0 border-bottom rounded-0 py-2">
             <div class="container-xl">
                 <div class="row align-items-center">
-                    <div class="col-auto">
+                    <div class="col-auto small opacity-75">
                         <i class="ti ti-phone me-1"></i> Helpline: (051) 111-728-7XX
                     </div>
-                    <div class="col-auto ms-3">
+                    <div class="col-auto ms-3 small opacity-75 border-start ps-3">
                         <i class="ti ti-mail me-1"></i> info@pats.org.pk
                     </div>
                     <div class="col text-end">
                         @guest
-                            <a href="{{ route('login') }}" class="text-white text-decoration-none me-3">Login</a>
-                            <a href="{{ route('auth.register') }}" class="text-white text-decoration-none">Register</a>
+                            <a href="{{ route('login') }}" class="opacity-80 text-decoration-none me-3 small font-weight-bold">Login</a>
+                            <a href="{{ route('auth.register') }}" class="opacity-80 text-decoration-none small font-weight-bold">Register</a>
                         @else
-                            <span class="text-white-50 small me-3">Signed in as <strong>{{ auth()->user()->full_name }}</strong></span>
-                            <a href="{{ route('auth.logout') }}" class="text-white text-decoration-none small" onclick="event.preventDefault(); document.getElementById('logout-form').submit();">Logout</a>
+                            <span class="opacity-60 small me-3">Welcome back, <strong>{{ auth()->user()->full_name }}</strong></span>
+                            <a href="{{ route('auth.logout') }}" class="text-danger opacity-80 text-decoration-none small font-weight-bold" onclick="event.preventDefault(); document.getElementById('logout-form').submit();">Logout</a>
                             <form id="logout-form" action="{{ route('auth.logout') }}" method="POST" class="d-none">@csrf</form>
                         @endguest
                     </div>
@@ -39,32 +60,31 @@
         </div>
 
         <!-- Main Navigation -->
-        <!-- Main Navigation -->
         <header class="main-nav sticky-top" id="navbar">
             <div class="container-xl">
                 <div class="d-flex align-items-center justify-content-between">
                     <a href="{{ url('/') }}" class="text-decoration-none hover-lift">
-                        <img src="{{ asset('logo.png') }}" alt="PATS" height="55" class="pats-logo">
+                        <img src="{{ asset('logo.png') }}" alt="PATS" height="58" class="pats-logo">
                     </a>
                     
                     <div class="d-none d-lg-block">
                         <ul class="nav">
-                            <li class="nav-item"><a href="{{ url('/') }}" class="nav-link text-dark fw-bold">Home</a></li>
-                            <li class="nav-item"><a href="{{ route('about') }}" class="nav-link text-dark">About Us</a></li>
-                            <li class="nav-item"><a href="{{ route('projects') }}" class="nav-link text-dark">Open Projects</a></li>
-                            <li class="nav-item"><a href="{{ route('results.search') }}" class="nav-link text-dark">Results</a></li>
-                            <li class="nav-item"><a href="{{ route('downloads') }}" class="nav-link text-dark">Downloads</a></li>
-                            <li class="nav-item"><a href="{{ route('contact') }}" class="nav-link text-dark">Contact</a></li>
+                            <li class="nav-item"><a href="{{ url('/') }}" class="nav-link fw-bold px-3 {{ request()->is('/') ? 'active' : '' }} hover-lift">Home</a></li>
+                            <li class="nav-item"><a href="{{ route('about') }}" class="nav-link px-3 {{ request()->routeIs('about') ? 'active' : '' }} hover-lift">About Us</a></li>
+                            <li class="nav-item"><a href="{{ route('projects') }}" class="nav-link px-3 {{ request()->routeIs('projects*') ? 'active' : '' }} hover-lift">Open Projects</a></li>
+                            <li class="nav-item"><a href="{{ route('results.search') }}" class="nav-link px-3 {{ request()->routeIs('results*') ? 'active' : '' }} hover-lift">Results</a></li>
+                            <li class="nav-item"><a href="{{ route('downloads') }}" class="nav-link px-3 {{ request()->routeIs('downloads') ? 'active' : '' }} hover-lift">Downloads</a></li>
+                            <li class="nav-item"><a href="{{ route('contact') }}" class="nav-link px-3 {{ request()->routeIs('contact') ? 'active' : '' }} hover-lift">Contact</a></li>
                         </ul>
                     </div>
 
                     <div class="d-flex align-items-center gap-2">
-                        <div class="d-none d-sm-flex gap-2 me-2">
-                            <a href="?theme=dark" class="btn btn-icon btn-ghost-secondary rounded-circle hide-theme-dark" title="Enable dark mode">
-                                <i class="ti ti-moon"></i>
+                        <div class="d-flex gap-2 me-3 theme-toggle-wrapper">
+                            <a href="javascript:setTheme('dark')" class="btn btn-icon btn-outline-secondary rounded-circle hide-theme-dark" title="Dark Mode">
+                                <i class="ti ti-moon fs-2"></i>
                             </a>
-                            <a href="?theme=light" class="btn btn-icon btn-ghost-secondary rounded-circle hide-theme-light" title="Enable light mode">
-                                <i class="ti ti-sun"></i>
+                            <a href="javascript:setTheme('light')" class="btn btn-icon btn-outline-warning rounded-circle hide-theme-light" title="Light Mode">
+                                <i class="ti ti-sun fs-2"></i>
                             </a>
                         </div>
                         @auth
@@ -120,7 +140,7 @@
                 <div class="row g-5">
                     <div class="col-lg-4">
                         <img src="{{ asset('logo.png') }}" alt="PATS" height="60" class="mb-4 brightness-0 invert opacity-90">
-                        <p class="opacity-70 fs-4">PATS is Pakistan's leading autonomous testing agency, committed to merit, transparency, and building a professional workforce through precision assessment.</p>
+                        <p class="opacity-70 fs-4">PATS is Pakistan's leading autonomous testing agency, committed to merit, transparency, and building a professional workforce through Prime Assessment & Testing Services.</p>
                         <div class="d-flex gap-3 mt-4">
                             <a href="#" class="btn btn-icon btn-ghost-light rounded-circle"><i class="ti ti-brand-facebook"></i></a>
                             <a href="#" class="btn btn-icon btn-ghost-light rounded-circle"><i class="ti ti-brand-x"></i></a>
@@ -182,9 +202,6 @@
                 navbar.classList.remove('scrolled');
             }
         };
-
-        const currentTheme = localStorage.getItem('pats-theme') || 'light';
-        document.body.setAttribute('data-bs-theme', currentTheme);
     </script>
     @stack('scripts')
 </body>

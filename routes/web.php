@@ -47,10 +47,10 @@ Route::middleware('guest')->group(function () {
     Route::post('/reset-password',    [AuthController::class, 'resetPassword'])->middleware('throttle:3,1');
 });
 
-// OTP verification (available to partially authenticated users)
-Route::get('/verify-otp',    [AuthController::class, 'showOtp'])->name('auth.otp');
-Route::post('/verify-otp',   [AuthController::class, 'verifyOtp'])->middleware('throttle:5,1');
-Route::post('/resend-otp',   [AuthController::class, 'resendOtp'])->middleware('throttle:3,1')->name('auth.otp.resend');
+// OTP verification (Deactivated in Phase 26)
+// Route::get('/verify-otp',    [AuthController::class, 'showOtp'])->name('auth.otp');
+// Route::post('/verify-otp',   [AuthController::class, 'verifyOtp'])->middleware('throttle:5,1');
+// Route::post('/resend-otp',   [AuthController::class, 'resendOtp'])->middleware('throttle:3,1')->name('auth.otp.resend');
 
 // Logout
 Route::post('/logout', [AuthController::class, 'logout'])->name('auth.logout');
@@ -97,6 +97,7 @@ Route::middleware(['auth', 'role:admin|data_entry|super_admin', \App\Http\Middle
 
     // Projects & Jobs
     Route::resource('projects', Admin\ProjectController::class);
+    Route::get('projects/{project}/documents', [Admin\ProjectController::class, 'documents'])->name('projects.documents');
     Route::get('projects/{project}/centers', [Admin\ProjectCenterController::class, 'index'])->name('projects.centers.index');
     Route::post('projects/{project}/centers', [Admin\ProjectCenterController::class, 'sync'])->name('projects.centers.sync');
     Route::resource('projects.jobs', Admin\JobController::class)->shallow();
@@ -105,12 +106,14 @@ Route::middleware(['auth', 'role:admin|data_entry|super_admin', \App\Http\Middle
     Route::resource('cities', Admin\CityController::class);
     Route::resource('centers', Admin\TestCenterController::class);
     Route::get('batches/stats', [Admin\BatchController::class, 'stats'])->name('batches.stats');
+    Route::get('batches/centers-json/{project}', [Admin\BatchController::class, 'centersForProject'])->name('batches.centers-json');
     Route::resource('batches', Admin\BatchController::class);
     Route::post('batches/{batch}/ready', [Admin\BatchController::class, 'markReady'])->name('batches.ready');
     Route::get('batches/{batch}/summary', [Admin\BatchController::class, 'summary'])->name('batches.summary');
     Route::get('batches/{batch}/attendance', [Admin\BatchController::class, 'attendance'])->name('batches.attendance');
     Route::get('batches/{batch}/attendance-sheet', [Admin\BatchController::class, 'attendanceSheet'])->name('batches.attendance-sheet');
     Route::get('batches/{batch}/answer-sheets', [Admin\BatchController::class, 'answerSheets'])->name('batches.answer-sheets');
+    Route::get('batches/{batch}/bulk-slips', [Admin\BatchController::class, 'bulkSlips'])->name('batches.bulk-slips');
     Route::post('batches/{batch}/scans', [Admin\BatchController::class, 'uploadScan'])->name('batches.scans.upload');
     Route::post('batches/{batch}/mark-attendance', [Admin\BatchController::class, 'markAttendance'])->name('batches.attendance.mark');
     Route::post('batches/{batch}/toggle-results', [Admin\BatchController::class, 'toggleResults'])->name('batches.toggle-results');
@@ -138,6 +141,11 @@ Route::middleware(['auth', 'role:admin|data_entry|super_admin', \App\Http\Middle
     Route::post('results/upload', [Admin\ResultController::class, 'upload'])->name('results.upload.post');
     Route::post('results/publish/{project}', [Admin\ResultController::class, 'publish'])->name('results.publish');
     Route::get('results/{app}', [Admin\ResultController::class, 'show'])->name('results.show');
+
+    // Notifications API
+    Route::get('notifications/unread', [Admin\NotificationController::class, 'unread'])->name('notifications.unread');
+    Route::post('notifications/mark-read', [Admin\NotificationController::class, 'markAsRead'])->name('notifications.mark-read');
+    Route::post('notifications/mark-all-read', [Admin\NotificationController::class, 'markAllAsRead'])->name('notifications.mark-all-read');
 
     // Attendance Sheets
     Route::get('attendance', [Admin\AttendanceController::class, 'index'])->name('attendance.index');
@@ -169,6 +177,10 @@ Route::middleware(['auth', 'role:admin|data_entry|super_admin', \App\Http\Middle
         Route::get('/sessions/{batch}/answer-sheets', [App\Http\Controllers\Admin\BatchController::class, 'answerSheets'])
             ->middleware('can:view-session,batch')
             ->name('sessions.answer-sheets');
+            
+        Route::get('/sessions/{batch}/bulk-slips', [App\Http\Controllers\Admin\BatchController::class, 'bulkSlips'])
+            ->middleware('can:view-session,batch')
+            ->name('sessions.bulk-slips');
 
         // Attendance Management for Examiners
         Route::get('/sessions/{batch}/attendance', [App\Http\Controllers\Admin\BatchController::class, 'attendance'])

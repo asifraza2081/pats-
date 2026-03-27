@@ -25,7 +25,28 @@
         .text-pats-gold { color: var(--pats-gold) !important; }
         .btn-pats { background-color: var(--pats-primary); color: white; }
         .btn-pats:hover { background-color: #07305a; color: white; }
+        
+        /* CSS Driven Theme Toggle - Targeted to HTML root */
+        html[data-bs-theme='dark'] .hide-theme-dark { display: none !important; }
+        html[data-bs-theme='light'] .hide-theme-light { display: none !important; }
     </style>
+
+    <!-- Theme Persistence Script (Instant Apply) -->
+    <script>
+        (function() {
+            const theme = localStorage.getItem('pats-theme') || 'light';
+            document.documentElement.setAttribute('data-bs-theme', theme);
+        })();
+        window.setTheme = function(theme) {
+            localStorage.setItem('pats-theme', theme);
+            document.documentElement.setAttribute('data-bs-theme', theme);
+            window.dispatchEvent(new Event('theme-changed'));
+        };
+
+        document.addEventListener('DOMContentLoaded', () => {
+            setTheme(localStorage.getItem('pats-theme') || 'light');
+        });
+    </script>
     @stack('styles')
 </head>
 <body class="layout-fluid">
@@ -42,12 +63,12 @@
                         <img src="{{ asset('logo.png') }}" alt="PATS" height="65" class="me-2" style="filter: drop-shadow(0px 2px 4px rgba(0,0,0,0.5)); max-height: 65px;">
                     </a>
                 </h1>
-                <div class="navbar-nav flex-row order-md-last">
-                    <div class="d-none d-md-flex me-3">
-                        <a href="?theme=dark" class="nav-link px-0 hide-theme-dark" title="Enable dark mode" data-bs-toggle="tooltip" data-bs-placement="bottom">
+                <div class="navbar-nav flex-row order-md-last align-items-center">
+                    <div class="d-flex me-2">
+                        <a href="javascript:setTheme('dark')" class="nav-link px-2 hide-theme-dark" title="Enable dark mode">
                             <i class="ti ti-moon fs-2 text-white"></i>
                         </a>
-                        <a href="?theme=light" class="nav-link px-0 hide-theme-light" title="Enable light mode" data-bs-toggle="tooltip" data-bs-placement="bottom">
+                        <a href="javascript:setTheme('light')" class="nav-link px-2 hide-theme-light" title="Enable light mode">
                             <i class="ti ti-sun fs-2 text-white"></i>
                         </a>
                     </div>
@@ -88,7 +109,23 @@
                 <div class="collapse navbar-collapse" id="navbar-menu">
                     <div class="d-flex flex-column flex-md-row flex-fill align-items-stretch align-items-md-center justify-content-center">
                         <ul class="navbar-nav">
-                            <li class="nav-item {{ request()->routeIs('home') ? 'active' : '' }}">
+                            @auth
+                                @php
+                                    $dashboardRoute = match(true) {
+                                        auth()->user()->hasRole('candidate') => route('candidate.dashboard'),
+                                        auth()->user()->hasRole('examiner') => route('examiner.dashboard'),
+                                        default => route('admin.dashboard')
+                                    };
+                                    $isPortalActive = request()->is('candidate*') || request()->is('admin*') || request()->is('examiner*');
+                                @endphp
+                                <li class="nav-item {{ $isPortalActive ? 'active' : '' }}">
+                                    <a class="nav-link text-white" href="{{ $dashboardRoute }}">
+                                        <span class="nav-link-icon d-md-none d-lg-inline-block"><i class="ti ti-layout-dashboard fs-2"></i></span>
+                                        <span class="nav-link-title">Portal Dashboard</span>
+                                    </a>
+                                </li>
+                            @endauth
+                            <li class="nav-item {{ request()->is('/') ? 'active' : '' }}">
                                 <a class="nav-link text-white" href="{{ route('home') }}">
                                     <span class="nav-link-icon d-md-none d-lg-inline-block"><i class="ti ti-home fs-2"></i></span>
                                     <span class="nav-link-title">Home</span>

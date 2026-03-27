@@ -5,6 +5,8 @@
 <style>
   @page { margin: 25px; }
   body { font-family: Helvetica, Arial, sans-serif; font-size: 11px; color: #000; line-height: 1.4; margin: 0; padding: 0; }
+  .page-break { page-break-after: always; }
+  
   .header-table { width: 100%; border-bottom: 2px solid #000; padding-bottom: 10px; margin-bottom: 20px; }
   .logo { width: 100px; }
   .header-text { text-align: center; }
@@ -28,7 +30,6 @@
   .warning-list { margin: 10px 0; padding-left: 20px; }
   .warning-list li { margin-bottom: 5px; text-align: justify; font-size: 10px; }
   
-  .urdu-text { direction: rtl; text-align: right; font-size: 11px; margin-top: 20px; font-weight: bold; border-top: 1px solid #ccc; padding-top: 15px; color: #d63031; }
   .footer { margin-top: 20px; text-align: center; font-size: 8px; border-top: 1px solid #000; padding-top: 5px; color: #666; }
   .watermark { position: fixed; top: 40%; left: 15%; width: 70%; opacity: 0.03; z-index: -1000; transform: rotate(-35deg); font-size: 120px; font-weight: bold; color: #0a3d62; }
   .barcode-container { margin-top: 10px; text-align: right; }
@@ -37,23 +38,21 @@
 </style>
 </head>
 <body>
+@foreach($roster as $roll)
 @php
-  $project    = $app->job->project;
-  $examRollno = $app->examRollno;
-  $center     = $examRollno->testCenter;
-  $city       = $examRollno->city;
+  $app        = $roll->application;
+  $candidate  = $app->candidate;
   $user       = $candidate->user;
-  $batch      = $examRollno->batch;
-  
-  $photoPath = storage_path('app/public/' . $candidate->photo_path);
-  $hasPhoto = $candidate->photo_path && file_exists($photoPath);
+  $project    = $roll->job->project;
+  $center     = $roll->center;
+  $batch      = $roll->batch;
 
   // Secure Barcode Generation
   $generator = new \Picqer\Barcode\BarcodeGeneratorPNG();
-  $barcode = base64_encode($generator->getBarcode($examRollno->roll_no, $generator::TYPE_CODE_128, 1.5, 40));
+  $barcode = base64_encode($generator->getBarcode($roll->roll_no, $generator::TYPE_CODE_128, 1.5, 40));
   
   // Document Fingerprint
-  $fingerprint = hash('sha256', $examRollno->roll_no . $user->id . $batch->id . now()->toDateTimeString());
+  $fingerprint = hash('sha256', $roll->roll_no . $user->id . $batch->id . now()->toDateTimeString());
 @endphp
 
 <div class="watermark">PATS OFFICIAL</div>
@@ -72,14 +71,14 @@
 
 <div class="title-section">
     <h2 style="background: #f8f9fa; padding: 5px; border-top: 1px solid #ddd; border-bottom: 2px solid #0a3d62;">{{ strtoupper($project->name) }}</h2>
-    <div style="font-size: 18px; font-weight: bold; margin-top: 10px;">{{ strtoupper($app->job->title) }}</div>
+    <div style="font-size: 18px; font-weight: bold; margin-top: 10px;">{{ strtoupper($roll->job->title) }}</div>
     <h3>(Roll Number Slip)</h3>
 </div>
 
 <div class="main-content">
     <div class="photo-box">
-        @if($hasPhoto)
-            <img src="{{ $photoPath }}">
+        @if($candidate->photo_path && file_exists(storage_path('app/public/' . $candidate->photo_path)))
+            <img src="{{ storage_path('app/public/' . $candidate->photo_path) }}">
         @else
             <div style="padding-top: 80px; color: #999;">CANDIDATE<br>PHOTO</div>
         @endif
@@ -88,7 +87,7 @@
     <table class="content-table" style="width: calc(100% - 180px);">
         <tr>
             <td class="label">Roll No :</td>
-            <td class="value"><strong>{{ $examRollno->roll_no }}</strong></td>
+            <td class="value"><strong>{{ $roll->roll_no }}</strong></td>
         </tr>
         <tr>
             <td class="label">Name :</td>
@@ -104,7 +103,7 @@
         </tr>
         <tr>
             <td class="label">Paper Type :</td>
-            <td class="value">{{ strtoupper($app->job->title) }}</td>
+            <td class="value">{{ strtoupper($roll->job->title) }}</td>
         </tr>
         <tr>
             <td class="label">Test Date :</td>
@@ -122,7 +121,7 @@
     
     <div class="barcode-container">
         <img src="data:image/png;base64,{{ $barcode }}" style="width: 250px; height: 50px;">
-        <div style="font-family: monospace; font-size: 11px; font-weight: bold; margin-top: 3px;">* {{ $examRollno->roll_no }} *</div>
+        <div style="font-family: monospace; font-size: 11px; font-weight: bold; margin-top: 3px;">* {{ $roll->roll_no }} *</div>
     </div>
 </div>
 
@@ -146,9 +145,6 @@
     </ul>
 </div>
 
-<div class="urdu-text">
-    احتیاط: ٹیٹ سنٹر کی حدود میں موبائل فون لانا سختی سے منع ہے موبائل اور الیکٹرانک آلات کے لیے آپ کی جامع تلاشی لی جاسکتی ہے اور برآمد ہونے کی صورت میں ضبط کرکے پیپر Cancel کردیا جائے گا۔
-</div>
 
 <div class="footer">
     Verification ID: <span style="font-family: monospace;">{{ substr($fingerprint, 0, 16) }}</span> | 
@@ -156,6 +152,9 @@
     &copy; {{ date('Y') }} PATS (Prime Assessment & Testing Services) | Security Hash: {{ substr($fingerprint, 16, 32) }}
     <div class="fingerprint">DOC-ID: {{ $fingerprint }}</div>
 </div>
+
+@if(!$loop->last) <div class="page-break"></div> @endif
+@endforeach
 
 </body>
 </html>

@@ -21,12 +21,12 @@
     .nts-quick-btn {
         display: block;
         padding: 1.5rem 1rem;
-        background: #fff;
-        border: 2px solid #e0e6ed;
+        background: var(--tblr-card-bg, #fff);
+        border: 2px solid var(--tblr-border-color, #e0e6ed);
         border-left: 5px solid var(--pats-primary);
         border-radius: 8px;
         text-decoration: none;
-        color: #333;
+        color: var(--tblr-body-color, #333);
         font-weight: 600;
         transition: all 0.2s ease;
         box-shadow: 0 4px 6px rgba(0,0,0,0.04);
@@ -82,17 +82,17 @@
         <div class="row align-items-center">
             <div class="col-md-8 mb-4 mb-md-0">
                 <h1 class="display-5 fw-bold mb-3 shadow-sm">Building Merit, Shaping Futures</h1>
-                <p class="fs-5 text-white-50 mb-0">
+                <p class="fs-5 text-white opacity-75 mb-0">
                     Transparent, efficient, and technology-driven testing and assessment services for public and private sector organizations.
                 </p>
             </div>
             <div class="col-md-4 text-md-end text-center mt-3 mt-md-0">
-                <div class="bg-white p-4 rounded-3 shadow text-dark d-inline-block text-start w-100" style="max-width: 300px;">
+                <div class="card p-4 shadow-lg text-start w-100 mx-auto" style="max-width: 300px;">
                     <h5 class="fw-bold mb-3 border-bottom pb-2">Candidate Login</h5>
-                    <a href="{{ route('login') }}" class="btn btn-pats w-100 mb-2 fw-semibold">
+                    <a href="{{ route('login') }}" class="btn btn-pats w-100 mb-2 fw-semibold hover-lift nts-hover-glow">
                         <i class="ti ti-login me-2"></i>Sign In
                     </a>
-                    <a href="{{ route('auth.register') }}" class="btn btn-outline-secondary w-100 fw-semibold">
+                    <a href="{{ route('auth.register') }}" class="btn btn-outline-secondary w-100 fw-semibold hover-lift">
                         <i class="ti ti-user-plus me-2"></i>Create Profile
                     </a>
                 </div>
@@ -102,29 +102,29 @@
 </section>
 
 {{-- NTS Style Quick Links / Main Buttons --}}
-<section class="py-5 bg-light border-bottom">
+<section class="py-5 bg-body-tertiary border-bottom">
     <div class="container">
         <div class="row g-4 text-center">
             <div class="col-6 col-md-3">
-                <a href="{{ route('projects') }}" class="nts-quick-btn h-100" style="border-left-color: #0d6efd;">
+                <a href="{{ route('projects') }}" class="nts-quick-btn h-100 hover-lift nts-hover-glow" style="border-left-color: #0d6efd;">
                     <i class="ti ti-speakerphone" style="color: #0d6efd;"></i>
                     Open Applications
                 </a>
             </div>
             <div class="col-6 col-md-3">
-                <a href="{{ route('login') }}" class="nts-quick-btn h-100" style="border-left-color: #198754;">
+                <a href="{{ route('login') }}" class="nts-quick-btn h-100 hover-lift nts-hover-glow" style="border-left-color: #198754;">
                     <i class="ti ti-layout-dashboard" style="color: #198754;"></i>
                     Candidate Portal
                 </a>
             </div>
             <div class="col-6 col-md-3">
-                <a href="{{ route('login') }}" class="nts-quick-btn h-100" style="border-left-color: #fd7e14;">
+                <a href="{{ route('login') }}" class="nts-quick-btn h-100 hover-lift nts-hover-glow" style="border-left-color: #fd7e14;">
                     <i class="ti ti-receipt" style="color: #fd7e14;"></i>
                     Roll No Slips
                 </a>
             </div>
             <div class="col-6 col-md-3">
-                <a href="{{ route('results.search') }}" class="nts-quick-btn h-100" style="border-left-color: #dc3545;">
+                <a href="{{ route('results.search') }}" class="nts-quick-btn h-100 hover-lift nts-hover-glow" style="border-left-color: #dc3545;">
                     <i class="ti ti-trophy" style="color: #dc3545;"></i>
                     All Results
                 </a>
@@ -134,7 +134,7 @@
 </section>
 
 {{-- Main Content Area: Latest Projects & Instructions --}}
-<section class="py-5 section-white">
+<section class="py-5">
     <div class="container">
         <div class="row">
             {{-- Left Column: Projects --}}
@@ -142,17 +142,17 @@
                 <h3 class="section-title">Latest Projects</h3>
                 
                 @if($openProjects->isEmpty())
-                <div class="alert alert-secondary border-0 bg-light p-4 text-center">
-                    <i class="bi bi-info-circle fs-3 d-block mb-2 text-muted"></i>
+                <div class="alert bg-body-tertiary border-0 p-4 text-center">
+                    <i class="ti ti-info-circle fs-1 d-block mb-2 opacity-50"></i>
                     No active projects at this time.
                 </div>
                 @else
                     <div class="d-flex flex-column gap-4">
                         @foreach($openProjects as $project)
-                        <div class="card project-card border-0 shadow-sm rounded-3">
+                        <div class="card card-nts border-0 shadow-sm rounded-3">
                             <div class="card-body p-4 d-flex flex-column flex-md-row align-items-md-center justify-content-between">
                                 <div class="mb-3 mb-md-0">
-                                    <h5 class="fw-bold mb-1 text-dark">{{ $project->name }}</h5>
+                                    <h5 class="fw-bold mb-1">{{ $project->name }}</h5>
                                     <div class="text-muted small mb-2">
                                         <i class="bi bi-building me-1"></i>{{ $project->org_name }}
                                     </div>
@@ -188,7 +188,7 @@
                 <h3 class="section-title">Instructions</h3>
                 
                 <div class="card border-0 shadow-sm rounded-3 mb-4">
-                    <div class="card-header bg-white fw-bold d-flex align-items-center py-3">
+                    <div class="card-header fw-bold d-flex align-items-center py-3">
                         <i class="bi bi-info-square-fill text-primary me-2 fs-5"></i> How to Apply?
                     </div>
                     <div class="card-body p-0">
@@ -214,13 +214,13 @@
                 </div>
 
                 <div class="card border-0 shadow-sm rounded-3">
-                    <div class="card-header bg-white fw-bold d-flex align-items-center py-3">
+                    <div class="card-header fw-bold d-flex align-items-center py-3">
                         <i class="bi bi-headset text-success me-2 fs-5"></i> Need Help?
                     </div>
                     <div class="card-body px-4 py-4 small">
-                        <p class="mb-2"><i class="bi bi-telephone text-muted me-2"></i> <strong>Call:</strong> +92 (51) 1234567</p>
-                        <p class="mb-2"><i class="bi bi-envelope text-muted me-2"></i> <strong>Email:</strong> support@pats.org.pk</p>
-                        <p class="mb-0 text-muted mt-3 fst-italic">Timing: Monday to Friday (9:00 AM to 5:00 PM)</p>
+                        <p class="mb-2"><i class="ti ti-phone opacity-50 me-2"></i> <strong>Call:</strong> +92 (51) 111-728-7XX</p>
+                        <p class="mb-2"><i class="ti ti-mail opacity-50 me-2"></i> <strong>Email:</strong> support@pats.org.pk</p>
+                        <p class="mb-0 opacity-60 mt-3 fst-italic">Timing: Monday to Friday (9:00 AM to 5:00 PM)</p>
                     </div>
                 </div>
             </div>

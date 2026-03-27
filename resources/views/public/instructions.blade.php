@@ -1,63 +1,68 @@
 @extends('layouts.public')
-@section('title', 'How to Apply')
-@section('header-title', 'INSTRUCTIONS FOR CANDIDATES')
+@section('title', 'How to Apply — Prime Assessment & Testing Services')
+@section('header-title', 'Step-by-Step Guide')
 
 @section('content')
 <div class="row justify-content-center">
     <div class="col-lg-10">
-        <div class="card shadow-sm border-0 mb-5">
-            <div class="card-body p-md-5">
-                <h2 class="section-header">STEP-BY-STEP APPLICATION GUIDE</h2>
-                <div class="row g-5 mt-2">
+        <div class="card glass-panel border-0 mb-6 rounded-5 shadow-lg animate__animated animate__fadeIn">
+            <div class="card-body p-5 p-md-7">
+                <div class="badge bg-indigo-lt text-indigo px-4 py-2 mb-4 rounded-pill fw-black">APPLICATION PROTOCOL</div>
+                <h2 class="display-5 fw-black text-dark mb-5 border-bottom pb-4">Standard Operating Procedures</h2>
+                
+                <div class="row g-6">
                     <!-- Step 1 -->
-                    <div class="col-md-6 d-flex">
+                    <div class="col-md-6 d-flex align-items-start hover-lift transition-all">
                         <div class="me-4">
-                            <span class="avatar avatar-lg bg-teal-lt text-teal rounded-circle"><i class="ti ti-user-plus fs-1"></i></span>
+                            <div class="avatar avatar-xl bg-grad-accent text-white rounded-5 shadow-teal-30"><i class="ti ti-user-plus fs-0"></i></div>
                         </div>
                         <div>
-                            <h3 class="fw-bold mb-2">1. Create Your Profile</h3>
-                            <p class="text-secondary small">Visit the registration page and enter your CNIC and mobile number. You will receive an OTP for verification. Once logged in, complete your basic profile, academic history, and work experience.</p>
+                            <h3 class="fw-black text-dark h2 mb-2">1. Profile Genesis</h3>
+                            <p class="text-secondary fs-4 lh-lg opacity-80 fw-medium">Initialize your account using your CNIC and mobile number. Secure OTP verification ensures identity integrity. Once authenticated, complete your profile with precision.</p>
                         </div>
                     </div>
                     <!-- Step 2 -->
-                    <div class="col-md-6 d-flex">
+                    <div class="col-md-6 d-flex align-items-start hover-lift transition-all">
                         <div class="me-4">
-                            <span class="avatar avatar-lg bg-teal-lt text-teal rounded-circle"><i class="ti ti-briefcase fs-1"></i></span>
+                            <div class="avatar avatar-xl bg-dark text-white rounded-5 shadow-sm"><i class="ti ti-briefcase fs-0"></i></div>
                         </div>
                         <div>
-                            <h3 class="fw-bold mb-2">2. Browse & Select Project</h3>
-                            <p class="text-secondary small">Head to "Open Projects" to see all active job listings. Read the eligibility criteria carefully. If you qualify, click "Apply Now". The system will auto-check your profile against the requirements.</p>
+                            <h3 class="fw-black text-dark h2 mb-2">2. Project Engagement</h3>
+                            <p class="text-secondary fs-4 lh-lg opacity-80 fw-medium">Navigate to Open Projects to discover opportunities. Our intelligent system automatically matches your eligibility against job requirements in real-time.</p>
                         </div>
                     </div>
                     <!-- Step 3 -->
-                    <div class="col-md-6 d-flex">
+                    <div class="col-md-6 d-flex align-items-start hover-lift transition-all">
                         <div class="me-4">
-                            <span class="avatar avatar-lg bg-teal-lt text-teal rounded-circle"><i class="ti ti-receipt-2 fs-1"></i></span>
+                            <div class="avatar avatar-xl bg-indigo text-white rounded-5 shadow-sm"><i class="ti ti-receipt-2 fs-0"></i></div>
                         </div>
                         <div>
-                            <h3 class="fw-bold mb-2">3. Fee Payment</h3>
-                            <p class="text-secondary small">After submitting, download the system-generated Bank Challan. Pay the fee at any designated bank branch. Your application status will update to "Fee Paid" within 48 hours of verification.</p>
+                            <h3 class="fw-black text-dark h2 mb-2">3. Merit Investment</h3>
+                            <p class="text-secondary fs-4 lh-lg opacity-80 fw-medium">Generate your secure Bank Challan. Payments are digitally verified via 1Link and partner banks. Expect status updates within 24-48 business hours.</p>
                         </div>
                     </div>
                     <!-- Step 4 -->
-                    <div class="col-md-6 d-flex">
+                    <div class="col-md-6 d-flex align-items-start hover-lift transition-all">
                         <div class="me-4">
-                            <span class="avatar avatar-lg bg-teal-lt text-teal rounded-circle"><i class="ti ti-ticket fs-1"></i></span>
+                            <div class="avatar avatar-xl bg-teal text-white rounded-5 shadow-teal-30"><i class="ti ti-ticket fs-0"></i></div>
                         </div>
                         <div>
-                            <h3 class="fw-bold mb-2">4. Download Roll No Slip</h3>
-                            <p class="text-secondary small">Once the test is scheduled, you will receive an SMS. Log in to your dashboard to download your Roll Number Slip. Ensure you print it and bring it to the test center along with your original CNIC.</p>
+                            <h3 class="fw-black text-dark h2 mb-2">4. Tactical Readiness</h3>
+                            <p class="text-secondary fs-4 lh-lg opacity-80 fw-medium">Download your Roll Number Slip via the dashboard. This document, accompanied by your original CNIC, is mandatory for test center access.</p>
                         </div>
                     </div>
                 </div>
 
-                <div class="alert alert-info mt-5 border-0 shadow-none bg-primary-lt">
-                    <div class="d-flex">
-                        <div><i class="ti ti-info-circle fs-2 me-3"></i></div>
+                <div class="mt-7 p-5 bg-grad-pats text-white rounded-5 position-relative overflow-hidden shadow-lg animate__animated animate__pulse animate__infinite animate__slower">
+                    <div class="position-absolute top-0 end-0 p-5 mt-n4 me-n4 opacity-10">
+                        <i class="ti ti-shield-alert" style="font-size: 8rem;"></i>
+                    </div>
+                    <div class="d-flex align-items-center position-relative z-index-2">
+                        <i class="ti ti-info-circle-filled fs-0 me-4"></i>
                         <div>
-                            <h4 class="fw-bold mb-1">Important Note for Test Day</h4>
-                            <p class="small mb-0 text-secondary">
-                                Reach the test center at least 60 minutes before the reporting time. No candidate will be allowed to enter the premises after the test start time. Use only blue/black ballpoints for filling OMR sheets.
+                            <h3 class="fw-black text-white h2 mb-1">CRITICAL NOTICE: Test Day Integrity</h3>
+                            <p class="fs-4 mb-0 opacity-80 fw-medium">
+                                Report at least 60 minutes prior to the designated time. Strictly adhere to SOPs. Malpractice will lead to immediate disqualification and legal escalation.
                             </p>
                         </div>
                     </div>
@@ -65,10 +70,10 @@
             </div>
         </div>
 
-        <div class="text-center mb-5">
-            <h3 class="fw-bold">Still have questions?</h3>
-            <p class="text-secondary">If you're facing any technical issues, our helpdesk is here to assist you.</p>
-            <a href="{{ route('contact') }}" class="btn btn-primary px-5">CONTACT HELPDESK</a>
+        <div class="text-center mb-6">
+            <h3 class="display-6 fw-black text-dark mb-3">Encountering Friction?</h3>
+            <p class="fs-3 text-secondary mb-5 opacity-80">Our technical dispatchers are standing by to resolve any application bottlenecks.</p>
+            <a href="{{ route('contact') }}" class="btn btn-teal btn-lg px-6 rounded-pill fw-black shadow-teal-30 border-0 py-3">CONTACT COMMAND CENTER</a>
         </div>
     </div>
 </div>

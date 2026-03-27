@@ -172,7 +172,8 @@
                         <p class="text-secondary mb-0 small">Schedule test sessions, select centers, and allocate candidates who have applied to this project.</p>
                     </div>
                     <div>
-                        <a href="{{ route('admin.batches.index', ['project_id' => $project->id]) }}" class="btn btn-primary shadow-sm"><i class="ti ti-calendar-plus me-2"></i> Schedule Sessions</a>
+                        <a href="{{ route('admin.batches.index', ['project_id' => $project->id]) }}" class="btn btn-outline-primary shadow-sm me-2"><i class="ti ti-calendar-plus me-2"></i> Schedule Sessions</a>
+                        <a href="{{ route('admin.projects.documents', $project) }}" class="btn btn-primary shadow-sm"><i class="ti ti-printer me-2"></i> Print Center Documents</a>
                     </div>
                 </div>
             </div>

@@ -106,6 +106,9 @@
                         <a href="{{ route('admin.batches.answer-sheets', $batch) }}" target="_blank" class="btn btn-outline-info">
                             <i class="ti ti-forms me-2"></i> Print Answer Sheets (NTS Style)
                         </a>
+                        <a href="{{ route('admin.batches.bulk-slips', $batch) }}" target="_blank" class="btn btn-outline-success">
+                            <i class="ti ti-id me-2"></i> Print Bulk Roll No Slips
+                        </a>
                         <a href="{{ route('admin.batches.attendance', $batch) }}" class="btn btn-outline-primary">
                             <i class="ti ti-user-check me-2"></i> Post-Test Attendance Tracking
                         </a>

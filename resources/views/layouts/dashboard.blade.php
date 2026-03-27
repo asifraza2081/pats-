@@ -11,14 +11,82 @@
     <link rel="stylesheet" href="{{ asset('assets/vendor/css/tom-select.bootstrap5.min.css') }}">
     <link rel="stylesheet" href="{{ asset('assets/vendor/css/toastr.min.css') }}">
     <link rel="stylesheet" href="{{ asset('assets/vendor/css/inter.css') }}">
+    <link rel="stylesheet" href="{{ asset('assets/css/pats-core.css') }}?v={{ time() }}">
     
-    <link href="{{ asset('assets/css/bootstrap-icons.min.css') }}" rel="stylesheet">
+    <!-- Theme Persistence Script (Instant Apply) -->
+    <script>
+        (function() {
+            const theme = localStorage.getItem('pats-theme') || 'light';
+            document.documentElement.setAttribute('data-bs-theme', theme);
+        })();
+        window.setTheme = function(theme) {
+            localStorage.setItem('pats-theme', theme);
+            document.documentElement.setAttribute('data-bs-theme', theme);
+            
+            // Sync icons manually for high-fidelity response
+            const darkIcons = document.querySelectorAll('.hide-theme-dark');
+            const lightIcons = document.querySelectorAll('.hide-theme-light');
+            if (theme === 'dark') {
+                darkIcons.forEach(el => el.style.display = 'none');
+                lightIcons.forEach(el => el.style.display = 'block');
+            } else {
+                darkIcons.forEach(el => el.style.display = 'block');
+                lightIcons.forEach(el => el.style.display = 'none');
+            }
+            window.dispatchEvent(new Event('theme-changed'));
+        };
+
+        // Run on initial load
+        document.addEventListener('DOMContentLoaded', () => {
+            setTheme(localStorage.getItem('pats-theme') || 'light');
+        });
+    </script>
     <style>
         :root {
             --tblr-font-sans-serif: 'InterVariable', -apple-system, BlinkMacSystemFont, San Francisco, Segoe UI, Roboto, Helvetica Neue, sans-serif;
         }
         body {
             font-feature-settings: "cv03", "cv04", "cv11";
+        }
+        /* Ironman Sidebar Enhancements */
+        :root {
+            --pats-nav-hover: rgba(var(--tblr-primary-rgb), 0.08);
+            --pats-nav-active: rgba(var(--tblr-primary-rgb), 0.12);
+        }
+        [data-bs-theme="dark"] {
+            --pats-nav-hover: rgba(var(--tblr-primary-rgb), 0.15);
+            --pats-nav-active: rgba(var(--tblr-primary-rgb), 0.25);
+        }
+        .navbar-nav .nav-item .nav-link {
+            transition: all 0.2s ease;
+            position: relative;
+        }
+        .navbar-nav .nav-item .nav-link:hover {
+            background: var(--pats-nav-hover);
+            color: var(--tblr-primary) !important;
+            border-radius: 4px;
+        }
+        .navbar-nav .nav-item.active > .nav-link {
+            background: var(--pats-nav-active) !important;
+            color: var(--tblr-primary) !important;
+            font-weight: 600;
+            border-radius: 4px;
+        }
+        .navbar-nav .nav-item.active > .nav-link::after {
+            content: '';
+            position: absolute;
+            bottom: 0;
+            left: 10%;
+            width: 80%;
+            height: 2px;
+            background: var(--tblr-primary);
+            border-radius: 2px;
+        }
+        .nav-link-icon {
+            transition: transform 0.2s ease;
+        }
+        .nav-link:hover .nav-link-icon {
+            transform: scale(1.15);
         }
     </style>
 </head>
@@ -39,12 +107,35 @@
                 </h1>
                 <div class="navbar-nav flex-row order-md-last">
                     <div class="d-none d-md-flex align-items-center me-3">
-                        <a href="?theme=dark" class="nav-link px-0 hide-theme-dark" title="Enable dark mode" data-bs-toggle="tooltip" data-bs-placement="bottom">
+                        <a href="javascript:setTheme('dark')" class="nav-link px-0 hide-theme-dark" title="Enable dark mode" data-bs-toggle="tooltip" data-bs-placement="bottom">
                             <i class="ti ti-moon fs-2"></i>
                         </a>
-                        <a href="?theme=light" class="nav-link px-0 hide-theme-light" title="Enable light mode" data-bs-toggle="tooltip" data-bs-placement="bottom">
+                        <a href="javascript:setTheme('light')" class="nav-link px-0 hide-theme-light" title="Enable light mode" data-bs-toggle="tooltip" data-bs-placement="bottom">
                             <i class="ti ti-sun fs-2"></i>
                         </a>
+                    </div>
+                    <!-- Notification Center -->
+                    <div class="nav-item dropdown d-none d-md-flex me-3">
+                        <a href="#" class="nav-link px-0" data-bs-toggle="dropdown" tabindex="-1" aria-label="Show notifications">
+                            <i class="ti ti-bell fs-2"></i>
+                            <span class="badge bg-red d-none" id="notif-badge"></span>
+                        </a>
+                        <div class="dropdown-menu dropdown-menu-arrow dropdown-menu-end dropdown-menu-card">
+                            <div class="card">
+                                <div class="card-header">
+                                    <h3 class="card-title">Recent Notifications</h3>
+                                </div>
+                                <div class="list-group list-group-flush list-group-hoverable" id="notif-list">
+                                    <div class="list-group-item text-center py-4 text-muted">No new alerts.</div>
+                                </div>
+                                <div class="card-footer text-center">
+                                    <form method="POST" action="{{ route('admin.notifications.mark-all-read') }}">
+                                        @csrf
+                                        <button type="submit" class="btn btn-link link-secondary btn-sm">Clear All</button>
+                                    </form>
+                                </div>
+                            </div>
+                        </div>
                     </div>
                     <div class="nav-item dropdown">
                         <a href="#" class="nav-link d-flex lh-1 text-reset p-0 dropdown-toggle" data-bs-toggle="dropdown" aria-label="Open user menu">
@@ -93,8 +184,8 @@
                                         <span class="nav-link-title">Locations</span>
                                     </a>
                                     <div class="dropdown-menu">
-                                        <a class="dropdown-item" href="{{ route('admin.centers.index') }}">Test Centers</a>
-                                        <a class="dropdown-item" href="{{ route('admin.cities.index') }}">Cities Setup</a>
+                                        <a class="dropdown-item @if(request()->routeIs('admin.centers.*')) active @endif" href="{{ route('admin.centers.index') }}">Test Centers</a>
+                                        <a class="dropdown-item @if(request()->routeIs('admin.cities.*')) active @endif" href="{{ route('admin.cities.index') }}">Cities Setup</a>
                                     </div>
                                 </li>
                                 @endcan
@@ -125,8 +216,8 @@
                                         <span class="nav-link-title">Test Sessions</span>
                                     </a>
                                     <div class="dropdown-menu">
-                                        <a class="dropdown-item" href="{{ route('admin.batches.index') }}">Sessions Schedule</a>
-                                        <a class="dropdown-item" href="{{ route('admin.rollnumbers.index') }}">Roll Numbers Archive</a>
+                                        <a class="dropdown-item @if(request()->routeIs('admin.batches.*')) active @endif" href="{{ route('admin.batches.index') }}">Sessions Schedule</a>
+                                        <a class="dropdown-item @if(request()->routeIs('admin.rollnumbers.*')) active @endif" href="{{ route('admin.rollnumbers.index') }}">Roll Numbers Archive</a>
                                     </div>
                                 </li>
                                 @endcan
@@ -157,7 +248,7 @@
                                         <span class="nav-link-title">Dashboard</span>
                                     </a>
                                 </li>
-                                <li class="nav-item @if(request()->routeIs('candidate.profile.*')) active @endif">
+                                <li class="nav-item @if(request()->routeIs('candidate.profile.*') || request()->routeIs('candidate.profile')) active @endif">
                                     <a class="nav-link" href="{{ route('candidate.profile.show') }}">
                                         <span class="nav-link-icon d-md-none d-lg-inline-block"><i class="ti ti-user fs-2"></i></span>
                                         <span class="nav-link-title">My Profile</span>
@@ -184,7 +275,7 @@
 
         <div class="page-wrapper">
             <!-- Page header -->
-            @hasSection('page-header')
+            @if(View::hasSection('page-header') || View::hasSection('page-title') || View::hasSection('page-actions'))
                 <div class="page-header d-print-none">
                     <div class="container-xl">
                         <div class="row g-2 align-items-center">
@@ -245,6 +336,59 @@
         toastr.options = { "positionClass": "toast-bottom-right", "progressBar": true };
         @if(session('success')) toastr.success(@json(session('success'))); @endif
         @if(session('error')) toastr.error(@json(session('error'))); @endif
+
+        // Real-time Notification Poller
+        function pollNotifications() {
+            $.get("{{ route('admin.notifications.unread') }}", function(data) {
+                const badge = $('#notif-badge');
+                const list = $('#notif-list');
+                
+                if (data.length > 0) {
+                    badge.removeClass('d-none').text(data.length);
+                    list.empty();
+                    data.forEach(n => {
+                        list.append(`
+                            <div class="list-group-item">
+                                <div class="row align-items-center">
+                                    <div class="col-auto"><span class="status-dot status-dot-animated bg-${n.data.type || 'info'} d-block"></span></div>
+                                    <div class="col text-truncate">
+                                        <a href="${n.data.link || '#'}" class="text-body d-block">${n.data.message}</a>
+                                        <div class="d-block text-secondary text-truncate mt-n1">${new Date(n.created_at).toLocaleString()}</div>
+                                    </div>
+                                    <div class="col-auto">
+                                        <a href="javascript:void(0)" onclick="markRead('${n.id}')" class="list-group-item-actions"><i class="ti ti-check text-success"></i></a>
+                                    </div>
+                                </div>
+                            </div>
+                        `);
+                        // Trigger Toastr if it's a very new notification (last 30s)
+                        const createdAt = new Date(n.created_at);
+                        const now = new Date();
+                        if ((now - createdAt) < 35000) { // Slightly more than poll interval
+                             if (!window.shownNotifs) window.shownNotifs = new Set();
+                             if (!window.shownNotifs.has(n.id)) {
+                                 toastr[n.data.type || 'info'](n.data.message);
+                                 window.shownNotifs.add(n.id);
+                             }
+                        }
+                    });
+                } else {
+                    badge.addClass('d-none');
+                    list.html('<div class="list-group-item text-center py-4 text-muted">No new alerts.</div>');
+                }
+            });
+        }
+
+        function markRead(id) {
+            $.post("{{ route('admin.notifications.mark-read') }}", { _token: "{{ csrf_token() }}", id: id }, function() {
+                pollNotifications();
+            });
+        }
+
+        @auth
+            setInterval(pollNotifications, 30000); // Poll every 30s
+            pollNotifications(); // Initial call
+        @endauth
 
         // Auto-initialize all .tom-select inputs globally (if not already handled)
         document.addEventListener("DOMContentLoaded", function () {

@@ -22,9 +22,15 @@ class AppServiceProvider extends ServiceProvider
         \Illuminate\Support\Facades\Gate::define('publish results', function ($user) {
             return $user->hasAnyRole(['admin', 'super_admin', 'data_entry']);
         });
-        // @active('pattern' or 'route.name') — adds 'active' class when URL or Route name matches
-        Blade::directive('active', function ($expression) {
-            return "<?php echo (request()->is($expression) || request()->routeIs($expression)) ? 'active' : ''; ?>";
+        // Job Failure Monitoring
+        \Illuminate\Support\Facades\Queue::failing(function (\Illuminate\Queue\Events\JobFailed $event) {
+            $admins = \App\Models\User::role('super_admin')->get();
+            $jobName = $event->job->resolveName();
+            $message = "CRITICAL: Background Job Failed ({$jobName}). Technical review required.";
+            
+            foreach ($admins as $admin) {
+                $admin->notify(new \App\Notifications\SystemAlert($message, 'error'));
+            }
         });
     }
 }

@@ -8,6 +8,8 @@ use App\Models\PatsJob;
 use App\Models\City;
 use App\Models\Payment;
 use App\Services\EligibilityService;
+use Illuminate\Support\Facades\Storage;
+use Illuminate\Support\Str;
 use Barryvdh\DomPDF\Facade\Pdf;
 use Carbon\Carbon;
 use Illuminate\Http\Request;
@@ -138,22 +140,29 @@ class ApplicationController extends Controller
     public function slip(Application $app)
     {
         $this->authorize('view', $app);
-        $app->load(['job.project', 'examRollno.center', 'examRollno.city']);
+        $app->load(['job.project', 'examRollno.center', 'examRollno.batch']);
         $examRollno = $app->examRollno;
 
         abort_if(!$examRollno || !$examRollno->roll_no, 403, 'Roll number slip is not yet generated.');
-        abort_if(!$examRollno->slip_ready, 403, 'Roll number slip is not yet available for download. Please check back later.');
+        abort_if(!$examRollno->slip_ready, 403, 'Roll number slip is not yet available for download.');
         
-        if ($examRollno->test_date) {
-            $testDateTime = Carbon::createFromFormat(
-                'Y-m-d H:i:s',
-                $examRollno->test_date->toDateString() . ' ' . $examRollno->start_time
-            );
-            abort_if(now()->isAfter($testDateTime), 403, 'Slip download is disabled after the test has started.');
-        }
-
         $candidate = Auth::user()->candidate;
         $pdf = Pdf::loadView('pdf.slip', compact('app', 'candidate'));
+        
+        // IRONMAN: Persistent Storage
+        try {
+            $date = $examRollno->batch->test_date->toDateString();
+            $projectSlug = Str::slug($app->project->name);
+            $centerSlug = Str::slug($examRollno->center->name);
+            
+            $directory = "exports/{$date}/{$projectSlug}/{$centerSlug}/slips";
+            $filename = "Slip_{$examRollno->roll_no}_" . now()->format('His') . ".pdf";
+            
+            Storage::disk('public')->put("{$directory}/{$filename}", $pdf->output());
+        } catch (\Exception $e) {
+            \Log::warning("Candidate Slip storage failed: " . $e->getMessage());
+        }
+
         return $pdf->download("Slip_{$examRollno->roll_no}.pdf");
     }
 

@@ -36,6 +36,13 @@ class ProjectController extends Controller
         return view('admin.projects.show', compact('project'));
     }
 
+    /** Center-wise Document Management View */
+    public function documents(Project $project)
+    {
+        $project->load('centers.city', 'batches.center');
+        return view('admin.projects.documents', compact('project'));
+    }
+
     public function edit(Project $project) { return view('admin.projects.edit', compact('project')); }
 
     public function update(ProjectRequest $request, Project $project)
