@@ -4,7 +4,7 @@
 
 @push('styles')
 <style>
-    .nts-marquee-wrapper {
+    .pats-marquee-wrapper {
         background-color: #d9534f; /* bootstrap border-danger red */
         color: white;
         padding: 8px 0;
@@ -12,13 +12,13 @@
         font-size: 0.95rem;
         border-bottom: 2px solid #c9302c;
     }
-    .nts-hero {
+    .pats-hero {
         background: url('data:image/svg+xml;utf8,<svg xmlns="http://www.w3.org/2000/svg" width="100%" height="100%"><rect width="100%" height="100%" fill="%230a3d62"/><text x="50%" y="50%" font-size="20" fill="rgba(255,255,255,0.05)" font-family="Arial" text-anchor="middle" alignment-baseline="middle">TESTING EXCELLENCE</text></svg>'), linear-gradient(135deg, #0a3d62 0%, #1a5276 100%);
         padding: 4rem 0;
         color: white;
         border-bottom: 5px solid #f9ca24;
     }
-    .nts-quick-btn {
+    .pats-quick-btn {
         display: block;
         padding: 1.5rem 1rem;
         background: var(--tblr-card-bg, #fff);
@@ -31,13 +31,13 @@
         transition: all 0.2s ease;
         box-shadow: 0 4px 6px rgba(0,0,0,0.04);
     }
-    .nts-quick-btn:hover {
+    .pats-quick-btn:hover {
         transform: translateY(-3px);
         box-shadow: 0 8px 15px rgba(0,0,0,0.1);
         border-color: var(--pats-primary);
         color: var(--pats-primary);
     }
-    .nts-quick-btn i {
+    .pats-quick-btn i {
         font-size: 2rem;
         color: var(--pats-accent);
         margin-bottom: 10px;
@@ -62,8 +62,8 @@
 
 @section('content')
 
-{{-- NTS Style Marquee --}}
-<div class="nts-marquee-wrapper">
+{{-- Professional Marquee --}}
+<div class="pats-marquee-wrapper">
     <div class="container d-flex align-items-center">
         <div class="fw-bold pe-3 border-end border-white me-3 text-uppercase" style="white-space:nowrap;">
             <i class="ti ti-bell-ringing me-1"></i> Alerts
@@ -77,7 +77,7 @@
 </div>
 
 {{-- Hero Section --}}
-<section class="nts-hero">
+<section class="pats-hero">
     <div class="container text-center text-md-start">
         <div class="row align-items-center">
             <div class="col-md-8 mb-4 mb-md-0">
@@ -89,7 +89,7 @@
             <div class="col-md-4 text-md-end text-center mt-3 mt-md-0">
                 <div class="card p-4 shadow-lg text-start w-100 mx-auto" style="max-width: 300px;">
                     <h5 class="fw-bold mb-3 border-bottom pb-2">Candidate Login</h5>
-                    <a href="{{ route('login') }}" class="btn btn-pats w-100 mb-2 fw-semibold hover-lift nts-hover-glow">
+                    <a href="{{ route('login') }}" class="btn btn-pats w-100 mb-2 fw-semibold hover-lift pats-hover-glow">
                         <i class="ti ti-login me-2"></i>Sign In
                     </a>
                     <a href="{{ route('auth.register') }}" class="btn btn-outline-secondary w-100 fw-semibold hover-lift">
@@ -101,30 +101,30 @@
     </div>
 </section>
 
-{{-- NTS Style Quick Links / Main Buttons --}}
+{{-- Quick Links / Main Buttons --}}
 <section class="py-5 bg-body-tertiary border-bottom">
     <div class="container">
         <div class="row g-4 text-center">
             <div class="col-6 col-md-3">
-                <a href="{{ route('projects') }}" class="nts-quick-btn h-100 hover-lift nts-hover-glow" style="border-left-color: #0d6efd;">
+                <a href="{{ route('projects') }}" class="pats-quick-btn h-100 hover-lift pats-hover-glow" style="border-left-color: #0d6efd;">
                     <i class="ti ti-speakerphone" style="color: #0d6efd;"></i>
                     Open Applications
                 </a>
             </div>
             <div class="col-6 col-md-3">
-                <a href="{{ route('login') }}" class="nts-quick-btn h-100 hover-lift nts-hover-glow" style="border-left-color: #198754;">
+                <a href="{{ route('login') }}" class="pats-quick-btn h-100 hover-lift pats-hover-glow" style="border-left-color: #198754;">
                     <i class="ti ti-layout-dashboard" style="color: #198754;"></i>
                     Candidate Portal
                 </a>
             </div>
             <div class="col-6 col-md-3">
-                <a href="{{ route('login') }}" class="nts-quick-btn h-100 hover-lift nts-hover-glow" style="border-left-color: #fd7e14;">
+                <a href="{{ route('login') }}" class="pats-quick-btn h-100 hover-lift pats-hover-glow" style="border-left-color: #fd7e14;">
                     <i class="ti ti-receipt" style="color: #fd7e14;"></i>
                     Roll No Slips
                 </a>
             </div>
             <div class="col-6 col-md-3">
-                <a href="{{ route('results.search') }}" class="nts-quick-btn h-100 hover-lift nts-hover-glow" style="border-left-color: #dc3545;">
+                <a href="{{ route('results.search') }}" class="pats-quick-btn h-100 hover-lift pats-hover-glow" style="border-left-color: #dc3545;">
                     <i class="ti ti-trophy" style="color: #dc3545;"></i>
                     All Results
                 </a>
@@ -149,7 +149,7 @@
                 @else
                     <div class="d-flex flex-column gap-4">
                         @foreach($openProjects as $project)
-                        <div class="card card-nts border-0 shadow-sm rounded-3">
+                        <div class="card card-pats border-0 shadow-sm rounded-3">
                             <div class="card-body p-4 d-flex flex-column flex-md-row align-items-md-center justify-content-between">
                                 <div class="mb-3 mb-md-0">
                                     <h5 class="fw-bold mb-1">{{ $project->name }}</h5>

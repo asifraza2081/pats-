@@ -48,7 +48,7 @@
         body {
             font-feature-settings: "cv03", "cv04", "cv11";
         }
-        /* Ironman Sidebar Enhancements */
+        /* Sidebar Enhancements */
         :root {
             --pats-nav-hover: rgba(var(--tblr-primary-rgb), 0.08);
             --pats-nav-active: rgba(var(--tblr-primary-rgb), 0.12);
@@ -108,10 +108,10 @@
                 <div class="navbar-nav flex-row order-md-last">
                     <div class="d-none d-md-flex align-items-center me-3">
                         <a href="javascript:setTheme('dark')" class="nav-link px-0 hide-theme-dark" title="Enable dark mode" data-bs-toggle="tooltip" data-bs-placement="bottom">
-                            <i class="ti ti-moon fs-2"></i>
+                            <i class="ti ti-moon-filled fs-2 text-azure"></i>
                         </a>
                         <a href="javascript:setTheme('light')" class="nav-link px-0 hide-theme-light" title="Enable light mode" data-bs-toggle="tooltip" data-bs-placement="bottom">
-                            <i class="ti ti-sun fs-2"></i>
+                            <i class="ti ti-sun-filled fs-2 text-yellow"></i>
                         </a>
                     </div>
                     <!-- Notification Center -->

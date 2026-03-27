@@ -265,7 +265,7 @@ class BatchController extends Controller
             
             $pdf = Pdf::loadView('pdf.attendance', compact('batch', 'roster'))->setPaper('a4', 'portrait');
             
-            // IRONMAN: Save to hierarchy
+            // Save to hierarchy
             $this->savePdfToHierarchy($pdf, $batch, 'attendance');
             
             return $pdf->stream("Attendance_{$batch->center->tcid}_{$batch->test_date->format('Ymd')}.pdf");
@@ -275,7 +275,7 @@ class BatchController extends Controller
         }
     }
 
-    /** NTS-style printable Answer Sheets for all candidates in batch */
+    /** Professional recruitment-style printable Answer Sheets for all candidates in batch */
     public function answerSheets(Batch $batch)
     {
         if ($batch->booked_seats > 750) {
@@ -296,7 +296,7 @@ class BatchController extends Controller
 
             $pdf = Pdf::loadView('pdf.answer-sheet', compact('batch', 'roster'))->setPaper('a4', 'portrait');
             
-            // IRONMAN: Save to hierarchy
+            // Save to hierarchy
             $this->savePdfToHierarchy($pdf, $batch, 'answer_sheets');
             
             return $pdf->stream("AnswerSheets_{$batch->center->tcid}.pdf");
@@ -326,7 +326,7 @@ class BatchController extends Controller
 
             $pdf = Pdf::loadView('pdf.bulk-slips', compact('batch', 'roster'))->setPaper('a4', 'portrait');
             
-            // IRONMAN: Save to hierarchy
+            // Save to hierarchy
             $this->savePdfToHierarchy($pdf, $batch, 'bulk_slips');
             
             return $pdf->stream("RollNoSlips_{$batch->center->tcid}.pdf");

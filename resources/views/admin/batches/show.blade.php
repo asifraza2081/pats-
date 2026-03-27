@@ -104,7 +104,7 @@
                             <i class="ti ti-file-text me-2"></i> Print Attendance Sheet
                         </a>
                         <a href="{{ route('admin.batches.answer-sheets', $batch) }}" target="_blank" class="btn btn-outline-info">
-                            <i class="ti ti-forms me-2"></i> Print Answer Sheets (NTS Style)
+                            <i class="ti ti-forms me-2"></i> Print Answer Sheets (Standard Style)
                         </a>
                         <a href="{{ route('admin.batches.bulk-slips', $batch) }}" target="_blank" class="btn btn-outline-success">
                             <i class="ti ti-id me-2"></i> Print Bulk Roll No Slips

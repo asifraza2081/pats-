@@ -2,23 +2,14 @@
 
 PATS is a comprehensive Laravel 11 application designed to manage the entire lifecycle of candidate testing and recruitment. It handles everything from candidate registration, profile building, and exact eligibility checking, to fee payments, complex test batch allocations, roll number generations, attendance marking, and final result percentiles.
 
-## 🛡️ Institutional-Grade Hardening (Ironman V5)
-
-The system has undergone a rigorous "Ironman" hardening phase to ensure stability, high-fidelity rendering, and administrative efficiency for large-scale governmental and private recruitment projects.
-
-### Key Ironman Features:
-- **High-Performance Print Portal**: A centralized, AJAX-powered modal for administrators to scope and batch-print thousands of documents by Project, City, and Test Center without page reloads.
-- **Visual Artifact Resolution**: Definitive resolution of navbar and UI regressions for a clean, professional administrative interface.
-- **High-Fidelity PDF Engine**: Optimized document generation using standard institutional fonts (Helvetica) and clear, NTS-style layouts for Slips, Attendance, and OMR sheets.
-- **Dumbproof Workflows**: Enhanced helping text and instructional alerts across critical scheduling and allocation modules.
-
 ## Features Overview
 - **Robust Role-Based Access Control (RBAC)**: Powered by Spatie `laravel-permission` (Super Admin, Admin, Data Entry, Candidate).
 - **Candidate Profiles**: Enforces 100% profile completion including photo, CNIC, domicile, education history, and work experience.
 - **Dynamic Eligibility Engine**: Automatically checks age limits, required degree levels, specific subjects, minimum experience, and domicile constraints before allowing application submission.
-- **Smart Batch Allocation**: Ensures test centers never exceed capacity and seamlessly groups candidates by job titles.
-- **Collision-free Roll Numbers**: Sequentially generates collision-free roll numbers within specific test centers.
-- **Document Master Suite**: Generates automated Fee Challans, Roll Number Slips, and Hall Attendance Lists with candidate photos.
+- **Smart Batch Allocation**: Ensures test centers never exceed capacity and seamlessly groups candidates by job titles based on city preferences and verified payment status.
+- **Collision-free Roll Numbers**: Sequentially generates collision-free, strictly numeric roll numbers within specific test centers.
+- **Document Master Suite**: Generates automated Fee Challans, Roll Number Slips, and Hall Attendance Lists with candidate photos in institutional-standard high-fidelity layouts.
+- **Administrative Print Portal**: A high-efficiency, AJAX-powered portal for batch-printing thousands of documents by Project, City, and Test Center without page reloads.
 - **End-to-End Post-Test Processing**: Allows admin to upload attendance scans, upload CSV exam results, and automatically calculates candidate percentiles and percentages.
 
 ---
@@ -132,7 +123,7 @@ Below are the step-by-step workflows for each user role in the PATS system.
 ### 🛡️ 2. For Admins (The Agency)
 *The central authority managing the recruitment process.*
 
-1.  **Project Management**: Create a recruitment project (e.g., "MofIT 2026") and add specific jobs with their unique eligibility criteria.
+1.  **Project Management**: Create a recruitment project and add specific jobs with their unique eligibility criteria.
 2.  **Center Verification**: Manage the list of cities and test centers (each with their seating capacity).
 3.  **Payment Verification**: In the **"Payments"** module, review uploaded candidate receipts and mark them as "Verified".
 4.  **Batch Scheduling**:
@@ -143,7 +134,7 @@ Below are the step-by-step workflows for each user role in the PATS system.
 5.  **Multi-Center Logistics (Print Portal)**:
     - On the Batches index, use the **"Print Portal"** button.
     - Select the project to load its centers dynamically.
-    - Instantly print **Roll Number Slips**, **Attendance Sheets**, and **OMR Sheets** for each specific center.
+    - Instantly print **Roll Number Slips**, **Attendance Sheets**, and **Answer Sheets** for each specific center.
 6.  **Roll Number Issuance**: After scheduling, click **"Mark Ready / Notify"** at the batch level. This generates roll numbers and notifies candidates via SMS/Email.
 7.  **Attendance & Results**:
     - Print **Attendance Sheets** and **Answer Sheets** for the examiners.
@@ -176,3 +167,5 @@ When an admin uploads the results for a project, the system expects a file (`.cs
 | 1010130010003 | 0 | 100 | absent |
 
 **Allowed Status Values:** `pass`, `fail`, `absent`, `withheld`.
+
+<p align="right"><sub>Platform maintained by Adeel Ali Raja</sub></p>

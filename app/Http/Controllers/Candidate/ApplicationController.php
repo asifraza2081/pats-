@@ -149,7 +149,7 @@ class ApplicationController extends Controller
         $candidate = Auth::user()->candidate;
         $pdf = Pdf::loadView('pdf.slip', compact('app', 'candidate'));
         
-        // IRONMAN: Persistent Storage
+        // Persistent Storage
         try {
             $date = $examRollno->batch->test_date->toDateString();
             $projectSlug = Str::slug($app->project->name);

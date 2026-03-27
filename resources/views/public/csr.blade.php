@@ -20,21 +20,21 @@
 
 <div class="row g-4 mb-5">
     <div class="col-md-4">
-        <div class="card card-nts h-100 text-center p-4">
+        <div class="card card-pats h-100 text-center p-4">
             <div class="mb-3"><span class="avatar avatar-lg bg-blue-lt text-blue rounded"><i class="ti ti-school fs-1"></i></span></div>
             <h3 class="fw-bold">Scholarship Support</h3>
             <p class="small text-muted">Facilitating needs-blind admissions and scholarship screening for underprivileged students in remote regions.</p>
         </div>
     </div>
     <div class="col-md-4">
-        <div class="card card-nts h-100 text-center p-4">
+        <div class="card card-pats h-100 text-center p-4">
             <div class="mb-3"><span class="avatar avatar-lg bg-green-lt text-green rounded"><i class="ti ti-leaf fs-1"></i></span></div>
             <h3 class="fw-bold">Digital Literacy</h3>
             <p class="small text-muted">Providing free digital assessment readiness workshops in public sector colleges to bridge the digital divide.</p>
         </div>
     </div>
     <div class="col-md-4">
-        <div class="card card-nts h-100 text-center p-4">
+        <div class="card card-pats h-100 text-center p-4">
             <div class="mb-3"><span class="avatar avatar-lg bg-orange-lt text-orange rounded"><i class="ti ti-users fs-1"></i></span></div>
             <h3 class="fw-bold">Inclusion Programs</h3>
             <p class="small text-muted">Developing specialized assessment protocols and support systems for candidates with physical disabilities.</p>

@@ -195,7 +195,6 @@
             <div class="modal-footer bg-white border-0 py-3">
                 <button type="button" class="btn btn-link link-secondary me-auto" data-bs-dismiss="modal">Close portal</button>
                 <div class="text-muted small">
-                    <span class="badge bg-blue-lt me-1">Ironman v5.0</span> 
                     Secure Printing Module
                 </div>
             </div>

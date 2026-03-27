@@ -104,7 +104,7 @@
             <div class="row row-cards g-4">
                 @foreach($projects as $project)
                 <div class="col-md-6">
-                    <div class="card card-nts h-100 border-0 overflow-hidden shadow-sm">
+                    <div class="card card-pats h-100 border-0 overflow-hidden shadow-sm">
                         <div class="card-body p-4 position-relative">
                             <div class="d-flex align-items-center mb-4">
                                 <div class="bg-grad-accent text-white p-3 rounded-4 me-3 shadow-teal-30">

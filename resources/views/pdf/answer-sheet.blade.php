@@ -117,7 +117,7 @@
                 <img src="data:image/png;base64,{{ $barcode }}" style="width: 350px; height: 60px;">
             </div>
             <div class="barcode-msg">Do not write or mark anything in this box</div>
-            <div style="font-size: 12px; margin-top: 5px; font-weight: bold;">BATCH- {{ $project->code ?? 'NTS' }}/{{ $batch->test_date->format('d-m-Y') }}/</div>
+            <div style="font-size: 12px; margin-top: 5px; font-weight: bold;">BATCH- {{ $project->code ?? 'PATS' }}/{{ $batch->test_date->format('d-m-Y') }}/</div>
         </div>
 
         <div class="photo-box">

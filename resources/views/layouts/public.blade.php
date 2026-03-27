@@ -117,7 +117,7 @@
         </header>
 
         @hasSection('header-title')
-        <section class="page-header-nts">
+        <section class="page-header-pats">
             <div class="container-xl py-2">
                 <h1 class="display-5 fw-bold mb-0">@yield('header-title')</h1>
                 @hasSection('header-breadcrumb')
@@ -135,7 +135,7 @@
         </div>
 
         <!-- Footer -->
-        <footer class="footer-nts">
+        <footer class="footer-pats">
             <div class="container-xl">
                 <div class="row g-5">
                     <div class="col-lg-4">

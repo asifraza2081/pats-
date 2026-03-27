@@ -98,7 +98,7 @@ body {
     pointer-events: none;
 }
 
-.page-header-nts {
+.page-header-pats {
     background: var(--pats-grad-hero);
     color: white;
     padding: 70px 0;
@@ -124,7 +124,7 @@ body {
 }
 
 /* Components */
-.card-nts {
+.card-pats {
     border: 1px solid rgba(15, 23, 42, 0.05);
     background: white;
     box-shadow: var(--pats-shadow-sm);
@@ -132,7 +132,7 @@ body {
     border-radius: 1.25rem !important;
 }
 
-.card-nts:hover {
+.card-pats:hover {
     transform: translateY(-10px) scale(1.02);
     box-shadow: var(--pats-shadow-lg);
     border-color: var(--pats-teal);
@@ -153,7 +153,7 @@ body {
     transform: translateY(-5px) scale(1.02);
 }
 
-.nts-hover-glow:hover {
+.pats-hover-glow:hover {
     box-shadow: 0 0 20px rgba(13, 148, 136, 0.4);
     border-color: var(--pats-teal) !important;
 }
@@ -275,7 +275,7 @@ a[href="#navbar-seat"]::after,
 .tracking-tighter { letter-spacing: -0.05em; }
 
 /* Footer */
-.footer-nts {
+.footer-pats {
     background: var(--pats-dark);
     color: white;
     padding: 80px 0 40px 0;
@@ -289,11 +289,11 @@ a[href="#navbar-seat"]::after,
 
 [data-bs-theme="dark"] body { background: #0f172a; color: #f8fafc; }
 [data-bs-theme="dark"] .main-nav { background: rgba(15, 23, 42, 0.9); border-bottom: 1px solid rgba(255,255,255,0.05); }
-[data-bs-theme="dark"] .card-nts, [data-bs-theme="dark"] .card { background: #1e293b !important; border-color: rgba(255,255,255,0.1) !important; color: #f8fafc !important; }
+[data-bs-theme="dark"] .card-pats, [data-bs-theme="dark"] .card { background: #1e293b !important; border-color: rgba(255,255,255,0.1) !important; color: #f8fafc !important; }
 [data-bs-theme="dark"] .notice-board { background: #1e293b; color: #f8fafc; }
 [data-bs-theme="dark"] .text-muted, [data-bs-theme="dark"] .text-secondary { color: #94a3b8 !important; }
 [data-bs-theme="dark"] .list-group-item { background: transparent; color: #f8fafc; border-color: rgba(255,255,255,0.05); }
-[data-bs-theme="dark"] .nts-quick-btn { background: #1e293b; color: #f8fafc; border-color: rgba(255,255,255,0.1); }
+[data-bs-theme="dark"] .pats-quick-btn { background: #1e293b; color: #f8fafc; border-color: rgba(255,255,255,0.1); }
 [data-bs-theme="dark"] .glass-panel { background: rgba(15, 23, 42, 0.8); border-color: rgba(255,255,255,0.1); }
 
 /* Global Font Override */
