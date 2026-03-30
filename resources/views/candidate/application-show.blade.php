@@ -34,13 +34,13 @@
         <!-- Action Buttons -->
         <div class="d-flex flex-wrap gap-2 mb-4">
             @if($app->payment && $app->status === \App\Enums\ApplicationStatus::SUBMITTED)
-            <a href="{{ route('candidate.challan', $app) }}" class="btn btn-warning" target="_blank">
+            <a href="{{ URL::patsDownload($app, 'challan') }}" class="btn btn-warning" target="_blank">
                 <i class="ti ti-download me-2"></i> Download Fee Challan
             </a>
             @endif
             
             @if($app->examRollno && $app->examRollno->roll_no)
-            <a href="{{ route('candidate.slip', $app) }}" class="btn btn-success" target="_blank">
+            <a href="{{ URL::patsDownload($app, 'slip') }}" class="btn btn-success" target="_blank">
                 <i class="ti ti-ticket me-2"></i> Download Roll Number Slip
             </a>
             @endif

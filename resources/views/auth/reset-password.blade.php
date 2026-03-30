@@ -28,6 +28,9 @@
 
                 <form method="POST" action="{{ route('auth.reset-password') }}" class="text-start" autocomplete="off">
                     @csrf
+                    <input type="hidden" name="token" value="{{ $token }}">
+                    <input type="hidden" name="email" value="{{ $email }}">
+                    
                     <div class="mb-3">
                         <label class="form-label required">New Password</label>
                         <input type="password" name="password" class="form-control" placeholder="Min 8 characters" minlength="8" required>

@@ -13,13 +13,13 @@ class UserController extends Controller
 {
     public function index()
     {
-        $users = User::role(['admin', 'data_entry', 'super_admin'])->paginate(15);
+        $users = User::role(['admin', 'data_entry', 'super_admin', 'examiner'])->paginate(15);
         return view('admin.users.index', compact('users'));
     }
 
     public function create()
     {
-        $roles = Role::whereIn('name', ['admin', 'data_entry', 'super_admin'])->get();
+        $roles = Role::whereIn('name', ['admin', 'data_entry', 'super_admin', 'examiner'])->get();
         return view('admin.users.create', compact('roles'));
     }
 
@@ -28,7 +28,7 @@ class UserController extends Controller
         $data = $request->validate([
             'first_name' => 'required|string|max:80',
             'last_name'  => 'required|string|max:80',
-            'cnic'       => 'required|regex:/^\d{13}$/|unique:users',
+            'cnic'       => 'nullable|regex:/^\d{5}-\d{7}-\d{1}$/|unique:users',
             'phone'      => 'required|string|max:15',
             'email'      => 'nullable|email|unique:users',
             'role'       => 'required|exists:roles,name',
@@ -52,7 +52,7 @@ class UserController extends Controller
 
     public function edit(User $user)
     {
-        $roles = Role::whereIn('name', ['admin', 'data_entry', 'super_admin'])->get();
+        $roles = Role::whereIn('name', ['admin', 'data_entry', 'super_admin', 'examiner'])->get();
         return view('admin.users.edit', compact('user', 'roles'));
     }
 
@@ -61,7 +61,7 @@ class UserController extends Controller
         $data = $request->validate([
             'first_name' => 'required|string|max:80',
             'last_name'  => 'required|string|max:80',
-            'cnic'       => ['required', 'regex:/^\d{13}$/', Rule::unique('users')->ignore($user)],
+            'cnic'       => ['nullable', 'regex:/^\d{5}-\d{7}-\d{1}$/', Rule::unique('users')->ignore($user)],
             'phone'      => 'required|string|max:15',
             'email'      => ['nullable', 'email', Rule::unique('users')->ignore($user)],
             'role'       => 'required|exists:roles,name',

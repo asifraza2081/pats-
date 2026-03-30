@@ -15,7 +15,7 @@
             <div class="card-body py-5 px-sm-5">
                 <i class="ti ti-key text-muted fs-1 mb-3 d-block text-center" style="font-size: 3rem !important;"></i>
                 <h2 class="h2 text-center mb-1 fw-bold">Forgot password?</h2>
-                <p class="text-muted text-center small mb-4">Enter your CNIC and we'll send you an OTP to reset your password.</p>
+                <p class="text-muted text-center small mb-4">Enter your Email or CNIC and we'll send you an OTP to reset your password.</p>
 
                 @if($errors->any())
                 <div class="alert alert-important alert-danger alert-dismissible" role="alert">
@@ -30,9 +30,9 @@
                 <form action="{{ route('auth.forgot-password') }}" method="POST" autocomplete="off" novalidate>
                     @csrf
                     <div class="mb-3">
-                        <label class="form-label required">Registered CNIC</label>
-                        <input type="text" name="cnic" class="form-control" placeholder="1234567890123" maxlength="13" inputmode="numeric" required>
-                        <div class="form-hint">13 digits without dashes</div>
+                        <label class="form-label required">Email or CNIC</label>
+                        <input type="text" name="identifier" class="form-control" placeholder="user@example.com or 1234567890123" required>
+                        <div class="form-hint">Enter your registered email address or 13-digit CNIC.</div>
                     </div>
                     
                     <div class="form-footer mt-4">

@@ -20,8 +20,11 @@ class AppServiceProvider extends ServiceProvider
         });
 
         \Illuminate\Support\Facades\Gate::define('publish results', function ($user) {
-            return $user->hasAnyRole(['admin', 'super_admin', 'data_entry']);
+            return $user->hasAnyRole(['admin', 'super_admin']);
         });
+
+        // Hardening: Prevent N+1 and other common pitfalls in development
+        \Illuminate\Database\Eloquent\Model::shouldBeStrict(! $this->app->isProduction());
         // Job Failure Monitoring
         \Illuminate\Support\Facades\Queue::failing(function (\Illuminate\Queue\Events\JobFailed $event) {
             $admins = \App\Models\User::role('super_admin')->get();
@@ -31,6 +34,15 @@ class AppServiceProvider extends ServiceProvider
             foreach ($admins as $admin) {
                 $admin->notify(new \App\Notifications\SystemAlert($message, 'error'));
             }
+        });
+
+        // Hardening: Secure Signed URLs for Documents
+        \Illuminate\Support\Facades\URL::macro('patsDownload', function ($app, $type = 'challan') {
+            return \Illuminate\Support\Facades\URL::temporarySignedRoute(
+                "candidate.{$type}",
+                now()->addHours(2),
+                ['app' => $app->id]
+            );
         });
     }
 }

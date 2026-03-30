@@ -75,7 +75,7 @@
     </div>
 
     <!-- Missing Information Checklist -->
-    @php
+        @php
         $missingFields = [];
         if (!$candidate) {
             $missingFields[] = 'Initial Profile Setup';
@@ -181,12 +181,12 @@
                                     <td>
                                         <div class="btn-list flex-nowrap">
                                             @if($app->payment && $app->payment->status->value === 'unpaid' && $app->job->project->isRegistrationOpen())
-                                                <a href="{{ route('candidate.challan', $app) }}" class="btn btn-sm btn-outline-dark" target="_blank">
+                                                <a href="{{ URL::patsDownload($app, 'challan') }}" class="btn btn-sm btn-outline-dark" target="_blank">
                                                     <i class="ti ti-receipt me-1"></i> Challan
                                                 </a>
                                             @endif
                                             @if($app->examRollno && $app->examRollno->slip_ready)
-                                                <a href="{{ route('candidate.slip', $app) }}" class="btn btn-sm btn-primary" target="_blank">
+                                                <a href="{{ URL::patsDownload($app, 'slip') }}" class="btn btn-sm btn-primary" target="_blank">
                                                     <i class="ti ti-download me-1"></i> Slip
                                                 </a>
                                             @endif

@@ -85,7 +85,7 @@ class BatchController extends Controller
                 // New logic: Check if (start < current_end AND end > current_start)
                 // We use reporting_time to start_time + 4 hours (estimated) for overlap-safety
                 $startTime = $data['start_time'];
-                $endTime   = \Carbon\Carbon::parse($startTime)->addHours(4)->format('H:i:s');
+                $endTime   = Carbon::parse($startTime)->addHours(4)->format('H:i:s');
 
                 $conflict = Batch::where('center_id', $centerId)
                     ->where('test_date', $testDateNormalized)

@@ -9,7 +9,8 @@ use App\Services\SmsService;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Hash;
-use Illuminate\Validation\Rules\Password;
+use Illuminate\Support\Facades\Password as PasswordBroker;
+use Illuminate\Validation\Rules\Password as PasswordRule;
 
 class AuthController extends Controller
 {
@@ -24,12 +25,12 @@ class AuthController extends Controller
             'first_name'  => 'required|string|max:80',
             'last_name'   => 'required|string|max:80',
             'email'       => 'required|email|unique:users',
-            'cnic'        => ['required', 'regex:/^\d{13}$/', 'unique:users'],
+            'cnic'        => ['nullable', 'regex:/^\d{5}-\d{7}-\d{1}$/', 'unique:users'],
             'phone'       => 'required|string|max:15',
             'nationality' => 'required|in:Pakistani,Foreigner',
-            'password'    => ['required', 'confirmed', Password::min(8)],
+            'password'    => ['required', 'confirmed', PasswordRule::min(8)],
         ], [
-            'cnic.regex' => 'CNIC must be exactly 13 digits (without dashes).',
+            'cnic.regex' => 'CNIC must be in the format XXXXX-XXXXXXX-X.',
         ]);
 
         $user = User::create([
@@ -160,29 +161,51 @@ class AuthController extends Controller
 
     public function forgotPassword(Request $request)
     {
-        $request->validate(['cnic' => ['required', 'regex:/^\d{13}$/']]);
-        $user = User::where('cnic', $request->cnic)->first();
+        $request->validate(['identifier' => ['required', 'string']]);
+        
+        $user = User::where('cnic', $request->identifier)
+            ->orWhere('email', $request->identifier)
+            ->first();
 
-        if (!$user) return back()->withErrors(['cnic' => 'No account found with this CNIC.']);
+        if (!$user || !$user->email) {
+            return back()->withErrors(['identifier' => 'No account found with an associated email address.']);
+        }
 
-        session(['reset_user_id' => $user->id]);
-        return redirect()->route('auth.reset-password')->with('info', 'Please set your new password.');
+        // Standard Laravel Token-based Reset
+        $status = PasswordBroker::broker()->sendResetLink(['email' => $user->email]);
+
+        return $status === PasswordBroker::RESET_LINK_SENT
+            ? back()->with('status', __($status))
+            : back()->withErrors(['identifier' => __($status)]);
     }
 
-    public function showResetPassword() { return view('auth.reset-password'); }
+    public function showResetPassword(Request $request, ?string $token = null)
+    {
+        return view('auth.reset-password')->with([
+            'token' => $token,
+            'email' => $request->email
+        ]);
+    }
 
     public function resetPassword(Request $request)
     {
         $request->validate([
-            'password' => ['required', 'confirmed', Password::min(8)],
+            'token'    => 'required',
+            'email'    => 'required|email',
+            'password' => ['required', 'confirmed', PasswordRule::min(8)],
         ]);
 
-        $userId = session('reset_user_id');
-        if (!$userId) return redirect()->route('login');
+        $status = PasswordBroker::broker()->reset(
+            $request->only('email', 'password', 'password_confirmation', 'token'),
+            function ($user, $password) {
+                $user->forceFill([
+                    'password' => Hash::make($password)
+                ])->save();
+            }
+        );
 
-        User::findOrFail($userId)->update(['password' => Hash::make($request->password)]);
-        session()->forget('reset_user_id');
-
-        return redirect()->route('login')->with('success', 'Password reset successfully. Please log in.');
+        return $status === PasswordBroker::PASSWORD_RESET
+            ? redirect()->route('login')->with('success', __($status))
+            : back()->withErrors(['email' => [__($status)]]);
     }
 }

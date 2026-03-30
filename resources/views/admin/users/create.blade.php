@@ -43,9 +43,9 @@
                     </div>
                     
                     <div class="col-md-6">
-                        <label class="form-label required">CNIC Number</label>
-                        <input type="text" name="cnic" class="form-control" value="{{ old('cnic') }}" maxlength="13" minlength="13" pattern="\d{13}" placeholder="13 digits without dashes" required>
-                        <div class="form-hint">Used as login username.</div>
+                        <label class="form-label">CNIC Number <span class="text-muted small fw-normal">(Optional)</span></label>
+                        <input type="text" name="cnic" class="form-control" value="{{ old('cnic') }}" maxlength="15" placeholder="XXXXX-XXXXXXX-X">
+                        <div class="form-hint">Used as login identifier along with Email.</div>
                     </div>
                     <div class="col-md-6">
                         <label class="form-label required">Phone Number</label>

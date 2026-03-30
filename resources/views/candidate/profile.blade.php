@@ -69,6 +69,13 @@
                             <input type="text" class="form-control" value="{{ auth()->user()->last_name }}" readonly disabled>
                         </div>
                         <div class="col-md-6">
+                            <label class="form-label">CNIC (XXXXX-XXXXXXX-X)</label>
+                            <input type="text" name="cnic" class="form-control" value="{{ old('cnic', auth()->user()->cnic) }}" placeholder="XXXXX-XXXXXXX-X" maxlength="15" {{ $candidate->profile_locked ? 'readonly' : '' }}>
+                            @if(!auth()->user()->cnic)
+                                <div class="text-warning small mt-1">CNIC is required for most job applications.</div>
+                            @endif
+                        </div>
+                        <div class="col-md-6">
                             <label class="form-label required">Father's Name</label>
                             <input type="text" name="father_name" class="form-control" value="{{ old('father_name', $candidate->father_name) }}" {{ $candidate->profile_locked ? 'readonly' : '' }}>
                         </div>

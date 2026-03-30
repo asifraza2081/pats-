@@ -38,7 +38,7 @@ Route::get('/safe-download', [App\Http\Controllers\PublicDownloadController::cla
 // ═══════════════════════════════════════════════════
 Route::middleware('guest')->group(function () {
     Route::get('/register',           [AuthController::class, 'showRegister'])->name('auth.register');
-    Route::post('/register',          [AuthController::class, 'register']);
+    Route::post('/register',          [AuthController::class, 'register'])->middleware('throttle:3,1');
     Route::get('/login',              [AuthController::class, 'showLogin'])->name('login');
     Route::post('/login',             [AuthController::class, 'login'])->middleware('throttle:5,1')->name('auth.login.post');
     Route::get('/forgot-password',    [AuthController::class, 'showForgotPassword'])->name('auth.forgot-password');
@@ -83,8 +83,8 @@ Route::middleware(['auth', 'role:candidate', \App\Http\Middleware\InactivityLogo
     Route::post('/apply/{job}',             [ApplicationController::class, 'store'])->name('apply.store');
     Route::get('/applications',             [ApplicationController::class, 'index'])->name('applications');
     Route::get('/applications/{app}',       [ApplicationController::class, 'show'])->name('applications.show');
-    Route::get('/applications/{app}/challan',  [ApplicationController::class, 'challan'])->name('challan');
-    Route::get('/applications/{app}/slip',     [ApplicationController::class, 'slip'])->name('slip');
+    Route::get('/applications/{app}/challan',  [ApplicationController::class, 'challan'])->name('challan')->middleware('signed');
+    Route::get('/applications/{app}/slip',     [ApplicationController::class, 'slip'])->name('slip')->middleware('signed');
     Route::get('/applications/{app}/result',   [ApplicationController::class, 'result'])->name('result');
 });
 

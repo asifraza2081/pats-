@@ -47,8 +47,8 @@
                         </div>
                         
                         <div class="col-md-6">
-                            <label class="form-label required">CNIC Number</label>
-                            <input type="text" name="cnic" class="form-control @error('cnic') is-invalid @enderror" placeholder="13 digits without dashes" maxlength="13" value="{{ old('cnic') }}" autocomplete="off" required>
+                            <label class="form-label">CNIC Number <span class="text-muted small fw-normal">(Optional)</span></label>
+                            <input type="text" name="cnic" class="form-control @error('cnic') is-invalid @enderror" placeholder="XXXXX-XXXXXXX-X" maxlength="15" value="{{ old('cnic') }}" autocomplete="off">
                             @error('cnic')<div class="invalid-feedback">{{ $message }}</div>@enderror
                         </div>
                         

@@ -29,6 +29,7 @@ class UpdateProfileRequest extends FormRequest
             'postal_address'        => 'required_without:same_postal_address|nullable|string',
             'same_postal_address'   => 'nullable|boolean',
             'alternate_phone'       => 'nullable|string|max:15',
+            'cnic'                  => ['nullable', 'regex:/^\d{5}-\d{7}-\d{1}$/', 'unique:users,cnic,' . auth()->id()],
             'photo'                 => 'nullable|image|max:5120',
             'cnic_copy'             => 'nullable|image|max:5120',
         ];

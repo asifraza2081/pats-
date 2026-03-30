@@ -101,7 +101,7 @@ class ResultController extends Controller
     {
         $preview = Cache::get('result_preview_' . Auth::id(), []);
         $sessionProjectId = session('result_project_id');
-        if (empty($preview) || $sessionProjectId !== $project->id) {
+        if (empty($preview) || $sessionProjectId != $project->id) {
             return back()->with('error', 'Result data mismatch. Please upload the file for this specific project again.');
         }
 

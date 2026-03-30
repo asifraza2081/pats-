@@ -58,13 +58,13 @@
                             </a>
                             
                             @if($app->status === \App\Enums\ApplicationStatus::SUBMITTED && $app->payment)
-                            <a href="{{ route('candidate.challan', $app) }}" class="btn btn-warning btn-sm" target="_blank">
+                            <a href="{{ URL::patsDownload($app, 'challan') }}" class="btn btn-warning btn-sm" target="_blank">
                                 <i class="ti ti-download me-1"></i> Download Challan
                             </a>
                             @endif
                             
                             @if($app->examRollno && $app->examRollno->roll_no)
-                            <a href="{{ route('candidate.slip', $app) }}" class="btn btn-success btn-sm" target="_blank">
+                            <a href="{{ URL::patsDownload($app, 'slip') }}" class="btn btn-success btn-sm" target="_blank">
                                 <i class="ti ti-ticket me-1"></i> Roll No Slip
                             </a>
                             @endif

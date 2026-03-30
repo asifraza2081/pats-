@@ -3,191 +3,265 @@
 namespace Database\Seeders;
 
 use App\Models\User;
+use App\Models\City;
+use App\Models\Project;
+use App\Models\PatsJob;
+use App\Models\TestCenter;
+use App\Models\Candidate;
+use App\Models\Application;
+use App\Models\EducationHistory;
+use App\Models\Payment;
 use Illuminate\Database\Seeder;
 use Illuminate\Support\Facades\Hash;
+use Illuminate\Support\Facades\DB;
 use Spatie\Permission\Models\Permission;
 use Spatie\Permission\Models\Role;
-use App\Models\City;
+use Carbon\Carbon;
 
 class DatabaseSeeder extends Seeder
 {
     public function run(): void
     {
-        // ── Roles ─────────────────────────────────────────
+        $this->command->info('─── PATS UNIFIED SEEDER STARTING ───');
+
+        // 1. ROLES & PERMISSIONS
+        $this->seedRolesPermissions();
+
+        // 2. CORE SYSTEM USERS
+        $admin = $this->seedCoreUsers();
+
+        // 3. GEOGRAPHY (Major Cities of Pakistan)
+        $cities = $this->seedGeography();
+
+        // 4. INFRASTRUCTURE (Centers & Examiners)
+        $infrastructure = $this->seedInfrastructure($cities);
+
+        // 5. DEMO PROJECTS & JOBS (WAPDA Theme)
+        $projectData = $this->seedProjects($admin, $infrastructure['centers']);
+
+        // 6. CANDIDATES & APPLICATIONS (Bulk Generation)
+        $this->seedCandidates($cities, $projectData);
+
+        $this->command->info('─── SEEDING COMPLETE! ───');
+        $this->command->table(['User Type', 'Email', 'Password'], [
+            ['Super Admin', 'admin@pats.test', 'Admin@1234'],
+            ['Data Entry', 'data@pats.test', 'password'],
+            ['Examiner (LHR)', 'examiner.lahore@pats.test', 'password'],
+            ['Test Candidate', 'candidate@pats.test', 'password'],
+        ]);
+    }
+
+    private function seedRolesPermissions()
+    {
         $roles = ['super_admin', 'admin', 'data_entry', 'candidate', 'examiner'];
         foreach ($roles as $r) {
             Role::firstOrCreate(['name' => $r, 'guard_name' => 'web']);
         }
 
-        // ── Permissions ───────────────────────────────────
         $permissions = [
-            'manage users',
-            'manage projects', 'manage jobs',
-            'manage centers',  'manage batches',
-            'verify payments', 'assign rolls',
-            'upload results',  'publish results',
-            'mark attendance',
-            'view reports',
-            'view assigned sessions',
+            'manage users', 'manage projects', 'manage jobs',
+            'manage centers', 'manage batches', 'verify payments',
+            'assign rolls', 'upload results', 'publish results',
+            'mark attendance', 'view reports', 'view assigned sessions',
         ];
 
         foreach ($permissions as $p) {
             Permission::firstOrCreate(['name' => $p, 'guard_name' => 'web']);
         }
 
-        $superAdmin = Role::whereName('super_admin')->first();
-        if ($superAdmin) {
-            $superAdmin->syncPermissions(Permission::all());
-        }
+        Role::findByName('super_admin')->syncPermissions(Permission::all());
+        Role::findByName('admin')->syncPermissions(Permission::whereNot('name', 'manage users')->get());
+        Role::findByName('data_entry')->syncPermissions(
+            Permission::whereIn('name', ['verify payments', 'mark attendance', 'view reports'])->get()
+        );
+        Role::findByName('examiner')->syncPermissions(
+            Permission::whereIn('name', ['view assigned sessions', 'mark attendance', 'view reports'])->get()
+        );
+    }
 
-        $admin = Role::whereName('admin')->first();
-        if ($admin) {
-            $admin->syncPermissions(Permission::whereNot('name', 'manage users')->get());
-        }
-
-        $dataEntry = Role::whereName('data_entry')->first();
-        if ($dataEntry) {
-            $dataEntry->syncPermissions(
-                Permission::whereIn('name', ['verify payments', 'mark attendance', 'view reports'])->get()
-            );
-        }
-
-        $examiner = Role::whereName('examiner')->first();
-        if ($examiner) {
-            $examiner->syncPermissions(
-                Permission::whereIn('name', ['view assigned sessions', 'mark attendance', 'view reports'])->get()
-            );
-        }
-
-        // ── Admin Users ──────────────────────────────
-        $superUser = User::updateOrCreate(
+    private function seedCoreUsers()
+    {
+        $admin = User::updateOrCreate(
             ['email' => 'admin@pats.test'],
             [
-                'first_name'        => 'Super',
-                'last_name'         => 'Admin',
-                'cnic'              => '0000000000001',
-                'phone'             => '03000000000',
-                'nationality'       => 'Pakistani',
-                'password'          => Hash::make('Admin@1234'),
-                'phone_verified_at' => now(),
-                'email_verified_at' => now(),
+                'first_name' => 'System', 'last_name' => 'Admin', 'cnic' => '0000000000001',
+                'phone' => '03000000000', 'nationality' => 'Pakistani',
+                'password' => Hash::make('Admin@1234'), 'email_verified_at' => now(),
             ]
         );
-        $superUser->assignRole('super_admin');
+        $admin->assignRole('super_admin');
 
-        $dataEntryUser = User::updateOrCreate(
+        $dataEntry = User::updateOrCreate(
             ['email' => 'data@pats.test'],
             [
-                'first_name'        => 'Data',
-                'last_name'         => 'Entry',
-                'cnic'              => '0000000000002',
-                'phone'             => '03000000001',
-                'nationality'       => 'Pakistani',
-                'password'          => Hash::make('password'),
-                'phone_verified_at' => now(),
-                'email_verified_at' => now(),
+                'first_name' => 'Data', 'last_name' => 'Entry', 'cnic' => '0000000000002',
+                'phone' => '03000000001', 'nationality' => 'Pakistani',
+                'password' => Hash::make('password'), 'email_verified_at' => now(),
             ]
         );
-        $dataEntryUser->assignRole('data_entry');
-        
-        // ── Examiner User ──────────────────────────────
-        $examinerUser = User::updateOrCreate(
-            ['email' => 'examiner@pats.test'],
+        $dataEntry->assignRole('data_entry');
+
+        return $admin;
+    }
+
+    private function seedGeography()
+    {
+        $provinces = [
+            'Punjab' => ['Lahore', 'Faisalabad', 'Multan', 'Rawalpindi'],
+            'Sindh' => ['Karachi', 'Hyderabad', 'Sukkur'],
+            'KPK' => ['Peshawar', 'Abbottabad'],
+            'Balochistan' => ['Quetta'],
+            'Federal' => ['Islamabad']
+        ];
+
+        $cities = [];
+        foreach ($provinces as $province => $cityNames) {
+            foreach ($cityNames as $cityName) {
+                $cities[] = City::updateOrCreate(['name' => $cityName], ['province' => $province, 'is_test_center' => true]);
+            }
+        }
+        return $cities;
+    }
+
+    private function seedInfrastructure($cities)
+    {
+        $centers = [];
+        foreach ($cities as $index => $city) {
+            $center = TestCenter::updateOrCreate(
+                ['tcid' => str_pad($index + 7000, 4, '0', STR_PAD_LEFT)],
+                [
+                    'name' => "PATS Excellence Center - " . $city->name,
+                    'city_id' => $city->id,
+                    'address' => "Main Street, " . $city->name,
+                    'seating_capacity' => 1000,
+                    'is_active' => true,
+                ]
+            );
+            $centers[] = $center;
+
+            // Create Examiner for this city/center
+            $examEmail = 'examiner.' . strtolower(str_replace(' ', '', $city->name)) . '@pats.test';
+            $examiner = User::updateOrCreate(
+                ['email' => $examEmail],
+                [
+                    'first_name' => 'Examiner', 'last_name' => $city->name,
+                    'cnic' => '99999' . str_pad($index, 8, '0', STR_PAD_LEFT),
+                    'phone' => '0399' . str_pad($index, 7, '0', STR_PAD_LEFT),
+                    'password' => Hash::make('password'), 'email_verified_at' => now(),
+                ]
+            );
+            $examiner->assignRole('examiner');
+        }
+        return ['centers' => $centers];
+    }
+
+    private function seedProjects($admin, $centers)
+    {
+        $project = Project::updateOrCreate(
+            ['name' => 'WAPDA Mega Recruitment 2026'],
             [
-                'first_name'        => 'Test',
-                'last_name'         => 'Examiner',
-                'cnic'              => '1111111111111',
-                'phone'             => '03111111111',
-                'nationality'       => 'Pakistani',
-                'password'          => Hash::make('password'),
-                'phone_verified_at' => now(),
-                'email_verified_at' => now(),
+                'org_name' => 'WAPDA',
+                'description' => 'National scale recruitment for technical and non-technical staff.',
+                'status' => 'open',
+                'open_date' => now()->subDays(10),
+                'close_date' => now()->addDays(20),
+                'created_by' => $admin->id,
             ]
         );
-        $examinerUser->assignRole('examiner');
 
-        // ── Cities ────────────────────────────────────────
-        $cityLhe = City::create(['name' => 'Lahore', 'province' => 'Punjab', 'is_test_center' => true]);
-        $cityIsb = City::create(['name' => 'Islamabad', 'province' => 'Federal', 'is_test_center' => true]);
-        $cityKhi = City::create(['name' => 'Karachi', 'province' => 'Sindh', 'is_test_center' => true]);
+        // Sync Centers
+        $project->centers()->sync(array_column($centers, 'id'));
 
-        // ── Projects ─────────────────────
-        $project1 = \App\Models\Project::create([
-            'name'        => 'National Health Drive 2026',
-            'org_name'    => 'Ministry of Health',
-            'description' => 'Medical and para-medical staff recruitment.',
-            'open_date'   => now()->subDays(10),
-            'close_date'  => now()->addDays(15),
-            'status'      => 'open',
-            'created_by'  => $superUser->id,
-        ]);
+        $jobs = [];
+        $jobTitles = [
+            ['title' => 'Assistant Manager (IT)', 'code' => 101, 'fee' => 1200, 'deg' => 3],
+            ['title' => 'Junior Engineer', 'code' => 102, 'fee' => 1500, 'deg' => 3],
+            ['title' => 'Lines Superintendent', 'code' => 103, 'fee' => 850, 'deg' => 2],
+        ];
 
-        $job1 = \App\Models\PatsJob::create([
-            'project_id'       => $project1->id,
-            'job_code'         => 101,
-            'title'            => 'Medical Officer',
-            'department'       => 'Clinical',
-            'bps_grade'        => 'BPS-17',
-            'total_seats'      => 50,
-            'fee'              => 1500,
-            'min_degree_level' => 3, 
-            'age_min'          => 22,
-            'age_max'          => 40,
-        ]);
+        foreach ($jobTitles as $j) {
+            $jobs[] = PatsJob::updateOrCreate(
+                ['project_id' => $project->id, 'job_code' => $j['code']],
+                [
+                    'title' => $j['title'], 'department' => 'Operations', 'bps_grade' => 'BPS-17',
+                    'total_seats' => 50, 'fee' => $j['fee'], 'min_degree_level' => $j['deg'],
+                    'age_min' => 21, 'age_max' => 35,
+                ]
+            );
+        }
 
-        $center1 = \App\Models\TestCenter::create([
-            'tcid'             => '9001',
-            'name'             => 'PATS HQ Lahore',
-            'city_id'          => $cityLhe->id,
-            'address'          => 'Main Boulevard, Lahore',
-            'seating_capacity' => 1000,
-            'is_active'        => true,
-        ]);
-        $center1->projects()->attach($project1->id);
+        return ['project' => $project, 'jobs' => $jobs];
+    }
 
-        // ── Candidate User (Fully Profiled) ──────────────────────────────
-        $candidateUser = User::create([
-            'first_name'        => 'Test',
-            'last_name'         => 'Candidate',
-            'cnic'              => '3520200000001',
-            'phone'             => '03001234567',
-            'email'             => 'candidate@pats.test',
-            'nationality'       => 'Pakistani',
-            'password'          => Hash::make('password'),
-            'phone_verified_at' => now(),
-        ]);
-        $candidateUser->assignRole('candidate');
+    private function seedCandidates($cities, $projectData)
+    {
+        // 1. Standard Test Candidate (matched role)
+        $testCandUser = User::updateOrCreate(
+            ['email' => 'candidate@pats.test'],
+            [
+                'first_name' => 'Jane', 'last_name' => 'Doe', 'cnic' => '3520200000001',
+                'phone' => '03001234567', 'nationality' => 'Pakistani',
+                'password' => Hash::make('password'), 'phone_verified_at' => now(),
+            ]
+        );
+        $testCandUser->assignRole('candidate');
 
-        $candidateInfo = \App\Models\Candidate::create([
-            'user_id'              => $candidateUser->id,
-            'father_name'          => 'John Doe Sr',
-            'gender'               => 'Male',
-            'dob'                  => '1998-05-15',
-            'domicile_city_id'     => $cityLhe->id,
-            'address_city_id'      => $cityLhe->id,
-            'postal_address'       => 'House 123, Street 4, Lahore',
-            'profile_locked'       => false,
-            'religion'             => 'Islam',
-            'province_of_domicile' => 'Punjab',
-            'district_of_domicile' => 'Lahore',
-        ]);
+        $candidateInfo = Candidate::updateOrCreate(
+            ['user_id' => $testCandUser->id],
+            [
+                'father_name' => 'John Doe Sr', 'gender' => 'Female', 'dob' => '1998-05-15',
+                'domicile_city_id' => $cities[0]->id, 'address_city_id' => $cities[0]->id,
+                'postal_address' => 'House 123, Street 4, Lahore', 'profile_locked' => false,
+            ]
+        );
 
-        \App\Models\EducationHistory::create([
-            'candidate_id'    => $candidateInfo->id,
-            'degree_level'    => 3, 
-            'degree_name'     => 'MBBS',
-            'subject_major'   => 'Medicine',
-            'institution'     => 'King Edward Medical University',
-            'passing_year'    => 2020,
-            'marks_type'      => 'Marks',
-            'obtained_marks'  => 850,
-            'total_marks'     => 1100,
-        ]);
+        EducationHistory::updateOrCreate(
+            ['candidate_id' => $candidateInfo->id, 'degree_level' => 3],
+            [
+                'degree_name' => 'BS Computer Science', 'subject_major' => 'Software',
+                'institution' => 'PUCIT', 'passing_year' => 2020, 'marks_type' => 'CGPA',
+                'obtained_marks' => 3.8, 'total_marks' => 4.0,
+            ]
+        );
 
-        echo "\n✅ PATS Seeder Complete! Ready for Flow Testing.\n";
-        echo "   Super Admin: admin@pats.test / Admin@1234\n";
-        echo "   Candidate: candidate@pats.test / password\n";
-        echo "   Examiner: examiner@pats.test / password\n";
+        // 2. Bulk Generation (50 Candidates)
+        $this->command->info("Seeding 50 Bulk Candidates...");
+        for ($i = 0; $i < 50; $i++) {
+            $user = User::create([
+                'first_name' => 'Candidate', 'last_name' => '#' . ($i + 1),
+                'email' => "candidate." . ($i + 1) . "@example.com",
+                'cnic' => '55555' . str_pad($i, 8, '0', STR_PAD_LEFT),
+                'phone' => '0300' . str_pad($i, 7, '0', STR_PAD_LEFT),
+                'password' => Hash::make('password'), 'nationality' => 'Pakistani',
+                'phone_verified_at' => now(), 'email_verified_at' => now(),
+            ]);
+            $user->assignRole('candidate');
 
+            $cand = Candidate::create([
+                'user_id' => $user->id, 'father_name' => "Father Name", 'gender' => rand(0, 1) ? 'Male' : 'Female',
+                'dob' => Carbon::now()->subYears(rand(22, 35))->format('Y-m-d'),
+                'domicile_city_id' => $cities[array_rand($cities)]->id, 
+                'address_city_id' => $cities[array_rand($cities)]->id,
+                'profile_locked' => true,
+            ]);
+
+            EducationHistory::create([
+                'candidate_id' => $cand->id, 'degree_level' => 3, 'degree_name' => 'Bachelor Degree',
+                'subject_major' => 'General', 'institution' => 'University', 'passing_year' => 2021,
+                'marks_type' => 'Marks', 'obtained_marks' => 850, 'total_marks' => 1100,
+            ]);
+
+            // Apply to one job
+            $job = $projectData['jobs'][array_rand($projectData['jobs'])];
+            $app = Application::create([
+                'candidate_id' => $cand->id, 'project_id' => $job->project_id, 'job_id' => $job->id,
+                'desired_test_city_id' => $cand->domicile_city_id, 'status' => 'fee_paid', 'applied_at' => now(),
+            ]);
+
+            Payment::create([
+                'application_id' => $app->id, 'challan_ref' => 'PAY-' . str_pad($app->id, 8, '0', STR_PAD_LEFT),
+                'amount' => $job->fee, 'status' => 'paid', 'deposit_date' => now(),
+            ]);
+        }
     }
 }

@@ -21,19 +21,12 @@ class RollNumberService
      */
     public function allocateBatch(Batch $batch, int $count, array $jobIds = []): int
     {
-        
-        // 1. Prepare data, generate barcodes, and insert EVERYTHING in ONE transaction
         return DB::transaction(function () use ($batch, $count, $jobIds) {
-            $closeDate = $batch->project->close_date
-                ? Carbon::parse($batch->project->close_date)->toDateString()
-                : Carbon::now()->toDateString();
-            
-            $closeYear = $batch->project->close_date
-                ? Carbon::parse($batch->project->close_date)->year
-                : Carbon::now()->year;
+            $closeDate = $batch->project->close_date ?? now();
+            $closeYear = $closeDate->year;
+            $testDateStr = $batch->test_date->toDateString();
 
-            $testDateStr = Carbon::parse($batch->test_date)->toDateString();
-
+            // Core allocation query
             $query = Application::where('applications.project_id', $batch->project_id)
                 ->where('applications.status', 'fee_paid')
                 ->where('applications.desired_test_city_id', $batch->center->city_id)
@@ -45,6 +38,7 @@ class RollNumberService
                 })
                 ->join('candidates', 'applications.candidate_id', '=', 'candidates.id')
                 ->join('pats_jobs', 'applications.job_id', '=', 'pats_jobs.id')
+                // Eligibility Logic (Hardened SQL)
                 ->where(function($q) use ($closeYear) {
                     $q->whereRaw('(pats_jobs.min_degree_level IS NULL OR pats_jobs.min_degree_level <= (
                         SELECT MAX(degree_level) FROM education_history 
@@ -52,7 +46,9 @@ class RollNumberService
                         AND passing_year <= ?
                     ))', [$closeYear]);
                 })
-                ->whereRaw('(pats_jobs.age_min IS NULL OR (TIMESTAMPDIFF(YEAR, candidates.dob, ?) >= pats_jobs.age_min AND (pats_jobs.age_max IS NULL OR TIMESTAMPDIFF(YEAR, candidates.dob, ?) <= pats_jobs.age_max)))', [$closeDate, $closeDate])
+                ->whereRaw('(pats_jobs.age_min IS NULL OR ((YEAR(?) - YEAR(candidates.dob)) - (DATE_FORMAT(?, "%m%d") < DATE_FORMAT(candidates.dob, "%m%d")) >= pats_jobs.age_min))')
+                ->whereRaw('(pats_jobs.age_max IS NULL OR ((YEAR(?) - YEAR(candidates.dob)) - (DATE_FORMAT(?, "%m%d") < DATE_FORMAT(candidates.dob, "%m%d")) <= pats_jobs.age_max))')
+                ->setBindings([$closeYear, $closeDate->toDateString(), $closeDate->toDateString(), $closeDate->toDateString(), $closeDate->toDateString()], 'where')
                 ->select('applications.*');
 
             if (!empty($jobIds)) {
@@ -62,25 +58,30 @@ class RollNumberService
             $candidates = $query->with('job')->lockForUpdate()->limit($count)->get();
             if ($candidates->isEmpty()) return 0;
 
-            $uniqueJobs = $candidates->pluck('job_id')->unique();
-            $jobCounts = [];
-            foreach ($uniqueJobs as $jobId) {
-                $jobCounts[$jobId] = ExamRollno::where('project_id', $batch->project_id)
-                    ->where('city_id', $batch->center->city_id)
-                    ->where('center_id', $batch->center_id)
-                    ->where('job_id', $jobId)
-                    ->lockForUpdate()
-                    ->count();
-            }
-
+            // Roll Number Generation Logic
             $examRecords = [];
             $appIds = [];
+            
+            // Get current max serials for each job in this project/city/center to prevent collisions
+            $uniqueJobs = $candidates->pluck('job_id')->unique();
+            $jobSerials = [];
+            foreach ($uniqueJobs as $jobId) {
+                // Get the current max serial from the last 4 digits of roll_no for this specific job/center
+                $lastRoll = ExamRollno::where('project_id', $batch->project_id)
+                    ->where('center_id', $batch->center_id)
+                    ->where('job_id', $jobId)
+                    ->orderByDesc('roll_no')
+                    ->lockForUpdate()
+                    ->first();
+                
+                $jobSerials[$jobId] = $lastRoll ? (int) substr($lastRoll->roll_no, -4) : 0;
+            }
 
             foreach ($candidates as $app) {
                 $jobId = $app->job_id;
-                $serial = ($jobCounts[$jobId] ?? 0) + 1;
-                $jobCounts[$jobId] = $serial;
+                $serial = ++$jobSerials[$jobId];
 
+                // Robust Format: [ProjID(2)][JobID(2)][CityID(2)][CenterID(2)][Serial(4)]
                 $rollNo = sprintf(
                     '%02d%02d%02d%02d%04d',
                     $app->project_id % 100,
@@ -98,7 +99,7 @@ class RollNumberService
                     'center_id'      => $batch->center_id,
                     'batch_id'       => $batch->id,
                     'roll_no'        => $rollNo,
-                    'barcode'        => $rollNo, // Using roll_no as barcode for integrity and uniqueness
+                    'barcode'        => $rollNo, 
                     'batch_no'       => (string)$batch->batch_number,
                     'slip_ready'     => 0,
                     'created_at'     => now(),
@@ -112,9 +113,10 @@ class RollNumberService
             }
 
             Application::whereIn('id', $appIds)->update([
-                'batch_id' => $batch->id,
-                'status'   => 'scheduled'
+                'status'   => 'scheduled',
+                'batch_id' => $batch->id
             ]);
+            
             $batch->increment('booked_seats', count($appIds));
 
             return count($appIds);
@@ -138,7 +140,7 @@ class RollNumberService
     {
         return ExamRollno::where('batch_id', $batch->id)
             ->with('job')
-            ->selectRaw('job_id, MIN(CAST(roll_no AS UNSIGNED)) as roll_from, MAX(CAST(roll_no AS UNSIGNED)) as roll_to, COUNT(*) as allocated')
+            ->selectRaw('job_id, MIN(roll_no) as roll_from, MAX(roll_no) as roll_to, COUNT(*) as allocated')
             ->groupBy('job_id')
             ->get();
     }

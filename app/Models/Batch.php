@@ -14,7 +14,7 @@ class Batch extends Model
     protected $fillable = [
         'project_id', 'center_id', 'batch_number', 'test_date',
         'reporting_time', 'start_time', 'total_seats', 'booked_seats',
-        'envelope_size', 'is_ready', 'results_published',
+        'envelope_size', 'is_ready', 'results_published', 'created_by',
     ];
 
     protected $casts = [

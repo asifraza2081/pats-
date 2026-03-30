@@ -12,8 +12,18 @@
     <!-- Core Styles -->
     <link rel="stylesheet" href="{{ asset('assets/css/pats-core.css') }}">
     <style>
-        html[data-bs-theme='dark'] .hide-theme-dark { display: none !important; }
+        /* CSS Driven Theme Toggle - Targeted to HTML root */
+        [data-bs-theme='dark'] .hide-theme-dark { display: none !important; }
+        [data-bs-theme='light'] .hide-theme-light { display: none !important; }
+
+        /* Override Tabler's aggressive body-based theme toggle rules if any */
+        body:not([data-bs-theme='dark']) .hide-theme-light, 
+        body:not(.theme-dark) .hide-theme-light { 
+            display: unset !important; 
+        }
+        /* Re-apply our specific logic with higher specificity or after reset */
         html[data-bs-theme='light'] .hide-theme-light { display: none !important; }
+        html[data-bs-theme='dark'] .hide-theme-dark { display: none !important; }
     </style>
 
     <!-- Theme Persistence Script (Instant Apply) -->
@@ -25,6 +35,7 @@
         window.setTheme = function(theme) {
             localStorage.setItem('pats-theme', theme);
             document.documentElement.setAttribute('data-bs-theme', theme);
+            document.body.setAttribute('data-bs-theme', theme);
             window.dispatchEvent(new Event('theme-changed'));
         };
 
@@ -202,6 +213,22 @@
                 navbar.classList.remove('scrolled');
             }
         };
+
+        document.addEventListener('DOMContentLoaded', function () {
+            const maskCnic = (e) => {
+                let v = e.target.value;
+                if (v.includes('@')) return; // Don't mask emails
+                
+                v = v.replace(/\D/g, '');
+                if (v.length > 13) v = v.substring(0, 13);
+                let out = '';
+                if (v.length > 0) out += v.substring(0, 5);
+                if (v.length > 5) out += '-' + v.substring(5, 12);
+                if (v.length > 12) out += '-' + v.substring(12, 13);
+                e.target.value = out;
+            };
+            document.querySelectorAll('input[name="cnic"], .cnic-mask').forEach(i => i.addEventListener('input', maskCnic));
+        });
     </script>
     @stack('scripts')
 </body>

@@ -29,8 +29,8 @@
                     @csrf
                     <div class="mb-3">
                         <label class="form-label required">CNIC or Email</label>
-                        <input type="text" name="cnic" class="form-control @error('cnic') is-invalid @enderror" placeholder="CNIC (13 digits) or Email address" value="{{ old('cnic') }}" autocomplete="off" required>
-                        <div class="form-hint">Enter your registered 13-digit CNIC or Email address</div>
+                        <input type="text" name="cnic" class="form-control @error('cnic') is-invalid @enderror" placeholder="CNIC (XXXXX-XXXXXXX-X) or Email" value="{{ old('cnic') }}" autocomplete="off" required>
+                        <div class="form-hint">Enter your registered CNIC (with dashes) or Email address</div>
                         @error('cnic')<div class="invalid-feedback">{{ $message }}</div>@enderror
                     </div>
                     

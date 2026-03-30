@@ -22,16 +22,18 @@
         window.setTheme = function(theme) {
             localStorage.setItem('pats-theme', theme);
             document.documentElement.setAttribute('data-bs-theme', theme);
+            document.body.setAttribute('data-bs-theme', theme);
             
-            // Sync icons manually for high-fidelity response
+            // Sync icons manually for high-fidelity response - ensuring they show when they should
             const darkIcons = document.querySelectorAll('.hide-theme-dark');
             const lightIcons = document.querySelectorAll('.hide-theme-light');
+            
             if (theme === 'dark') {
-                darkIcons.forEach(el => el.style.display = 'none');
-                lightIcons.forEach(el => el.style.display = 'block');
+                darkIcons.forEach(el => el.style.setProperty('display', 'none', 'important'));
+                lightIcons.forEach(el => el.style.setProperty('display', 'block', 'important'));
             } else {
-                darkIcons.forEach(el => el.style.display = 'block');
-                lightIcons.forEach(el => el.style.display = 'none');
+                darkIcons.forEach(el => el.style.setProperty('display', 'block', 'important'));
+                lightIcons.forEach(el => el.style.setProperty('display', 'none', 'important'));
             }
             window.dispatchEvent(new Event('theme-changed'));
         };
@@ -88,6 +90,15 @@
         .nav-link:hover .nav-link-icon {
             transform: scale(1.15);
         }
+
+        /* Override Tabler's aggressive body-based theme toggle rules if any */
+        body:not([data-bs-theme='dark']) .hide-theme-light, 
+        body:not(.theme-dark) .hide-theme-light { 
+            display: unset !important; 
+        }
+        /* CSS Driven Theme Toggle - Targeted to HTML root */
+        [data-bs-theme='dark'] .hide-theme-dark { display: none !important; }
+        [data-bs-theme='light'] .hide-theme-light { display: none !important; }
     </style>
 </head>
 <body class="layout-fluid">
@@ -412,6 +423,26 @@
             var tooltipList = tooltipTriggerList.map(function (tooltipTriggerEl) {
                 return new bootstrap.Tooltip(tooltipTriggerEl)
             })
+        });
+    </script>
+    <script>
+        document.addEventListener('DOMContentLoaded', function () {
+            const maskCnic = (e) => {
+                let v = e.target.value;
+                if (v.includes('@')) return;
+                
+                v = v.replace(/\D/g, '');
+                if (v.length > 13) v = v.substring(0, 13);
+                let out = '';
+                if (v.length > 0) out += v.substring(0, 5);
+                if (v.length > 5) out += '-' + v.substring(5, 12);
+                if (v.length > 12) out += '-' + v.substring(12, 13);
+                e.target.value = out;
+            };
+            document.querySelectorAll('input[name="cnic"], .cnic-mask').forEach(i => {
+                i.addEventListener('input', maskCnic);
+                maskCnic({ target: i });
+            });
         });
     </script>
     @stack('scripts')

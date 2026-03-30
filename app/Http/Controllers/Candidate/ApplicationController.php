@@ -64,6 +64,14 @@ class ApplicationController extends Controller
 
         abort_if(!$project->isRegistrationOpen(), 403);
 
+        $data = $request->validate([
+            'desired_test_city_id' => 'required|exists:cities,id',
+            'age_relaxation_type'  => 'nullable|string',
+            'age_relaxation_years' => 'nullable|integer|min:0|max:15',
+        ]);
+
+        $eligResult = $this->eligibility->check($candidate, $job);
+
         try {
             DB::transaction(function () use ($candidate, $job, $data, $eligResult) {
                 // LOCK CANDIDATE and re-check application to prevent race conditions
@@ -100,7 +108,7 @@ class ApplicationController extends Controller
                 }
 
                 // Lock profile
-                $candidate->update(['profile_locked' => true]);
+                $candidateLocked->update(['profile_locked' => true]);
             });
         } catch (\Exception $e) {
             if ($e->getMessage() === 'DUPLICATE_APPLICATION') {

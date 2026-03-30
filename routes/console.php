@@ -9,10 +9,13 @@ Artisan::command('inspire', function () {
 })->purpose('Display an inspiring quote')->hourly();
 
 Schedule::call(function () {
-    $files = Storage::disk('public')->allFiles('temp_scans');
-    foreach ($files as $file) {
-        if (Storage::disk('public')->lastModified($file) < now()->subDays(7)->getTimestamp()) {
-            Storage::disk('public')->delete($file);
+    $paths = ['temp_scans', 'exports'];
+    foreach ($paths as $path) {
+        $files = Storage::disk('public')->allFiles($path);
+        foreach ($files as $file) {
+            if (Storage::disk('public')->lastModified($file) < now()->subDays(7)->getTimestamp()) {
+                Storage::disk('public')->delete($file);
+            }
         }
     }
-})->daily()->name('cleanup-temp-scans');
+})->weekly()->name('cleanup-temp-files');

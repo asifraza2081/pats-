@@ -134,7 +134,7 @@ class Candidate extends Model
         $fields = [
             'father_name', 'dob', 'gender', 'marital_status', 'religion',
             'domicile_city_id', 'address_city_id',
-            'permanent_address', 'postal_address',
+            'permanent_address', 'postal_address', 'photo_path',
         ];
         $filled = 0;
         $total  = count($fields) + 1; // +1 for education only

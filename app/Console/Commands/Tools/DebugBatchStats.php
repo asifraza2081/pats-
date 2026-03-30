@@ -1,6 +1,6 @@
 <?php
 
-namespace App\Console\Commands;
+namespace App\Console\Commands\Tools;
 
 use App\Models\Project;
 use App\Services\AllocationStatsService;
