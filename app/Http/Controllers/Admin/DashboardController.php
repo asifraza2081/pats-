@@ -24,7 +24,7 @@ class DashboardController extends Controller
             ];
         });
 
-        $recentApps = Application::with(['candidate.user', 'job', 'payment'])
+        $recentApps = Application::with(['candidate.user', 'job.project', 'payment'])
             ->latest('applied_at')->take(10)->get();
 
         $openProjects = Project::where('status', 'open')->latest()->take(5)->get();

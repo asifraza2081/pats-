@@ -153,15 +153,15 @@
                             </div>
                             <div class="datagrid-item">
                                 <div class="datagrid-title">Test Date</div>
-                                <div class="datagrid-content fw-bold text-primary">{{ $app->examRollno->test_date ? \Carbon\Carbon::parse($app->examRollno->test_date)->format('l, d M Y') : 'TBD' }}</div>
+                                <div class="datagrid-content fw-bold text-primary">{{ $app->examRollno->batch?->test_date ? \Carbon\Carbon::parse($app->examRollno->batch->test_date)->format('l, d M Y') : 'TBD' }}</div>
                             </div>
                             <div class="datagrid-item">
                                 <div class="datagrid-title">Reporting Time</div>
-                                <div class="datagrid-content fw-bold">{{ $app->examRollno->reporting_time ? \Carbon\Carbon::parse($app->examRollno->reporting_time)->format('h:i A') : 'TBD' }}</div>
+                                <div class="datagrid-content fw-bold">{{ $app->examRollno->batch?->reporting_time ? \Carbon\Carbon::parse($app->examRollno->batch->reporting_time)->format('h:i A') : 'TBD' }}</div>
                             </div>
                             <div class="datagrid-item">
                                 <div class="datagrid-title">Test Start Time</div>
-                                <div class="datagrid-content fw-bold">{{ $app->examRollno->start_time ? \Carbon\Carbon::parse($app->examRollno->start_time)->format('h:i A') : 'TBD' }}</div>
+                                <div class="datagrid-content fw-bold">{{ $app->examRollno->batch?->start_time ? \Carbon\Carbon::parse($app->examRollno->batch->start_time)->format('h:i A') : 'TBD' }}</div>
                             </div>
                         </div>
                     </div>

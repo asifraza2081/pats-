@@ -15,7 +15,7 @@ class RollNumberController extends Controller
      */
     public function index(Request $request)
     {
-        $query = ExamRollno::with(['application.candidate.user', 'job.project', 'center.city']);
+        $query = ExamRollno::with(['application.candidate.user', 'project', 'job', 'city', 'center']);
 
         if ($request->project_id) {
             $query->where('project_id', $request->project_id);

@@ -108,7 +108,7 @@
                             </div>
                             <div class="datagrid-item">
                                 <div class="datagrid-title">Test Schedule</div>
-                                <div class="datagrid-content">{{ $app->examRollno->test_date->format('l, d M Y') }} at {{ date('h:i A', strtotime($app->examRollno->start_time)) }}</div>
+                                <div class="datagrid-content">{{ $app->examRollno->batch->test_date->format('l, d M Y') }} at {{ date('h:i A', strtotime($app->examRollno->batch->start_time)) }}</div>
                             </div>
                         </div>
                     </div>

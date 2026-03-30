@@ -58,7 +58,7 @@
                             </div>
                             <div class="datagrid-item">
                                 <div class="datagrid-title">Test Date</div>
-                                <div class="datagrid-content text-body fw-medium">{{ $result->published_at?->format('d M, Y') ?: $app->examRollno->test_date->format('d M, Y') }}</div>
+                                <div class="datagrid-content text-body fw-medium">{{ $result->published_at?->format('d M, Y') ?: $app->examRollno?->batch?->test_date?->format('d M, Y') }}</div>
                             </div>
                         </div>
                     </div>

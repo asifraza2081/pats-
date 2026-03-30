@@ -134,10 +134,11 @@ class Candidate extends Model
         $fields = [
             'father_name', 'dob', 'gender', 'marital_status', 'religion',
             'domicile_city_id', 'address_city_id',
-            'permanent_address', 'postal_address', 'photo_path',
+            'permanent_address', 'postal_address',
+            'photo_path', 'cnic_front_path',
         ];
         $filled = 0;
-        $total  = count($fields) + 1; // +1 for education only
+        $total  = count($fields) + 1; // +1 for education
         foreach ($fields as $f) {
             if ($f === 'postal_address' && $this->same_postal_address) {
                 if (!empty($this->permanent_address)) {

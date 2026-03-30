@@ -141,6 +141,9 @@
                         </div>
                     </div>
                 </div>
+                <div class="card-footer bg-transparent py-4 text-end">
+                    <button type="submit" class="btn btn-primary px-5 btn-save-personal"><i class="ti ti-device-floppy me-2"></i> Save Profile Data</button>
+                </div>
             </div>
 
             <!-- Address & Domicile -->
@@ -188,20 +191,11 @@
                             <textarea name="postal_address" id="postal_address_input" class="form-control" rows="2" {{ old('same_postal_address', $candidate->same_postal_address) ? '' : 'required' }}>{{ old('postal_address', $candidate->postal_address) }}</textarea>
                         </div>
 
-                        <script>
-                            function togglePostal(isSame) {
-                                const field = document.getElementById('postalField');
-                                const input = document.getElementById('postal_address_input');
-                                if (isSame) {
-                                    field.style.display = 'none';
-                                    input.removeAttribute('required');
-                                } else {
-                                    field.style.display = 'block';
-                                    input.setAttribute('required', 'required');
-                                }
-                            }
                         </script>
                     </div>
+                </div>
+                <div class="card-footer bg-transparent py-4 text-end">
+                    <button type="submit" class="btn btn-primary px-5 btn-save-address"><i class="ti ti-device-floppy me-2"></i> Save Profile Data</button>
                 </div>
             </div>
 

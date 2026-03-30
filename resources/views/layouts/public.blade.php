@@ -217,15 +217,21 @@
         document.addEventListener('DOMContentLoaded', function () {
             const maskCnic = (e) => {
                 let v = e.target.value;
-                if (v.includes('@')) return; // Don't mask emails
+                // If it contains letters or @, it's likely an email, don't mask
+                if (/[a-zA-Z@]/.test(v)) return;
                 
-                v = v.replace(/\D/g, '');
-                if (v.length > 13) v = v.substring(0, 13);
+                let nums = v.replace(/\D/g, '');
+                if (nums.length > 13) nums = nums.substring(0, 13);
+                
                 let out = '';
-                if (v.length > 0) out += v.substring(0, 5);
-                if (v.length > 5) out += '-' + v.substring(5, 12);
-                if (v.length > 12) out += '-' + v.substring(12, 13);
-                e.target.value = out;
+                if (nums.length > 0) out += nums.substring(0, 5);
+                if (nums.length > 5) out += '-' + nums.substring(5, 12);
+                if (nums.length > 12) out += '-' + nums.substring(12, 13);
+                
+                // Only update if changed to avoid cursor jumps on emails
+                if (out !== v && nums.length > 0) {
+                    e.target.value = out;
+                }
             };
             document.querySelectorAll('input[name="cnic"], .cnic-mask').forEach(i => i.addEventListener('input', maskCnic));
         });

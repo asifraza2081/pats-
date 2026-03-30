@@ -64,7 +64,7 @@
                             @if($app->examRollno)
                             <div class="datagrid-item">
                                 <div class="datagrid-title">Test Date</div>
-                                <div class="datagrid-content">{{ $app->examRollno->test_date ? \Carbon\Carbon::parse($app->examRollno->test_date)->format('d M Y') : 'N/A' }}</div>
+                                <div class="datagrid-content">{{ $app->examRollno->batch?->test_date ? \Carbon\Carbon::parse($app->examRollno->batch->test_date)->format('d M Y') : 'N/A' }}</div>
                             </div>
                             <div class="datagrid-item">
                                 <div class="datagrid-title">Test Center</div>

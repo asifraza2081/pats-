@@ -78,14 +78,14 @@
                     </div>
                 </div>
                 
-                @if($app->examRollno && $app->examRollno->test_date)
+                @if($app->examRollno && $app->examRollno->batch?->test_date)
                 <div class="card-footer bg-transparent py-3">
                     <div class="row align-items-center small text-muted">
                         <div class="col-12 col-md-auto mb-2 mb-md-0">
-                            <i class="ti ti-calendar text-success me-1"></i> Test Date: <strong class="text-dark">{{ \Carbon\Carbon::parse($app->examRollno->test_date)->format('d M Y') }}</strong>
+                            <i class="ti ti-calendar text-success me-1"></i> Test Date: <strong class="text-dark">{{ \Carbon\Carbon::parse($app->examRollno->batch->test_date)->format('d M Y') }}</strong>
                         </div>
                         <div class="col-12 col-md-auto mb-2 mb-md-0">
-                            <i class="ti ti-clock text-warning me-1"></i> Reporting Time: <strong class="text-dark">{{ \Carbon\Carbon::parse($app->examRollno->reporting_time)->format('h:i A') }}</strong>
+                            <i class="ti ti-clock text-warning me-1"></i> Reporting Time: <strong class="text-dark">{{ $app->examRollno->batch->reporting_time ? \Carbon\Carbon::parse($app->examRollno->batch->reporting_time)->format('h:i A') : 'TBD' }}</strong>
                         </div>
                         <div class="col-12 col-md-auto mb-2 mb-md-0">
                             <i class="ti ti-map-pin text-primary me-1"></i> City: <strong class="text-dark">{{ $app->examRollno->city->name ?? 'N/A' }}</strong>

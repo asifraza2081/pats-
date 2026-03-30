@@ -49,7 +49,7 @@
                                 <div class="text-secondary small">{{ $roll->project->name }}</div>
                             </td>
                             <td>
-                                <div class="text-body fw-medium">{{ $roll->testCenter->name ?? 'TBD' }}</div>
+                                <div class="text-body fw-medium">{{ $roll->center->name ?? 'TBD' }}</div>
                                 <div class="text-secondary small">{{ $roll->city->name ?? 'TBD' }} (Batch {{ $roll->batch_no ?? '01' }})</div>
                             </td>
                             <td>
