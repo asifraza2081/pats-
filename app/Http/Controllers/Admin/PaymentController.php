@@ -31,6 +31,10 @@ class PaymentController extends Controller
 
     public function verify(Request $request, Payment $payment)
     {
+        if ($payment->status->value === 'paid') {
+            return back()->with('error', 'This payment is already verified.');
+        }
+
         $data = $request->validate([
             'bank_name'      => 'nullable|string|max:80',
             'branch_code'    => 'nullable|string|max:20',

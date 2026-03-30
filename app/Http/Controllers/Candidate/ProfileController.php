@@ -56,10 +56,12 @@ class ProfileController extends Controller
 
         // CNIC copy upload
         if ($request->hasFile('cnic_copy')) {
+            if ($candidate->cnic_front_path) Storage::delete($candidate->cnic_front_path);
             $data['cnic_front_path'] = $request->file('cnic_copy')->store('cnic_copies', 'public');
         }
 
-        // Unset fields not in Candidate::$fillable to avoid strict mode MassAssignmentException
+        // Capture CNIC before unsetting it from the $data array (which goes into Candidate::$fillable)
+        $cnicFromForm = $data['cnic'] ?? null;
         unset($data['photo'], $data['cnic_copy'], $data['cnic']);
 
         $candidate->update($data);
@@ -68,7 +70,7 @@ class ProfileController extends Controller
         if (!$candidate->profile_locked) {
             $user = auth()->user();
             $user->update([
-                'cnic' => $data['cnic'] ?? $user->cnic,
+                'cnic' => $cnicFromForm ?? $user->cnic,
             ]);
         }
 

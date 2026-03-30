@@ -43,8 +43,8 @@ Route::middleware('guest')->group(function () {
     Route::post('/login',             [AuthController::class, 'login'])->middleware('throttle:5,1')->name('auth.login.post');
     Route::get('/forgot-password',    [AuthController::class, 'showForgotPassword'])->name('auth.forgot-password');
     Route::post('/forgot-password',   [AuthController::class, 'forgotPassword'])->middleware('throttle:3,1');
-    Route::get('/reset-password',     [AuthController::class, 'showResetPassword'])->name('auth.reset-password');
-    Route::post('/reset-password',    [AuthController::class, 'resetPassword'])->middleware('throttle:3,1');
+    Route::get('/reset-password/{token}', [AuthController::class, 'showResetPassword'])->name('password.reset');
+    Route::post('/reset-password',    [AuthController::class, 'resetPassword'])->middleware('throttle:3,1')->name('auth.reset-password');
 });
 
 // OTP verification (Deactivated in Phase 26)

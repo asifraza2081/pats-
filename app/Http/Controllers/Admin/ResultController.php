@@ -168,11 +168,9 @@ class ResultController extends Controller
                     $upsertData = [];
 
                     foreach ($allScores as $entry) {
-                        $rank = $sorted->search(fn($s) => $s['application_id'] == $entry['application_id']) + 1;
                         $entry['percentile'] = round((($total - $rank) / $total) * 100, 2);
-                        // Laravel's upsert needs the keys to match the fillable/columns exactly.
-                        // We filter any unwanted numeric keys if present from toArray()
-                        $upsertData[] = array_filter($entry, fn($k) => !is_numeric($k), ARRAY_FILTER_USE_KEY);
+                        // Filter array to keep only data columns, letting MySQL handle updated_at
+                        $upsertData[] = array_filter($entry, fn($k) => !in_array($k, ['created_at', 'updated_at']) && !is_numeric($k), ARRAY_FILTER_USE_KEY);
                     }
 
                     // Bulk update percentiles using upsert with full data to satisfy strict mode defaults

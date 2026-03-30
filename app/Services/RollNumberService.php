@@ -46,9 +46,8 @@ class RollNumberService
                         AND passing_year <= ?
                     ))', [$closeYear]);
                 })
-                ->whereRaw('(pats_jobs.age_min IS NULL OR ((YEAR(?) - YEAR(candidates.dob)) - (DATE_FORMAT(?, "%m%d") < DATE_FORMAT(candidates.dob, "%m%d")) >= pats_jobs.age_min))')
-                ->whereRaw('(pats_jobs.age_max IS NULL OR ((YEAR(?) - YEAR(candidates.dob)) - (DATE_FORMAT(?, "%m%d") < DATE_FORMAT(candidates.dob, "%m%d")) <= pats_jobs.age_max))')
-                ->setBindings([$closeYear, $closeDate->toDateString(), $closeDate->toDateString(), $closeDate->toDateString(), $closeDate->toDateString()], 'where')
+                ->whereRaw('(pats_jobs.age_min IS NULL OR ((YEAR(?) - YEAR(candidates.dob)) - (DATE_FORMAT(?, "%m%d") < DATE_FORMAT(candidates.dob, "%m%d")) >= pats_jobs.age_min))', [$closeDate->toDateString(), $closeDate->toDateString()])
+                ->whereRaw('(pats_jobs.age_max IS NULL OR ((YEAR(?) - YEAR(candidates.dob)) - (DATE_FORMAT(?, "%m%d") < DATE_FORMAT(candidates.dob, "%m%d")) <= pats_jobs.age_max))', [$closeDate->toDateString(), $closeDate->toDateString()])
                 ->select('applications.*');
 
             if (!empty($jobIds)) {
