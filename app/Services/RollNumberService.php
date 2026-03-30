@@ -80,11 +80,11 @@ class RollNumberService
                 $jobId = $app->job_id;
                 $serial = ++$jobSerials[$jobId];
 
-                // Robust Format: [ProjID(2)][JobID(2)][CityID(2)][CenterID(2)][Serial(4)]
+                // Robust Format: [ProjID(2)][JobCode(2)][CityID(2)][CenterID(2)][Serial(4)]
                 $rollNo = sprintf(
                     '%02d%02d%02d%02d%04d',
                     $app->project_id % 100,
-                    $app->job->job_code % 100,
+                    ((int) preg_replace('/[^0-9]/', '', $app->job->job_code)) % 100,
                     $app->desired_test_city_id % 100,
                     ((int) preg_replace('/[^0-9]/', '', $batch->center->tcid) % 100),
                     $serial

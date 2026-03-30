@@ -7,9 +7,24 @@
     <div class="col-lg-7">
         <div class="card glass-panel border-0 p-5 rounded-5 animate__animated animate__fadeInLeft shadow-sm">
             <h2 class="display-5 fw-black text-dark mb-1">SEND A MESSAGE</h2>
-            <p class="text-muted small fw-bold mb-5">Our support team typically responds within 24 business hours.</p>
-            
-            <form action="#" method="POST">
+            <p class="text-muted small fw-bold mb-5">Our support team typically responds within 1–2 business days.</p>
+
+            @if(session('success'))
+            <div class="alert alert-success alert-dismissible fade show rounded-4 mb-4" role="alert">
+                <i class="ti ti-circle-check-filled me-2"></i> {{ session('success') }}
+                <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+            </div>
+            @endif
+
+            @if($errors->any())
+            <div class="alert alert-danger rounded-4 mb-4">
+                <ul class="mb-0 ps-3">
+                    @foreach($errors->all() as $e)<li>{{ $e }}</li>@endforeach
+                </ul>
+            </div>
+            @endif
+
+            <form action="{{ route('contact.submit') }}" method="POST">
                 @csrf
                 <div class="row g-4">
                     <div class="col-md-6">
@@ -35,7 +50,7 @@
                         <textarea class="form-control border-0 bg-light rounded-4 px-4 shadow-none" name="message" rows="6" required placeholder="How can we help you today?"></textarea>
                     </div>
                     <div class="col-md-12 mt-5">
-                        <button type="button" class="btn btn-teal btn-lg text-white px-5 shadow-teal-30 fw-black rounded-pill border-0 py-3 w-100 w-md-auto" style="background: var(--pats-teal)">
+                        <button type="submit" class="btn btn-teal btn-lg text-white px-5 shadow-teal-30 fw-black rounded-pill border-0 py-3 w-100 w-md-auto" style="background: var(--pats-teal)">
                             SEND INQUIRY <i class="ti ti-send ms-2"></i>
                         </button>
                     </div>

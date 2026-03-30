@@ -127,6 +127,30 @@
             </div>
         </header>
 
+        <!-- Mobile Menu (collapse target) -->
+        <div class="collapse d-lg-none bg-white border-bottom shadow-sm" id="mobileMenu">
+            <div class="container-xl">
+                <ul class="nav flex-column py-3">
+                    <li class="nav-item"><a href="{{ url('/') }}" class="nav-link fw-bold py-3 border-bottom {{ request()->is('/') ? 'text-teal' : '' }}"><i class="ti ti-home me-2"></i> Home</a></li>
+                    <li class="nav-item"><a href="{{ route('about') }}" class="nav-link fw-bold py-3 border-bottom {{ request()->routeIs('about') ? 'text-teal' : '' }}"><i class="ti ti-info-circle me-2"></i> About Us</a></li>
+                    <li class="nav-item"><a href="{{ route('projects') }}" class="nav-link fw-bold py-3 border-bottom {{ request()->routeIs('projects*') ? 'text-teal' : '' }}"><i class="ti ti-briefcase me-2"></i> Open Projects</a></li>
+                    <li class="nav-item"><a href="{{ route('results.search') }}" class="nav-link fw-bold py-3 border-bottom {{ request()->routeIs('results*') ? 'text-teal' : '' }}"><i class="ti ti-certificate me-2"></i> Results</a></li>
+                    <li class="nav-item"><a href="{{ route('downloads') }}" class="nav-link fw-bold py-3 border-bottom {{ request()->routeIs('downloads') ? 'text-teal' : '' }}"><i class="ti ti-download me-2"></i> Downloads</a></li>
+                    <li class="nav-item"><a href="{{ route('contact') }}" class="nav-link fw-bold py-3 border-bottom {{ request()->routeIs('contact') ? 'text-teal' : '' }}"><i class="ti ti-mail me-2"></i> Contact</a></li>
+                    <li class="nav-item py-3">
+                        @auth
+                            <a href="{{ $dashboardRoute ?? route('login') }}" class="btn btn-teal text-white fw-bold w-100"><i class="ti ti-layout-dashboard me-2"></i> Go to Dashboard</a>
+                        @else
+                            <div class="d-grid gap-2">
+                                <a href="{{ route('login') }}" class="btn btn-primary fw-bold"><i class="ti ti-login me-2"></i> Sign In</a>
+                                <a href="{{ route('auth.register') }}" class="btn btn-outline-secondary fw-bold">Register</a>
+                            </div>
+                        @endauth
+                    </li>
+                </ul>
+            </div>
+        </div>
+
         @hasSection('header-title')
         <section class="page-header-pats">
             <div class="container-xl py-2">

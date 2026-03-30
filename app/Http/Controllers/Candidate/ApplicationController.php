@@ -26,7 +26,7 @@ class ApplicationController extends Controller
     {
         $candidate    = Auth::user()->candidate;
         $applications = Application::where('candidate_id', $candidate->id)
-            ->with(['job.project', 'batch.center', 'payment', 'examRollno', 'result'])
+            ->with(['job.project', 'examRollno.center', 'examRollno.batch', 'payment', 'result'])
             ->latest('applied_at')->paginate(10);
         return view('candidate.applications', compact('applications'));
     }
@@ -180,7 +180,7 @@ class ApplicationController extends Controller
         $this->authorize('view', $app);
         $result = $app->result;
         abort_if(!$result || !$result->isPublished(), 404, 'Results are not yet published.');
-        $app->load(['job.project', 'examRollno.center']);
+        $app->load(['job.project', 'examRollno.center', 'examRollno.batch']);
         return view('candidate.result', compact('app', 'result'));
     }
 }

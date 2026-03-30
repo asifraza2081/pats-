@@ -403,18 +403,18 @@ class BatchController extends Controller
             }
         }
 
-        // Use bulk updates with status allowlist
+        // Use bulk updates — scope via examRollno since applications has no batch_id column
         if (!empty($appearedIds)) {
             Application::whereIn('id', $appearedIds)
-                ->where('batch_id', $batch->id)
-                ->whereIn('status', ['scheduled', 'absent']) // allow absent -> appeared
+                ->whereHas('examRollno', fn($q) => $q->where('batch_id', $batch->id))
+                ->whereIn('status', ['scheduled', 'absent'])
                 ->update(['status' => 'appeared']);
         }
 
         if (!empty($absentIds)) {
             Application::whereIn('id', $absentIds)
-                ->where('batch_id', $batch->id)
-                ->whereIn('status', ['scheduled', 'appeared']) // can go appeared -> absent if corrected
+                ->whereHas('examRollno', fn($q) => $q->where('batch_id', $batch->id))
+                ->whereIn('status', ['scheduled', 'appeared'])
                 ->update(['status' => 'absent']);
         }
 

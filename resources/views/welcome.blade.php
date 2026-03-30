@@ -73,7 +73,7 @@
         <div class="col-6 col-md-3">
             <div class="card stat-card glass-panel border-0 hover-lift h-100">
                 <div class="card-body py-5">
-                    <div class="stat-value text-primary mb-2 fw-black">{{ number_format($stats['applications'] / 1000, 1) }}K+</div>
+                    <div class="stat-value text-primary mb-2 fw-black">{{ $stats['applications'] >= 1000 ? number_format($stats['applications'] / 1000, 1) . 'K+' : $stats['applications'] }}</div>
                     <div class="text-uppercase tracking-widest fw-black text-muted small opacity-80">CANDIDATES</div>
                 </div>
             </div>

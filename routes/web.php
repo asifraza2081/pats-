@@ -15,6 +15,7 @@ use Illuminate\Support\Facades\Route;
 Route::get('/', [HomeController::class, 'index'])->name('home');
 Route::get('/about', [HomeController::class, 'about'])->name('about');
 Route::get('/contact', [HomeController::class, 'contact'])->name('contact');
+Route::post('/contact', [\App\Http\Controllers\Public\ContactController::class, 'submit'])->middleware('throttle:3,5')->name('contact.submit');
 Route::get('/downloads', [HomeController::class, 'downloads'])->name('downloads');
 Route::get('/procurement', [HomeController::class, 'procurement'])->name('procurement');
 Route::get('/csr', [HomeController::class, 'csr'])->name('csr');

@@ -135,7 +135,7 @@ class Candidate extends Model
             'father_name', 'dob', 'gender', 'marital_status', 'religion',
             'domicile_city_id', 'address_city_id',
             'permanent_address', 'postal_address',
-            'photo_path', 'cnic_front_path',
+            'photo_path', // cnic_front_path is optional — not required for 100%
         ];
         $filled = 0;
         $total  = count($fields) + 1; // +1 for education
