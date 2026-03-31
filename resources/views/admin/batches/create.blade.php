@@ -68,7 +68,7 @@
                         <div class="row g-5">
                             <!-- Target Definition -->
                             <div class="col-12">
-                                <h3 class="fw-black text-navy border-bottom pb-3 mb-4"><span class="badge bg-navy text-white me-2 rounded-circle px-2 py-1">1</span> Define Target Scope</h3>
+                                <h3 class="fw-black text-navy border-bottom pb-3 mb-4 d-flex align-items-center"><span class="badge bg-navy text-white me-3 rounded-circle px-3 py-2 fs-4">1</span> Define Target Scope</h3>
                                 <div class="row g-4">
                                     <div class="col-md-6">
                                         <label class="form-label required fw-bold text-secondary">Target Project</label>
@@ -90,8 +90,8 @@
                             </div>
 
                             <!-- Logistics -->
-                            <div class="col-12 mt-6">
-                                <h3 class="fw-black text-navy border-bottom pb-3 mb-4"><span class="badge bg-navy text-white me-2 rounded-circle px-2 py-1">2</span> Select Venues</h3>
+                            <div class="col-12 mt-5">
+                                <h3 class="fw-black text-navy border-bottom pb-3 mb-4 d-flex align-items-center"><span class="badge bg-navy text-white me-3 rounded-circle px-3 py-2 fs-4">2</span> Select Venues</h3>
                                 <div class="row g-4">
                                     <div class="col-md-6">
                                         <label class="form-label required fw-bold text-secondary">Test City Restriction</label>
@@ -113,8 +113,8 @@
                             </div>
                             
                             <!-- Schedule Definition -->
-                            <div class="col-12 mt-6">
-                                <h3 class="fw-black text-navy border-bottom pb-3 mb-4"><span class="badge bg-navy text-white me-2 rounded-circle px-2 py-1">3</span> Scheduling & Timings</h3>
+                            <div class="col-12 mt-5">
+                                <h3 class="fw-black text-navy border-bottom pb-3 mb-4 d-flex align-items-center"><span class="badge bg-navy text-white me-3 rounded-circle px-3 py-2 fs-4">3</span> Scheduling & Timings</h3>
                                 <div class="row g-4 bg-light rounded-4 p-4 border border-1 border-light">
                                     <div class="col-md-4">
                                         <label class="form-label required fw-bold text-secondary">Session No.</label>
@@ -152,7 +152,7 @@
                             </div>
 
                             <!-- Final Allocation Target -->
-                            <div class="col-12 mt-6">
+                            <div class="col-12 mt-5">
                                 <div class="card bg-navy bg-opacity-10 border-teal border-opacity-50 border-2 rounded-4 overflow-hidden">
                                     <div class="row g-0">
                                         <div class="col-auto bg-teal text-white d-flex align-items-center justify-content-center px-5">

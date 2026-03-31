@@ -264,6 +264,23 @@
             document.querySelectorAll('input[name="cnic"], .cnic-mask').forEach(i => i.addEventListener('input', maskCnic));
         });
     </script>
+    <script>
+        document.addEventListener('submit', function(e) {
+            const form = e.target;
+            if (form.classList.contains('no-spinner') || form.getAttribute('target') === '_blank') return;
+            const btn = form.querySelector('button[type="submit"]');
+            if (btn) {
+                if (btn.dataset.submitted) { e.preventDefault(); return; }
+                btn.dataset.submitted = 'true';
+                btn.style.minWidth = btn.offsetWidth + 'px';
+                const originalText = btn.innerHTML;
+                setTimeout(() => {
+                    btn.classList.add('disabled', 'opacity-75', 'pe-none');
+                    btn.innerHTML = '<span class="spinner-border spinner-border-sm me-2 animate__animated animate__fadeIn" role="status" aria-hidden="true"></span> Processing...';
+                }, 10);
+            }
+        });
+    </script>
     @stack('scripts')
 </body>
 </html>
