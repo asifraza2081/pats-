@@ -23,19 +23,19 @@
                         <td>PATS/TEN/24/08</td>
                         <td class="fw-bold">Security Printing of Optical Answer Sheets (OMR)</td>
                         <td>25 Mar, 2024</td>
-                        <td><a href="#" class="btn btn-sm btn-outline-danger"><i class="ti ti-file-type-pdf me-1"></i> RFP</a></td>
+                        <td><a href="{{ URL::temporarySignedRoute('public.download.signed', now()->addMinutes(30), ['file' => 'rfp_24_08.pdf']) }}" class="btn btn-sm btn-outline-danger"><i class="ti ti-file-type-pdf me-1"></i> RFP</a></td>
                     </tr>
                     <tr>
                         <td>PATS/TEN/24/09</td>
                         <td class="fw-bold">Procurement of IT Equipment (Laptops & Servers)</td>
                         <td>02 Apr, 2024</td>
-                        <td><a href="#" class="btn btn-sm btn-outline-danger"><i class="ti ti-file-type-pdf me-1"></i> RFP</a></td>
+                        <td><a href="{{ URL::temporarySignedRoute('public.download.signed', now()->addMinutes(30), ['file' => 'rfp_24_09.pdf']) }}" class="btn btn-sm btn-outline-danger"><i class="ti ti-file-type-pdf me-1"></i> RFP</a></td>
                     </tr>
                     <tr>
                         <td>PATS/ADM/24/01</td>
                         <td class="fw-bold">Provision of Security Guard Services (Headquarters)</td>
                         <td>10 Apr, 2024</td>
-                        <td><a href="#" class="btn btn-sm btn-outline-danger"><i class="ti ti-file-type-pdf me-1"></i> RFP</a></td>
+                        <td><a href="{{ URL::temporarySignedRoute('public.download.signed', now()->addMinutes(30), ['file' => 'rfp_24_01.pdf']) }}" class="btn btn-sm btn-outline-danger"><i class="ti ti-file-type-pdf me-1"></i> RFP</a></td>
                     </tr>
                 </tbody>
             </table>

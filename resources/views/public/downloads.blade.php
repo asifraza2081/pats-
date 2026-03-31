@@ -73,7 +73,7 @@
                         <td class="ps-5 py-4 fw-bold text-dark">Undertaking Form for Errors/Omissions</td>
                         <td class="text-muted fw-bold">Forms</td>
                         <td><span class="badge bg-blue-lt text-blue border-0 rounded-pill px-3 fw-black uppercase">DOCX</span></td>
-                        <td class="pe-5 text-center"><a href="#" class="btn btn-teal btn-sm rounded-pill px-4 fw-black">DOWNLOAD <i class="ti ti-download ms-1"></i></a></td>
+                        <td class="pe-5 text-center"><a href="{{ URL::temporarySignedRoute('public.download.signed', now()->addMinutes(30), ['file' => 'undertaking.docx']) }}" class="btn btn-teal btn-sm rounded-pill px-4 fw-black">DOWNLOAD <i class="ti ti-download ms-1"></i></a></td>
                     </tr>
                 </tbody>
             </table>

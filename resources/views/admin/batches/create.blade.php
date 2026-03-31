@@ -42,7 +42,7 @@
                             <div class="d-flex">
                                 <div><i class="ti ti-info-circle fs-2 me-2"></i></div>
                                 <div>
-                                    <h4 class="alert-title fw-bold">Dumbproof Tip: Automation Logic</h4>
+                                    <h4 class="alert-title fw-bold">System Guidelines: Automation Logic</h4>
                                     <div class="text-secondary small">
                                         The allocation engine automatically selects candidates who match <strong>ALL</strong> of the following:
                                         <ul class="mb-0 mt-1">
@@ -247,6 +247,11 @@
 <script>
 document.addEventListener('DOMContentLoaded', () => {
 
+    const oldJobs = @json(old('job_ids', []));
+    const oldCities = @json(old('city_ids', []));
+    const oldCenters = @json(old('center_ids', []));
+    let isFirstLoad = true;
+
     let rawStats = [];
     let projectTotals = { total: 0, unallocated: 0 };
     const projectSelect = document.getElementById('project_id');
@@ -428,6 +433,13 @@ document.addEventListener('DOMContentLoaded', () => {
                         uniqueCitiesMap.forEach((name, id) => tsCity.addOption({ value: id, text: name }));
                     }
                     renderStats();
+
+                    if (isFirstLoad) {
+                        if (oldJobs.length) tsJobs.setValue(oldJobs);
+                        if (oldCities.length) tsCity.setValue(oldCities);
+                        if (oldCenters.length) tsCenter.setValue(oldCenters);
+                        isFirstLoad = false;
+                    }
                 })
                 .catch(err => {
                     console.error('Stats Fetch Error:', err);
@@ -518,6 +530,11 @@ document.addEventListener('DOMContentLoaded', () => {
     };
 
     window.submitBatchForm = () => document.getElementById('batchForm').submit();
+
+    // Trigger initial load if validation failed and old project is selected
+    if (projectSelect.value) {
+        refreshStats();
+    }
 });
 </script>
 @endpush
