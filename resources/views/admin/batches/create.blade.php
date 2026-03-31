@@ -549,15 +549,21 @@ document.addEventListener('DOMContentLoaded', () => {
     allocationInput.addEventListener('input', () => updateDrainPreview());
     
     window.showBatchConfirm = () => {
-        const count = allocationInput.value;
+        const count = parseInt(allocationInput.value) || 0;
         if(!tsCenter.getValue().length || !tsJobs.getValue().length || !document.getElementById('test_date').value || !count) {
             toastr.error("Please complete all required fields."); return;
         }
+
+        const totalPending = parseInt(totalPendingBadge.innerText.replace(/,/g, '')) || 0;
+        const totalCapacity = parseInt(document.getElementById('totalCapacityVisualText').innerText.replace(/,/g, '')) || 0;
+        const actualAllocated = Math.min(count, totalPending, totalCapacity);
+
         document.getElementById('confirm-summary').innerHTML = `
             <div class="mb-2"><i class="ti ti-briefcase text-teal me-2"></i> ${tsJobs.getValue().length} Jobs Targeted</div>
-            <div class="mb-2"><i class="ti ti-building text-indigo me-2"></i> ${tsCenter.getValue().length} Centers Selected</div>
+            <div class="mb-2"><i class="ti ti-building text-indigo me-2"></i> ${tsCenter.getValue().length} Centers Selected (Cap: ${new Intl.NumberFormat().format(totalCapacity)})</div>
             <div class="mb-2"><i class="ti ti-calendar text-danger me-2"></i> ${document.getElementById('test_date').value}</div>
-            <div class="mt-3 fs-3 fw-black text-navy"><i class="ti ti-users text-teal me-2"></i> Allocating ${new Intl.NumberFormat().format(count)} Candidates</div>
+            <div class="mt-3 fs-3 fw-black text-navy"><i class="ti ti-loader text-teal me-2"></i> Processing Queue: ${new Intl.NumberFormat().format(actualAllocated)} Candidates</div>
+            <div class="text-secondary small mt-1 opacity-75">(Requested Target: ${new Intl.NumberFormat().format(count)} | Available Queue: ${new Intl.NumberFormat().format(totalPending)})</div>
         `;
         (new bootstrap.Modal(document.getElementById('modal-batch-confirm'))).show();
     };
