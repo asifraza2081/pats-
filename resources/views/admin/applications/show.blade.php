@@ -149,9 +149,9 @@
                                 <div class="fw-bold">{{ $edu->degree_name }}</div>
                                 <div class="text-secondary small">Level {{ $edu->degree_level }}</div>
                             </td>
-                            <td>{{ $edu->institute }}</td>
+                            <td>{{ $edu->institution }}</td>
                             <td>{{ $edu->passing_year }}</td>
-                            <td>{{ $edu->marks_obtained }} / {{ $edu->total_marks }}</td>
+                            <td>{{ $edu->obtained_marks }} / {{ $edu->total_marks }}</td>
                         </tr>
                         @empty
                         <tr><td colspan="4" class="text-center text-secondary italic py-3">No education records provided.</td></tr>

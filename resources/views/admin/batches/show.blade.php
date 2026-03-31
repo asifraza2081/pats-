@@ -84,7 +84,7 @@
                                     <td class="px-4 py-3 text-center font-mono text-sm">{{ $row->roll_to }}</td>
                                     <td class="px-4 py-3 text-center">
                                         <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-blue-100 text-blue-800">
-                                            {{ $row->count }}
+                                            {{ $row->allocated }}
                                         </span>
                                     </td>
                                 </tr>
@@ -173,7 +173,7 @@
                             <td><div class="fw-bold">{{ $row->job->title }}</div></td>
                             <td><span class="badge bg-blue-lt text-blue fw-bold">{{ $row->roll_from }}</span></td>
                             <td><span class="badge bg-blue-lt text-blue fw-bold">{{ $row->roll_to }}</span></td>
-                            <td><span class="text-body fw-bold">{{ $row->count }}</span></td>
+                            <td><span class="text-body fw-bold">{{ $row->allocated }}</span></td>
                         </tr>
                         @empty
                         <tr><td colspan="4" class="text-center text-secondary py-3 italic">No allocations generated yet.</td></tr>

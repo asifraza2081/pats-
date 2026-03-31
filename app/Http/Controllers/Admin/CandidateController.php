@@ -10,7 +10,7 @@ class CandidateController extends Controller
 {
     public function index(Request $request)
     {
-        $query = Candidate::with(['user'])->withCount('applications');
+        $query = Candidate::with(['user', 'domicileCity', 'addressCity'])->withCount('applications');
 
         if ($request->search) {
             $query->whereHas('user', function($q) use ($request) {
@@ -27,7 +27,7 @@ class CandidateController extends Controller
 
     public function show(Candidate $candidate)
     {
-        $candidate->load(['user', 'education', 'experience', 'applications.job.project']);
+        $candidate->load(['user', 'domicileCity', 'addressCity', 'education', 'experience', 'applications.job.project']);
         return view('admin.candidates.show', compact('candidate'));
     }
 }

@@ -123,7 +123,8 @@ class ApplicationController extends Controller
     public function show(Application $app)
     {
         $this->authorize('view', $app);
-        $app->load(['job.project', 'batch.center', 'payment', 'examRollno', 'result']);
+        $app->load(['job.project', 'examRollno.batch.center', 'payment', 'examRollno.center', 'result']);
+
         return view('candidate.application-show', compact('app'));
     }
 

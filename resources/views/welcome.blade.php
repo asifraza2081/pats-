@@ -2,24 +2,55 @@
 
 @section('content')
 <!-- Hero Section -->
-<section class="hero mb-5 rounded-4 overflow-hidden shadow-lg border-0">
-    <div class="container-xl text-center py-6 position-relative z-index-2 animate__animated animate__fadeIn">
-        <div class="badge bg-white text-teal px-4 py-2 mb-4 shadow-sm border-0 fs-5 animate__animated animate__fadeInDown fw-bold">
-            <i class="ti ti-shield-check me-2"></i> ISO 9001:2015 CERTIFIED TESTING AGENCY
-        </div>
-        <h1 class="display-1 fw-black mb-3 tracking-tighter text-white animate__animated animate__fadeInUp" style="letter-spacing: -3px;">
-            Prime Assessment & <br><span class="text-teal-light">Testing Services</span>
-        </h1>
-        <p class="fs-1 mb-5 text-white-50 mx-auto animate__animated animate__fadeInUp animate__delay-1s opacity-80" style="max-width: 900px; font-weight: 500;">
-            Pakistan's leading autonomous testing agency, committed to merit, transparency, and building a professional workforce through <span class="text-white border-bottom border-teal-light border-3">Prime Assessment & Testing Services</span>.
-        </p>
-        <div class="d-flex justify-content-center gap-4 animate__animated animate__fadeInUp animate__delay-2s">
-            <a href="{{ route('projects') }}" class="btn btn-teal btn-lg text-white px-5 shadow-lg hover-lift border-0 fs-3 fw-black py-3 rounded-pill" style="background: var(--pats-teal)">
-                Explore Projects <i class="ti ti-arrow-right ms-2"></i>
-            </a>
-            <a href="{{ route('results.search') }}" class="btn glass-panel text-white btn-lg px-5 hover-lift fs-3 fw-bold py-3 rounded-pill">
-                Check Results
-            </a>
+<section class="hero bg-mesh-gradient mb-5 rounded-4 overflow-hidden shadow-2xl border-0 position-relative" style="padding: 100px 0;">
+    <div class="position-absolute top-0 start-0 w-100 h-100 opacity-20" style="background-image: radial-gradient(#fff 1px, transparent 1px); background-size: 30px 30px;"></div>
+    
+    <div class="container-xl position-relative z-index-2">
+        <div class="row align-items-center g-5">
+            <!-- Text Content -->
+            <div class="col-lg-6 text-center text-lg-start animate__animated animate__fadeInLeft">
+                <div class="d-inline-flex badge glass-panel text-teal-light px-4 py-2 mb-4 shadow-sm border-0 fs-5 fw-bold floating-element">
+                    <i class="ti ti-shield-check me-2"></i> ISO 9001:2015 CERTIFIED AGENCY
+                </div>
+                <h1 class="display-1 fw-black mb-4 tracking-tighter text-white lh-1" style="letter-spacing: -2px; text-shadow: 0 10px 30px rgba(0,0,0,0.3);">
+                    Prime Assessment & <br><span class="text-teal-light">Testing Services</span>
+                </h1>
+                <p class="fs-2 mb-5 text-white-50 opacity-90 mx-auto mx-lg-0" style="max-width: 600px; font-weight: 500;">
+                    Pakistan's leading autonomous testing agency, committed to merit, transparency, and building a professional workforce through verifiable <span class="text-white border-bottom border-teal-light border-3 pb-1">digital assessment methodologies</span>.
+                </p>
+                <div class="d-flex flex-column flex-sm-row justify-content-center justify-content-lg-start gap-4 mt-4 animate__animated animate__fadeInUp animate__delay-1s">
+                    <a href="{{ route('projects') }}" class="btn btn-teal btn-lg text-white px-5 shadow-lg hover-lift border-0 fs-3 fw-black py-3 rounded-pill" style="box-shadow: var(--pats-hero-shadow) !important;">
+                        Explore Projects <i class="ti ti-arrow-right ms-2 fs-2"></i>
+                    </a>
+                    <a href="{{ route('results.search') }}" class="btn glass-panel text-white btn-lg px-5 hover-lift fs-3 fw-bold py-3 rounded-pill border-opacity-50">
+                        Check Results <i class="ti ti-search ms-2 fs-2 opacity-50"></i>
+                    </a>
+                </div>
+            </div>
+
+            <!-- Imagery -->
+            <div class="col-lg-6 d-none d-lg-block animate__animated animate__fadeInRight animate__delay-1s">
+                <div class="position-relative">
+                    <!-- Main Image Base -->
+                    <div class="card border-0 rounded-5 shadow-2xl overflow-hidden glass-panel-dark mx-auto" style="width: 85%; transform: rotate(2deg);">
+                        <img src="https://images.unsplash.com/photo-1577896851231-70ef18881754?q=80&w=1000&auto=format&fit=crop" class="img-fluid opacity-90" style="mix-blend-mode: luminosity;" alt="Candidates Testing">
+                        <div class="position-absolute top-0 start-0 w-100 h-100 bg-teal opacity-20" style="mix-blend-mode: overlay;"></div>
+                    </div>
+                    <!-- Overlaid Stats Card -->
+                    <div class="position-absolute bottom-0 start-0 translate-middle-x translate-middle-y floating-element" style="animation-duration: 8s; margin-bottom: -15%;">
+                        <div class="card glass-panel border-0 shadow-lg rounded-4 p-4 text-center">
+                            <i class="ti ti-clock-check text-teal fs-1 mb-2 d-block"></i>
+                            <div class="fw-black h2 mb-0 text-dark">5M+</div>
+                            <div class="text-muted small fw-bold text-uppercase tracking-widest">Assessments<br>Conducted</div>
+                        </div>
+                    </div>
+                    <!-- Overlaid Image Small -->
+                    <div class="position-absolute top-0 end-0 mt-4 me-n4 card shadow-lg border-0 rounded-4 overflow-hidden floating-element" style="width: 180px; transform: rotate(-4deg); animation-duration: 7s; animation-delay: 1s;">
+                        <img src="https://images.unsplash.com/photo-1543269865-cbf427effbad?q=80&w=600&auto=format&fit=crop" class="img-fluid grayscale" alt="Test Center">
+                        <div class="position-absolute bottom-0 w-100 bg-dark bg-opacity-75 text-white py-1 text-center small fw-bold">100% Merit</div>
+                    </div>
+                </div>
+            </div>
         </div>
     </div>
 </section>

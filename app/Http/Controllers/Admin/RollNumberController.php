@@ -42,7 +42,7 @@ class RollNumberController extends Controller
      */
     public function slip(Application $app)
     {
-        $app->load(['candidate.user', 'job.project', 'examRollno.center', 'examRollno.city']);
+        $app->load(['candidate.user', 'job.project', 'examRollno.center', 'examRollno.city', 'examRollno.batch']);
         $examRollno = $app->examRollno;
 
         abort_if(!$examRollno, 404, 'Roll number data not found for this application.');

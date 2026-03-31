@@ -48,8 +48,8 @@
                             <td><span class="text-secondary">{{ $c->user->cnic }}</span></td>
                             <td><span class="text-secondary">{{ $c->user->phone }}</span></td>
                             <td>
-                                <div class="text-body small">{{ $c->current_city }}</div>
-                                <div class="text-secondary xsmall">{{ $c->district_of_domicile }}</div>
+                                <div class="text-body small">{{ $c->addressCity?->name }}</div>
+                                <div class="text-secondary xsmall">{{ $c->domicileCity?->province }}</div>
                             </td>
                             <td><span class="badge bg-blue-lt">{{ $c->applications_count ?? $c->applications()->count() }}</span></td>
                             <td>

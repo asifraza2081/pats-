@@ -71,11 +71,15 @@
         </div>
 
         <!-- Main Navigation -->
-        <header class="main-nav sticky-top" id="navbar">
+        <header class="main-nav sticky-top glass-panel shadow-sm border-bottom border-teal border-opacity-10" id="navbar">
             <div class="container-xl">
                 <div class="d-flex align-items-center justify-content-between">
-                    <a href="{{ url('/') }}" class="text-decoration-none hover-lift">
-                        <img src="{{ asset('logo.png') }}" alt="PATS" height="58" class="pats-logo">
+                    <a href="{{ url('/') }}" class="text-decoration-none hover-lift d-flex align-items-center">
+                        <div class="bg-grad-accent p-2 rounded-3 me-2 shadow-teal-30 d-flex align-items-center justify-content-center">
+                            <i class="ti ti-shield-check text-white fs-2"></i>
+                        </div>
+                        <img src="{{ asset('logo.png') }}" alt="PATS" height="48" class="pats-logo hide-theme-dark">
+                        <img src="{{ asset('logo.png') }}" alt="PATS" height="48" class="pats-logo hide-theme-light brightness-0 invert">
                     </a>
                     
                     <div class="d-none d-lg-block">

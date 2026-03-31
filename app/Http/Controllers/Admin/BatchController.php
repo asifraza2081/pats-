@@ -188,8 +188,9 @@ class BatchController extends Controller
     public function edit(Batch $batch)
     {
         $projects = Project::where('status', 'open')->get();
-        $centers  = TestCenter::where('is_active', true)->get();
+        $centers  = TestCenter::with('city')->where('is_active', true)->get();
         return view('admin.batches.edit', compact('batch', 'projects', 'centers'));
+
     }
 
     public function update(UpdateBatchRequest $request, Batch $batch)
@@ -320,7 +321,7 @@ class BatchController extends Controller
         try {
             $batch->load(['project', 'center.city']);
             $roster = ExamRollno::where('batch_id', $batch->id)
-                ->with(['application.candidate.user', 'job.project', 'center.city'])
+                ->with(['application.candidate.user', 'job.project', 'center.city', 'batch'])
                 ->orderBy('roll_no')
                 ->get();
 

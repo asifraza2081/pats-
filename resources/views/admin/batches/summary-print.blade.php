@@ -95,21 +95,21 @@
             @php $grandTotal = 0; @endphp
             @foreach($summary as $row)
             @php 
-                $grandTotal += $row->count; 
-                $envs = ceil($row->count / $batch->envelope_size);
+                $grandTotal += $row->allocated; 
+                $envs = ceil($row->allocated / max(1, $batch->envelope_size ?? 25));
             @endphp
             <tr>
                 <td class="fw-bold">{{ $row->job->title }}</td>
                 <td class="text-blue fw-bold">{{ $row->roll_from }}</td>
                 <td class="text-blue fw-bold">{{ $row->roll_to }}</td>
-                <td style="text-align: center;">{{ $row->count }}</td>
+                <td style="text-align: center;">{{ $row->allocated }}</td>
                 <td style="text-align: center;">{{ $envs }}</td>
             </tr>
             @endforeach
             <tr style="background: #f8fafc;">
                 <td colspan="3" class="fw-bold" style="text-align: right; padding-right: 30px;">GRAND TOTAL</td>
                 <td style="text-align: center;" class="fw-bold text-blue">{{ $grandTotal }}</td>
-                <td style="text-align: center;" class="fw-bold">{{ ceil($grandTotal / $batch->envelope_size) }}</td>
+                <td style="text-align: center;" class="fw-bold">{{ ceil($grandTotal / max(1, $batch->envelope_size ?? 25)) }}</td>
             </tr>
         </tbody>
     </table>

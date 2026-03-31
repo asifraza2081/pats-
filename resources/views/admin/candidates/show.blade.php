@@ -34,11 +34,11 @@
                     <div class="text-secondary small mb-1">DOB: <span class="text-body fw-medium">{{ $candidate->dob?->format('d M Y') ?? 'N/A' }}</span></div>
                     <div class="text-secondary small mb-1">Gender: <span class="text-body fw-medium">{{ ucfirst($candidate->gender) }}</span></div>
                     <div class="text-secondary small mb-1">Religion: <span class="text-body fw-medium">{{ ucfirst($candidate->religion) }}</span></div>
-                    <div class="text-secondary small mb-1">Domicile: <span class="text-body fw-medium">{{ $candidate->district_of_domicile }}, {{ $candidate->province_of_domicile }}</span></div>
+                    <div class="text-secondary small mb-1">Domicile: <span class="text-body fw-medium">{{ $candidate->domicileCity?->name }}, {{ $candidate->domicileCity?->province }}</span></div>
                     
                     <label class="form-label text-primary fw-bold mb-2 small text-uppercase tracking-wider border-top pt-2 d-block mt-2">Address</label>
                     <div class="text-secondary small">{{ $candidate->postal_address }}</div>
-                    <div class="text-body fw-bold small">{{ $candidate->current_city }}</div>
+                    <div class="text-body fw-bold small">{{ $candidate->addressCity?->name }}, {{ $candidate->addressCity?->province }}</div>
                 </div>
             </div>
         </div>
@@ -65,9 +65,9 @@
                         @forelse($candidate->education as $edu)
                         <tr>
                             <td><div class="fw-bold">{{ $edu->degree_name }}</div><div class="text-secondary small">{{ $edu->degree_level }}</div></td>
-                            <td>{{ $edu->institute }}</td>
+                            <td>{{ $edu->institution }}</td>
                             <td>{{ $edu->passing_year }}</td>
-                            <td>{{ $edu->marks_obtained }} / {{ $edu->total_marks }}</td>
+                            <td>{{ $edu->obtained_marks }} / {{ $edu->total_marks }}</td>
                         </tr>
                         @empty
                         <tr><td colspan="4" class="text-center text-secondary py-3 italic">No academic records found.</td></tr>
@@ -130,8 +130,8 @@
                             </td>
                             <td>{{ $app->applied_at->format('d M Y') }}</td>
                             <td>
-                                <span class="badge bg-{{ $app->status == 'fee_paid' ? 'success' : 'secondary' }}-lt px-2">
-                                    {{ str_replace('_', ' ', $app->status) }}
+                                <span class="badge bg-{{ $app->status->color() }}-lt px-2">
+                                    {{ $app->status->label() }}
                                 </span>
                             </td>
                             <td>

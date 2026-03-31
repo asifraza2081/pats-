@@ -1,17 +1,19 @@
 :root {
     --tblr-font-sans-serif: 'Inter Var', 'Outfit', -apple-system, BlinkMacSystemFont, Segoe UI, Roboto, Helvetica Neue, sans-serif;
-    --pats-dark: #0f172a;
-    --pats-teal: #0d9488;
-    --pats-teal-light: #2dd4bf;
-    --pats-indigo: #6366f1;
-    --pats-glass-bg: rgba(255, 255, 255, 0.75);
-    --pats-glass-border: rgba(255, 255, 255, 0.4);
-    --pats-grad-hero: linear-gradient(135deg, #0f172a 0%, #0d9488 100%);
+    --pats-dark: #0a192f; /* Deep Navy Blue */
+    --pats-dark-alt: #112240; /* Lighter Navy */
+    --pats-teal: #00b4d8; /* Vibrant Teal */
+    --pats-teal-light: #48cae4;
+    --pats-indigo: #0077b6;
+    --pats-glass-bg: rgba(255, 255, 255, 0.85);
+    --pats-glass-border: rgba(255, 255, 255, 0.5);
+    --pats-grad-hero: linear-gradient(135deg, #0a192f 0%, #0077b6 100%);
     --pats-grad-surface: linear-gradient(135deg, #f8fafc 0%, #f1f5f9 100%);
-    --pats-grad-accent: linear-gradient(135deg, #0d9488 0%, #2dd4bf 100%);
+    --pats-grad-accent: linear-gradient(135deg, #00b4d8 0%, #48cae4 100%);
     --pats-shadow-sm: 0 1px 2px 0 rgba(0, 0, 0, 0.05);
     --pats-shadow-md: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06);
     --pats-shadow-lg: 0 10px 15px -3px rgba(0, 0, 0, 0.1), 0 4px 6px -2px rgba(0, 0, 0, 0.05);
+    --pats-hero-shadow: 0 20px 40px -5px rgba(0, 180, 216, 0.3);
 }
 
 body { 
@@ -102,6 +104,34 @@ body {
     background: var(--pats-grad-hero);
     color: white;
     padding: 70px 0;
+}
+
+/* Premium Mesh Gradient Animation */
+.bg-mesh-gradient {
+    background-color: var(--pats-dark);
+    background-image: 
+        radial-gradient(at 0% 0%, rgba(0, 180, 216, 0.4) 0px, transparent 50%),
+        radial-gradient(at 100% 0%, rgba(0, 119, 182, 0.4) 0px, transparent 50%),
+        radial-gradient(at 100% 100%, rgba(0, 180, 216, 0.4) 0px, transparent 50%),
+        radial-gradient(at 0% 100%, rgba(10, 25, 47, 0.8) 0px, transparent 50%);
+    background-size: 200% 200%;
+    animation: mesh-gradient-anim 15s ease infinite;
+}
+
+@keyframes mesh-gradient-anim {
+    0% { background-position: 0% 0% }
+    50% { background-position: 100% 100% }
+    100% { background-position: 0% 0% }
+}
+
+.floating-element {
+    animation: floating 6s ease-in-out infinite;
+}
+
+@keyframes floating {
+    0% { transform: translateY(0px); }
+    50% { transform: translateY(-15px); }
+    100% { transform: translateY(0px); }
 }
 
 .section-header {

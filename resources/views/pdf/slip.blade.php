@@ -40,7 +40,7 @@
 @php
   $project    = $app->job->project;
   $examRollno = $app->examRollno;
-  $center     = $examRollno->testCenter;
+  $center     = $examRollno->center;
   $city       = $examRollno->city;
   $user       = $candidate->user;
   $batch      = $examRollno->batch;
