@@ -57,8 +57,7 @@ class BatchController extends Controller
             'test_date'      => 'required|date_format:Y-m-d|after_or_equal:today|before:2100-01-01',
             'reporting_time' => 'required',
             'start_time'     => 'required|after:reporting_time',
-            'total_seats'    => 'required|integer|min:1',
-            'count_to_allocate' => 'required|integer|min:1|lte:total_seats',
+            'count_to_allocate' => 'required|integer|min:1',
             'envelope_size'  => 'required|integer|min:10|max:100',
         ]);
 
@@ -69,17 +68,16 @@ class BatchController extends Controller
         $totalAllocated = 0;
         $batchIds = [];
 
+        $unallocatedTarget = (int) $data['count_to_allocate'];
+
         DB::beginTransaction();
         try {
             foreach ($centerIds as $centerId) {
-                $center = TestCenter::findOrFail($centerId);
-                
-                // 1. Physical Capacity Check [FIXED]
-                // Each center in the loop gets a batch. The 'total_seats' in request represents 
-                // the capacity for EACH session/center selected.
-                if ($data['total_seats'] > $center->seating_capacity) {
-                    throw new \Exception("Center '{$center->name}' only has {$center->seating_capacity} seats, but {$data['total_seats']} were requested per center.");
+                if ($unallocatedTarget <= 0) {
+                    break; // All targets have been distributed across centers
                 }
+
+                $center = TestCenter::findOrFail($centerId);
 
                 // 2. Conflict Detection (Same center, same date, overlapping time)
                 // New logic: Check if (start < current_end AND end > current_start)
@@ -121,9 +119,12 @@ class BatchController extends Controller
                 $batch = Batch::create($batchData);
                 $batchIds[] = $batch->id;
 
-                $allocCount = min($data['count_to_allocate'], $eligibleCount);
+                // Cascade constraint: Never allocate more than remaining target, center's physical capacity, or available eligible candidates
+                $allocCount = min($unallocatedTarget, $center->seating_capacity, $eligibleCount);
                 $allocated = $this->rollNumbers->allocateBatch($batch, $allocCount, $data['job_ids']);
+                
                 $totalAllocated += $allocated;
+                $unallocatedTarget -= $allocated; // Deduct from the remaining pool
 
                 \App\Models\ActivityLog::log('allocate_seats', $batch, [
                     'count' => $allocated,
