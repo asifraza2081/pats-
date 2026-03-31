@@ -19,7 +19,9 @@
                 <label class="form-label fw-semibold">Center *</label>
                 <select name="center_id" class="form-select tom-select" required>
                     @foreach($centers as $c)
-                    <option value="{{ $c->id }}" {{ old('center_id',$batch->center_id)==$c->id?'selected':'' }}>{{ $c->name }} ({{ $c->city }})</option>
+                    <option value="{{ $c->id }}" {{ old('center_id', $batch->center_id) == $c->id ? 'selected' : '' }}>
+                        {{ $c->name }} ({{ $c->city?->name ?? 'Unknown City' }})
+                    </option>
                     @endforeach
                 </select>
             </div>

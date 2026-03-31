@@ -187,6 +187,7 @@ class BatchController extends Controller
 
     public function edit(Batch $batch)
     {
+        $batch->load(['project', 'center.city']);
         $projects = Project::where('status', 'open')->get();
         $centers  = TestCenter::with('city')->where('is_active', true)->get();
         return view('admin.batches.edit', compact('batch', 'projects', 'centers'));
