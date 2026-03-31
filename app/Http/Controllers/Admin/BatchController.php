@@ -103,6 +103,7 @@ class BatchController extends Controller
                 $batchData = array_diff_key($data, array_flip(['job_ids', 'count_to_allocate', 'center_ids']));
                 $batchData['center_id'] = $centerId;
                 $batchData['created_by'] = Auth::id();
+                $batchData['total_seats'] = $center->seating_capacity;
                 
                 $cityId = $center->city_id;
                 $eligibleCount = Application::where('project_id', $batchData['project_id'])
