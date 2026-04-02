@@ -1,7 +1,6 @@
 @extends('layouts.public')
 
 @section('content')
-
 <!-- Hero Section -->
 <section class="hero bg-mesh-gradient mb-5 rounded-4 overflow-hidden shadow-2xl border-0 position-relative" style="padding: 100px 0;">
     <div class="position-absolute top-0 start-0 w-100 h-100 opacity-20" style="background-image: radial-gradient(#fff 1px, transparent 1px); background-size: 30px 30px;"></div>
@@ -20,96 +19,40 @@
                     Pakistan's leading autonomous testing agency, committed to merit, transparency, and building a professional workforce through verifiable <span class="text-white border-bottom border-teal-light border-3 pb-1">digital assessment methodologies</span>.
                 </p>
                 <div class="d-flex flex-column flex-sm-row justify-content-center justify-content-lg-start gap-4 mt-4 animate__animated animate__fadeInUp animate__delay-1s">
-
-                    <!-- Explore Projects -->
-                    <a href="{{ route('projects') }}"
-                        class="btn hero-btn btn-project btn-lg px-5 fs-3 fw-black py-3 rounded-pill">
-                        Explore Projects
-                        <i class="ti ti-arrow-right ms-2 fs-2"></i>
+                    <a href="{{ route('projects') }}" class="btn btn-teal btn-lg text-white px-5 shadow-lg hover-lift border-0 fs-3 fw-black py-3 rounded-pill" style="box-shadow: var(--pats-hero-shadow) !important;">
+                        Explore Projects <i class="ti ti-arrow-right ms-2 fs-2"></i>
                     </a>
-
-                    <!-- Check Results -->
-                    <a href="{{ route('results.search') }}"
-                        class="btn hero-btn btn-result btn-lg px-5 fs-3 fw-bold py-3 rounded-pill">
-                        Check Results
-                        <i class="ti ti-search ms-2 fs-2"></i>
+                    <a href="{{ route('results.search') }}" class="btn glass-panel text-white btn-lg px-5 hover-lift fs-3 fw-bold py-3 rounded-pill border-opacity-50">
+                        Check Results <i class="ti ti-search ms-2 fs-2 opacity-50"></i>
                     </a>
-
                 </div>
             </div>
 
             <!-- Imagery -->
-            <!-- Cards Section (Replaces Imagery) -->
-            <div class="col-lg-6 animate__animated animate__fadeInRight animate__delay-1s">
-                <div class="row g-4">
-
-                    <!-- Open Projects -->
-                    <div class="col-6">
-                        <a href="#" class="text-decoration-none d-block">
-                            <div class="pats-card h-100">
-                                <div class="card-content text-center">
-                                    <div class="icon-wrap">
-                                        <i class="ti ti-briefcase"></i>
-                                    </div>
-                                    <h5>Open Projects</h5>
-                                    <p>Explore available testing projects</p>
-                                </div>
-                                <div class="shine"></div>
-                            </div>
-                        </a>
+            <div class="col-lg-6 d-none d-lg-block animate__animated animate__fadeInRight animate__delay-1s">
+                <div class="position-relative">
+                    <!-- Main Image Base -->
+                    <div class="card border-0 rounded-5 shadow-2xl overflow-hidden glass-panel-dark mx-auto" style="width: 85%; transform: rotate(2deg);">
+                        <img src="https://images.unsplash.com/photo-1577896851231-70ef18881754?q=80&w=1000&auto=format&fit=crop" class="img-fluid opacity-90" style="mix-blend-mode: luminosity;" alt="Candidates Testing">
+                        <div class="position-absolute top-0 start-0 w-100 h-100 bg-teal opacity-20" style="mix-blend-mode: overlay;"></div>
                     </div>
-
-                    <!-- Candidate List -->
-                    <div class="col-6">
-                        <a href="" class="text-decoration-none d-block">
-                            <div class="pats-card h-100">
-                                <div class="card-content text-center">
-                                    <div class="icon-wrap">
-                                        <i class="ti ti-users"></i>
-                                    </div>
-                                    <h5>Candidate List</h5>
-                                    <p>View registered candidates</p>
-                                </div>
-                                <div class="shine"></div>
-                            </div>
-                        </a>
+                    <!-- Overlaid Stats Card -->
+                    <div class="position-absolute bottom-0 start-0 translate-middle-x translate-middle-y floating-element" style="animation-duration: 8s; margin-bottom: -15%;">
+                        <div class="card glass-panel border-0 shadow-lg rounded-4 p-4 text-center">
+                            <i class="ti ti-clock-check text-teal fs-1 mb-2 d-block"></i>
+                            <div class="fw-black h2 mb-0 text-dark">5M+</div>
+                            <div class="text-muted small fw-bold text-uppercase tracking-widest">Assessments<br>Conducted</div>
+                        </div>
                     </div>
-
-                    <!-- Results -->
-                    <div class="col-6">
-                        <a href="" class="text-decoration-none d-block">
-                            <div class="pats-card h-100">
-                                <div class="card-content text-center">
-                                    <div class="icon-wrap">
-                                        <i class="ti ti-file-search"></i>
-                                    </div>
-                                    <h5>Results</h5>
-                                    <p>Check your test results</p>
-                                </div>
-                                <div class="shine"></div>
-                            </div>
-                        </a>
+                    <!-- Overlaid Image Small -->
+                    <div class="position-absolute top-0 end-0 mt-4 me-n4 card shadow-lg border-0 rounded-4 overflow-hidden floating-element" style="width: 180px; transform: rotate(-4deg); animation-duration: 7s; animation-delay: 1s;">
+                        <img src="https://images.unsplash.com/photo-1543269865-cbf427effbad?q=80&w=600&auto=format&fit=crop" class="img-fluid grayscale" alt="Test Center">
+                        <div class="position-absolute bottom-0 w-100 bg-dark bg-opacity-75 text-white py-1 text-center small fw-bold">100% Merit</div>
                     </div>
-
-                    <!-- Apply Now -->
-                    <div class="col-6">
-                        <a href="" class="text-decoration-none d-block">
-                            <div class="pats-card h-100">
-                                <div class="card-content text-center">
-                                    <div class="icon-wrap">
-                                        <i class="ti ti-pencil-plus"></i>
-                                    </div>
-                                    <h5>Apply Now</h5>
-                                    <p>Submit your application</p>
-                                </div>
-                                <div class="shine"></div>
-                            </div>
-                        </a>
-                    </div>
-
                 </div>
             </div>
         </div>
+    </div>
 </section>
 
 <!-- Notice Board (Dynamic Ticker) -->
@@ -406,218 +349,33 @@
         </div>
     </div>
 </section>
-<!-- WhatsApp Floating Button -->
-<a href="https://wa.me/923001234567" target="_blank" class="whatsapp-float">
-    <i class="ti ti-brand-whatsapp"></i>
-</a>
+
 <style>
-    /* Base Card */
-    /* Base Card */
-    /* ===== HERO OVERLAY FIX (MAIN ISSUE) ===== */
-    .col-6 a {
-        display: block;
-        position: relative;
-        z-index: 3;
+    .pulse-red {
+        box-shadow: 0 0 0 rgba(220, 53, 69, 0.4);
+        animation: pulse-red 2s infinite;
     }
 
-    .hero::after,
-    .hero::before {
-        pointer-events: none !important;
-        z-index: -1 !important;
-        /* send behind everything */
+    @keyframes pulse-red {
+        0% {
+            transform: scale(0.95);
+            box-shadow: 0 0 0 0 rgba(220, 53, 69, 0.7);
+        }
+
+        70% {
+            transform: scale(1);
+            box-shadow: 0 0 0 10px rgba(220, 53, 69, 0);
+        }
+
+        100% {
+            transform: scale(0.95);
+            box-shadow: 0 0 0 0 rgba(220, 53, 69, 0);
+        }
     }
 
-    /* Ensure content stays above */
-    .hero {
-        position: relative;
-        z-index: 1;
+    .pulse-green {
+        animation: pulse-green 2s infinite;
     }
-
-    /* Fix cards click + hover */
-    .pats-card {
-        position: relative;
-        z-index: 2;
-        cursor: pointer;
-    }
-
-    /* Prevent any layer blocking */
-    .pats-card::before,
-    .pats-card .shine {
-        pointer-events: none;
-    }
-
-    .pats-card {
-        position: relative;
-        border-radius: 20px;
-        padding: 30px;
-        background: linear-gradient(135deg, #0f2027, #203a43, #2c5364);
-        color: #fff;
-        overflow: hidden;
-        cursor: pointer;
-        transition: all 0.4s ease;
-        transform-style: preserve-3d;
-        box-shadow: 0 15px 40px rgba(0, 0, 0, 0.4);
-    }
-
-    /* Hover Effect */
-    .pats-card:hover {
-        transform: translateY(-12px) scale(1.03);
-        box-shadow: 0 25px 60px rgba(0, 0, 0, 0.6);
-    }
-
-    /* Gradient Glow */
-    .pats-card::before {
-        content: "";
-        position: absolute;
-        inset: 0;
-        background: radial-gradient(circle at top right, rgba(0, 255, 200, 0.3), transparent);
-        opacity: 0;
-        transition: 0.4s;
-        pointer-events: none;
-        /* FIX */
-    }
-
-    .pats-card:hover::before {
-        opacity: 1;
-    }
-
-    /* Shine Effect */
-    .shine {
-        position: absolute;
-        top: 0;
-        left: -100%;
-        width: 60%;
-        height: 100%;
-        background: linear-gradient(120deg, transparent, rgba(255, 255, 255, 0.4), transparent);
-        transform: skewX(-25deg);
-        pointer-events: none;
-        /* FIX */
-    }
-
-    .pats-card:hover .shine {
-        left: 130%;
-        transition: 0.8s;
-    }
-
-    /* Icon */
-    .icon-wrap {
-        width: 70px;
-        height: 70px;
-        margin: 0 auto 15px;
-        border-radius: 20px;
-        background: rgba(255, 255, 255, 0.1);
-        display: flex;
-        align-items: center;
-        justify-content: center;
-        font-size: 28px;
-        backdrop-filter: blur(10px);
-        transition: 0.4s;
-    }
-
-    .pats-card:hover .icon-wrap {
-        transform: translateY(-8px) scale(1.1);
-    }
-
-    /* Text */
-    .card-content h5 {
-        font-weight: 900;
-        margin-bottom: 5px;
-    }
-
-    .card-content p {
-        font-size: 13px;
-        opacity: 0.75;
-    }
-
-    /* Colors */
-    .col-6:nth-child(1) .pats-card {
-        background: linear-gradient(135deg, #11998e, #38ef7d);
-    }
-
-    .col-6:nth-child(2) .pats-card {
-        background: linear-gradient(135deg, #396afc, #2948ff);
-    }
-
-    .col-6:nth-child(3) .pats-card {
-        background: linear-gradient(135deg, #f7971e, #ffd200);
-    }
-
-    .col-6:nth-child(4) .pats-card {
-        background: linear-gradient(135deg, #ff512f, #dd2476);
-    }
-
-    /* ===== COMMON BUTTON STYLE ===== */
-    /* ===== HERO BUTTON BASE ===== */
-    .hero-btn {
-        position: relative;
-        overflow: hidden;
-        transition: all 0.4s ease;
-        transform: translateY(0);
-        color: #fff !important;
-        border: none;
-    }
-
-    /* Hover Lift */
-    .hero-btn:hover {
-        transform: translateY(-6px) scale(1.03);
-        box-shadow: 0 20px 45px rgba(0, 0, 0, 0.4);
-    }
-
-    /* Glow */
-    .hero-btn::before {
-        content: "";
-        position: absolute;
-        inset: 0;
-        background: radial-gradient(circle at top right, rgba(255, 255, 255, 0.25), transparent);
-        opacity: 0;
-        transition: 0.4s;
-        pointer-events: none;
-    }
-
-    .hero-btn:hover::before {
-        opacity: 1;
-    }
-
-    /* Shine */
-    .hero-btn::after {
-        content: "";
-        position: absolute;
-        top: 0;
-        left: -100%;
-        width: 60%;
-        height: 100%;
-        background: linear-gradient(120deg, transparent, rgba(255, 255, 255, 0.5), transparent);
-        transform: skewX(-25deg);
-    }
-
-    .hero-btn:hover::after {
-        left: 130%;
-        transition: 0.8s;
-    }
-
-    /* Icon animation */
-    .hero-btn i {
-        transition: transform 0.3s ease;
-    }
-
-    .hero-btn:hover i {
-        transform: translateX(6px);
-    }
-
-    /* ===== MATCH CARD COLORS ===== */
-
-    /* Open Projects (Green like card 1) */
-    .btn-project {
-        background: linear-gradient(135deg, #11998e, #38ef7d);
-    }
-
-    /* Results (Yellow like card 3) */
-    .btn-result {
-        background: linear-gradient(135deg, #f7971e, #ffd200);
-        color: #000 !important;
-        /* better contrast */
-    }
-
 
     @keyframes pulse-green {
         0% {
@@ -638,73 +396,6 @@
         -webkit-line-clamp: 3;
         -webkit-box-orient: vertical;
         overflow: hidden;
-    }
-
-    /* WhatsApp Floating Button */
-    .whatsapp-float {
-        position: fixed;
-        bottom: 10px;
-        right: 30px;
-        width: 55px;
-        height: 55px;
-        background: linear-gradient(135deg, #25D366, #128C7E);
-        color: #fff;
-        border-radius: 50%;
-        display: flex;
-        align-items: center;
-        justify-content: center;
-        font-size: 32px;
-        box-shadow: 0 10px 25px rgba(0, 0, 0, 0.3);
-        z-index: 9999;
-        transition: all 0.3s ease;
-        text-decoration: none;
-    }
-
-    /* Hover Effect */
-    .whatsapp-float:hover {
-        transform: scale(1.1);
-        box-shadow: 0 15px 35px rgba(0, 0, 0, 0.5);
-    }
-
-    /* Pulse Animation */
-    .whatsapp-float::before {
-        content: "";
-        position: absolute;
-        width: 100%;
-        height: 100%;
-        border-radius: 50%;
-        background: rgba(37, 211, 102, 0.5);
-        animation: whatsapp-pulse 2s infinite;
-        z-index: -1;
-    }
-
-    .whatsapp-float,
-    .whatsapp-float:hover,
-    .whatsapp-float:focus,
-    .whatsapp-float:active {
-        text-decoration: none !important;
-        color: #fff;
-    }
-
-    .whatsapp-float i {
-        line-height: 1;
-    }
-
-    @keyframes whatsapp-pulse {
-        0% {
-            transform: scale(1);
-            opacity: 0.7;
-        }
-
-        70% {
-            transform: scale(1.5);
-            opacity: 0;
-        }
-
-        100% {
-            transform: scale(1);
-            opacity: 0;
-        }
     }
 </style>
 @endsection

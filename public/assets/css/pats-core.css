@@ -301,7 +301,7 @@ a[href="#navbar-seat"]::after,
     box-shadow: 0 10px 30px rgba(13, 148, 136, 0.3);
 }
 
-.fw-black { font-weight: 900; }
+.fw-black { font-weight: 500; }
 .tracking-tighter { letter-spacing: -0.05em; }
 
 /* Footer */
@@ -329,7 +329,7 @@ a[href="#navbar-seat"]::after,
 /* Global Font Override */
 @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&family=Outfit:wght@400;600;700;800;900&display=swap');
 
-.fw-black { font-weight: 900 !important; }
+.fw-black { font-weight: 500 !important; }
 
 /* Custom Badges */
 .badge-pats {
