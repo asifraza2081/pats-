@@ -105,11 +105,13 @@ Route::middleware(['auth', 'role:admin|data_entry|super_admin', \App\Http\Middle
 
     // Test Centers & Batches
     Route::resource('cities', Admin\CityController::class);
+    Route::post('centers/reorder', [Admin\TestCenterController::class, 'reorder'])->name('centers.reorder');
     Route::resource('centers', Admin\TestCenterController::class);
     Route::get('batches/stats', [Admin\BatchController::class, 'stats'])->name('batches.stats');
     Route::get('batches/centers-json/{project}', [Admin\BatchController::class, 'centersForProject'])->name('batches.centers-json');
     Route::resource('batches', Admin\BatchController::class);
     Route::post('batches/{batch}/ready', [Admin\BatchController::class, 'markReady'])->name('batches.ready');
+    Route::get('batches/group/{project}/{test_date}/{batch_number}', [Admin\BatchController::class, 'groupShow'])->name('batches.group-show');
     Route::get('batches/{batch}/summary', [Admin\BatchController::class, 'summary'])->name('batches.summary');
     Route::get('batches/{batch}/attendance', [Admin\BatchController::class, 'attendance'])->name('batches.attendance');
     Route::get('batches/{batch}/attendance-sheet', [Admin\BatchController::class, 'attendanceSheet'])->name('batches.attendance-sheet');

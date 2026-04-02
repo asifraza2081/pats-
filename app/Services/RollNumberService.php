@@ -61,26 +61,24 @@ class RollNumberService
             $examRecords = [];
             $appIds = [];
             
-            // Get current max serials for each job in this project/city/center to prevent collisions
+            // Get current max serials for each job in this project globally to prevent collisions across cities
             $uniqueJobs = $candidates->pluck('job_id')->unique();
             $jobSerials = [];
             foreach ($uniqueJobs as $jobId) {
-                // Get the current max serial from the last 4 digits of roll_no for this specific job/center
-                $lastRoll = ExamRollno::where('project_id', $batch->project_id)
-                    ->where('center_id', $batch->center_id)
+                // Get the maximum globally allocated sequence for this specific job across ALL centers/cities
+                $lastSequence = ExamRollno::where('project_id', $batch->project_id)
                     ->where('job_id', $jobId)
-                    ->orderByDesc('roll_no')
                     ->lockForUpdate()
-                    ->first();
+                    ->max('roll_sequence');
                 
-                $jobSerials[$jobId] = $lastRoll ? (int) substr($lastRoll->roll_no, -4) : 0;
+                $jobSerials[$jobId] = $lastSequence ?? 0;
             }
 
             foreach ($candidates as $app) {
                 $jobId = $app->job_id;
                 $serial = ++$jobSerials[$jobId];
 
-                // Robust Format: [ProjID(2)][JobCode(2)][CityID(2)][CenterID(2)][Serial(4)]
+                // Robust Format: [ProjID(2)][JobCode(2)][CityID(2)][CenterID(2)][Serial(4+)]
                 $rollNo = sprintf(
                     '%02d%02d%02d%02d%04d',
                     $app->project_id % 100,
@@ -98,6 +96,7 @@ class RollNumberService
                     'center_id'      => $batch->center_id,
                     'batch_id'       => $batch->id,
                     'roll_no'        => $rollNo,
+                    'roll_sequence'  => $serial,
                     'barcode'        => $rollNo, 
                     'batch_no'       => (string)$batch->batch_number,
                     'slip_ready'     => 0,

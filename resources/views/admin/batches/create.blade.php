@@ -354,23 +354,19 @@ document.addEventListener('DOMContentLoaded', () => {
         }
     });
 
-    const dateInput = document.getElementById('test_date');
-    dateInput.addEventListener('change', () => {
-        if(tsProject.getValue()) refreshStats();
-    });
+    // Note: Removed dateInput 'change' listener to prevent resetting the analytics UI when user clicks round the calendar
 
     let refreshTimeout;
     function refreshStats() {
         clearTimeout(refreshTimeout);
         refreshTimeout = setTimeout(() => {
             const pid = tsProject.getValue();
-            const testDate = document.getElementById('test_date').value;
             if(!pid) return;
 
             // Optional animate out
             poolTrackerContent.style.opacity = 0.5;
 
-            fetch(`{{ route('admin.batches.stats') }}?project_id=${pid}&test_date=${testDate}`)
+            fetch(`{{ route('admin.batches.stats') }}?project_id=${pid}`)
                 .then(res => {
                     if (!res.ok) throw new Error('Network response was not ok');
                     return res.json();
@@ -434,6 +430,7 @@ document.addEventListener('DOMContentLoaded', () => {
                     if (projectChanged) {
                         tsCity.clearOptions();
                         uniqueCitiesMap.forEach((name, id) => tsCity.addOption({ value: id, text: name }));
+                        tsCity.refreshOptions(false);
                     }
                     
                     poolTrackerContent.style.opacity = 1;
@@ -441,7 +438,13 @@ document.addEventListener('DOMContentLoaded', () => {
 
                     if (isFirstLoad) {
                         if (oldJobs.length) tsJobs.setValue(oldJobs);
-                        if (oldCities.length) tsCity.setValue(oldCities);
+                        if (oldCities.length) {
+                            oldCities.forEach(val => {
+                                // Sometimes the options aren't registered yet due to DOM async
+                                if (!tsCity.options[val]) tsCity.addOption({ value: val, text: 'City ' + val });
+                            });
+                            tsCity.setValue(oldCities);
+                        }
                         if (oldCenters.length) tsCenter.setValue(oldCenters);
                         isFirstLoad = false;
                     }

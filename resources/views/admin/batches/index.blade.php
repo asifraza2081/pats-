@@ -72,6 +72,9 @@
                             <a href="{{ route('admin.batches.attendance', $batch) }}" class="btn btn-outline-info btn-icon btn-sm" title="Attendance Tracking">
                                 <i class="ti ti-user-check"></i>
                             </a>
+                            <a href="{{ route('admin.batches.group-show', ['project' => $batch->project_id, 'test_date' => $batch->test_date->toDateString(), 'batch_number' => $batch->batch_number]) }}" class="btn btn-outline-purple btn-icon btn-sm" title="View Mega Session Group">
+                                <i class="ti ti-layout-distribute-vertical"></i>
+                            </a>
                         </div>
                     </td>
                 </tr>

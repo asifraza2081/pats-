@@ -65,6 +65,13 @@ class BatchController extends Controller
         $data['test_date']  = $testDateNormalized;
 
         $centerIds = array_unique($data['center_ids'] ?? []);
+        // Enforce physical priority order locally configured by admins for cascaded fill rates
+        $centerIds = TestCenter::whereIn('id', $centerIds)
+            ->orderBy('city_id')
+            ->orderBy('priority_order')
+            ->pluck('id')
+            ->toArray();
+
         $totalAllocated = 0;
         $batchIds = [];
 
@@ -185,6 +192,39 @@ class BatchController extends Controller
         $batch->load(['project', 'center.city', 'examRollnos.application.candidate.user', 'examRollnos.job']);
         $summary = $this->rollNumbers->batchSummary($batch);
         return view('admin.batches.show', compact('batch', 'summary'));
+    }
+
+    /** View Mega Session across all test centers within a city for a given date/time slot */
+    public function groupShow($projectId, $testDate, $batchNumber)
+    {
+        $batches = Batch::with(['center.city', 'examRollnos.job', 'examRollnos.application.candidate.user'])
+            ->where('project_id', $projectId)
+            ->where('test_date', $testDate)
+            ->where('batch_number', $batchNumber)
+            ->get();
+
+        if ($batches->isEmpty()) {
+            abort(404, 'Mega session group not found');
+        }
+
+        // Aggregate statistics and candidate lists
+        $project = $batches->first()->project;
+        
+        $totalSeats = $batches->sum('total_seats');
+        $bookedSeats = $batches->sum('booked_seats');
+
+        // Group roll numbers by Center and then by Job
+        $groupedCandidates = collect();
+        foreach ($batches as $batch) {
+            $centerName = $batch->center->name . ' (' . $batch->center->city->name . ')';
+            $groupedCandidates[$centerName] = $batch->examRollnos->groupBy(function($roll) {
+                return $roll->job->title;
+            });
+        }
+
+        return view('admin.batches.group_show', compact(
+            'batches', 'project', 'testDate', 'batchNumber', 'totalSeats', 'bookedSeats', 'groupedCandidates'
+        ));
     }
 
     public function edit(Batch $batch)

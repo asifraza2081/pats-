@@ -463,7 +463,7 @@
                 const originalText = btn.innerHTML;
                 setTimeout(() => {
                     btn.classList.add('disabled', 'opacity-75', 'pe-none');
-                    btn.innerHTML = '<span class="spinner-border spinner-border-sm me-2 animate__animated animate__fadeIn" role="status" aria-hidden="true"></span> Validating...';
+                    btn.innerHTML = '<i class="ti ti-loader ti-spin me-2 animate__animated animate__fadeIn"></i> Processing...';
                 }, 10);
             }
         });

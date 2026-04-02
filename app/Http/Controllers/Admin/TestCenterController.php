@@ -12,8 +12,25 @@ class TestCenterController extends Controller
 {
     public function index()
     {
-        $centers = TestCenter::with('city')->latest()->paginate(15);
-        return view('admin.centers.index', compact('centers'));
+        $cities = \App\Models\City::with(['testCenters' => function($q) {
+            $q->orderBy('priority_order')->orderBy('name');
+        }])->whereHas('testCenters')->orderBy('name')->get();
+
+        return view('admin.centers.index', compact('cities'));
+    }
+
+    public function reorder(Request $request)
+    {
+        $data = $request->validate([
+            'order' => 'required|array',
+            'order.*' => 'exists:test_centers,id'
+        ]);
+
+        foreach ($data['order'] as $index => $id) {
+            TestCenter::where('id', $id)->update(['priority_order' => $index + 1]);
+        }
+        
+        return response()->json(['success' => true]);
     }
 
     public function create() 

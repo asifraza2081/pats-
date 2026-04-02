@@ -41,13 +41,7 @@ class AllocationStatsService
         $baseQuery = (clone $eligibleQuery)->unallocated();
 
         // 3. Collision Prevention
-        if ($testDate) {
-            $baseQuery->whereDoesntHave('candidate.applications.examRollno', function($q) use ($testDate) {
-                $q->whereHas('batch', function($q2) use ($testDate) {
-                    $q2->where('test_date', $testDate);
-                });
-            });
-        }
+        // Removed dynamic testDate collision queries as they conflict with deep Eloquent relations and reset UI state accidentally
 
         // 4. Breakdown by City/Job
         // We start a fresh query on the base table to avoid 'applications.*' from eligible scope
@@ -55,14 +49,6 @@ class AllocationStatsService
             ->feePaid()
             ->eligible($project)
             ->unallocated();
-
-        if ($testDate) {
-            $breakdown->whereDoesntHave('candidate.applications.examRollno', function($q) use ($testDate) {
-                $q->whereHas('batch', function($q2) use ($testDate) {
-                    $q2->where('test_date', $testDate);
-                });
-            });
-        }
 
         $breakdown = $breakdown
             ->join('cities', 'applications.desired_test_city_id', '=', 'cities.id')
