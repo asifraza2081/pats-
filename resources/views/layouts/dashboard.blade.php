@@ -180,6 +180,12 @@
                                         <span class="nav-link-title">Dashboard</span>
                                     </a>
                                 </li>
+                                <li class="nav-item @if(request()->routeIs('admin.analytics.*')) active @endif">
+                                    <a class="nav-link" href="{{ route('admin.analytics.index') }}">
+                                        <span class="nav-link-icon d-md-none d-lg-inline-block"><i class="ti ti-chart-pie fs-2"></i></span>
+                                        <span class="nav-link-title">Analytics</span>
+                                    </a>
+                                </li>
                                 @can('manage projects')
                                 <li class="nav-item @if(request()->routeIs('admin.projects.*')) active @endif">
                                     <a class="nav-link" href="{{ route('admin.projects.index') }}">

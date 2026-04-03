@@ -98,6 +98,11 @@
 <script src="https://cdn.jsdelivr.net/npm/sortablejs@latest/Sortable.min.js"></script>
 <script>
 document.addEventListener('DOMContentLoaded', function () {
+    if (typeof Sortable === 'undefined') {
+        console.warn('SortableJS could not be loaded.');
+        return;
+    }
+
     const lists = document.querySelectorAll('.sortable-list');
     lists.forEach(list => {
         new Sortable(list, {

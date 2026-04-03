@@ -39,7 +39,17 @@ class Application extends Model
 
     public function scopeFeePaid($query)
     {
-        return $query->where('applications.status', 'fee_paid');
+        return $query->where('applications.status', 'fee_paid')
+            ->where(function($q) {
+                // If job has fee, must have 'paid' status in payments table
+                // If job has NO fee, it's implicitly cleared
+                $q->whereHas('job', function($jq) {
+                    $jq->where('fee', '<=', 0);
+                })
+                ->orWhereHas('payment', function($pq) {
+                    $pq->where('status', \App\Enums\PaymentStatus::PAID);
+                });
+            });
     }
 
     public function scopeUnallocated($query)

@@ -80,7 +80,14 @@
                                         </select>
                                     </div>
                                     <div class="col-md-6">
-                                        <label class="form-label required fw-bold text-secondary">Target Job(s)</label>
+                                        <div class="d-flex justify-content-between align-items-center mb-1">
+                                            <label class="form-label required fw-bold text-secondary mb-0">Target Job(s)</label>
+                                            <div class="small">
+                                                <a href="javascript:void(0)" class="link-primary" onclick="tsSelectAll(tsJobs)">Select All</a>
+                                                <span class="text-muted mx-1">|</span>
+                                                <a href="javascript:void(0)" class="link-secondary" onclick="tsClear(tsJobs)">Clear</a>
+                                            </div>
+                                        </div>
                                         <select name="job_ids[]" id="job_ids" class="form-select" multiple required>
                                             <option value="">Select project first...</option>
                                         </select>
@@ -94,20 +101,41 @@
                                 <h3 class="fw-black text-navy border-bottom pb-3 mb-4 d-flex align-items-center"><span class="badge bg-navy text-white me-3 rounded-circle px-3 py-2 fs-4">2</span> Select Venues</h3>
                                 <div class="row g-4">
                                     <div class="col-md-6">
-                                        <label class="form-label required fw-bold text-secondary">Test City Restriction</label>
+                                        <div class="d-flex justify-content-between align-items-center mb-1">
+                                            <label class="form-label required fw-bold text-secondary mb-0">Test City Restriction</label>
+                                            <div class="small">
+                                                <a href="javascript:void(0)" class="link-primary" onclick="tsSelectAll(tsCity)">Select All</a>
+                                                <span class="text-muted mx-1">|</span>
+                                                <a href="javascript:void(0)" class="link-secondary" onclick="tsClear(tsCity)">Clear</a>
+                                            </div>
+                                        </div>
                                         <select name="city_ids[]" id="city_id" class="form-select" multiple required>
                                             <option value="">Select from available cities...</option>
                                         </select>
                                     </div>
-                                    <div class="col-md-6">
-                                        <label class="form-label required fw-bold text-secondary">Test Center Venues</label>
-                                        <select name="center_ids[]" id="center_id" class="form-select" multiple required>
-                                            <option value="">Select center...</option>
-                                            @foreach($centers as $c)
-                                            <option value="{{ $c->id }}" data-city="{{ $c->city_id }}" data-capacity="{{ $c->seating_capacity }}">{{ $c->name }} ({{ $c->city?->name ?? 'Unknown' }})</option>
-                                            @endforeach
-                                        </select>
-                                        <div class="form-hint text-indigo"><i class="ti ti-info-circle"></i> Combined Capacity: <strong id="totalCapacityVisualText">0</strong> seats</div>
+                                    <div class="col-12 mt-4">
+                                        <div class="card border-navy border-opacity-10 rounded-4 shadow-sm">
+                                            <div class="card-header bg-light py-3 border-0">
+                                                <div class="d-flex justify-content-between align-items-center w-100">
+                                                    <h4 class="card-title text-navy fw-bold mb-0"><i class="ti ti-building-community me-2"></i> Targeted Venues</h4>
+                                                    <div class="small">
+                                                        <a href="javascript:void(0)" class="link-primary fw-bold" onclick="tsSelectAll(tsCenter)">Select All Available</a>
+                                                        <span class="text-muted mx-1">|</span>
+                                                        <a href="javascript:void(0)" class="link-secondary" onclick="tsClear(tsCenter)">Clear All</a>
+                                                    </div>
+                                                </div>
+                                            </div>
+                                            <div class="card-body p-4 bg-white">
+                                                <div class="mb-0">
+                                                    <select name="center_ids[]" id="center_id" class="form-select" multiple required>
+                                                        @foreach($centers as $c)
+                                                        <option value="{{ $c->id }}" data-city="{{ $c->city_id }}" data-capacity="{{ $c->seating_capacity }}">{{ $c->name }} ({{ $c->city?->name ?? 'Unknown' }})</option>
+                                                        @endforeach
+                                                    </select>
+                                                </div>
+                                            </div>
+                                        </div>
+                                        <div class="form-hint text-indigo mt-2"><i class="ti ti-info-circle"></i> Combined Capacity: <strong id="totalCapacityVisualText">0</strong> seats</div>
                                     </div>
                                 </div>
                             </div>
@@ -290,7 +318,7 @@ document.addEventListener('DOMContentLoaded', () => {
         @endforeach
     };
 
-    let tsJobs = new TomSelect(jobSelect, { 
+    window.tsJobs = new TomSelect(jobSelect, { 
         plugins: ['remove_button'],
         placeholder: "Search and select job(s)...",
         onChange: (values) => {
@@ -298,7 +326,7 @@ document.addEventListener('DOMContentLoaded', () => {
         }
     });
 
-    let tsCity = new TomSelect(citySelect, {
+    window.tsCity = new TomSelect(citySelect, {
         plugins: ['remove_button'],
         placeholder: "Select test city restriction...",
         onChange: (cids) => {
@@ -321,7 +349,7 @@ document.addEventListener('DOMContentLoaded', () => {
         }
     });
 
-    let tsCenter = new TomSelect(centerSelect, {
+    window.tsCenter = new TomSelect(centerSelect, {
         plugins: ['remove_button'],
         placeholder: "Select test centers...",
         onChange: (values) => {
@@ -550,6 +578,17 @@ document.addEventListener('DOMContentLoaded', () => {
     }
 
     allocationInput.addEventListener('input', () => updateDrainPreview());
+
+    window.tsSelectAll = function(tsInstance) {
+        if (!tsInstance) return;
+        const allOptionValues = Object.keys(tsInstance.options);
+        tsInstance.setValue(allOptionValues);
+    };
+
+    window.tsClear = function(tsInstance) {
+        if (!tsInstance) return;
+        tsInstance.clear();
+    };
     
     window.showBatchConfirm = () => {
         const count = parseInt(allocationInput.value) || 0;

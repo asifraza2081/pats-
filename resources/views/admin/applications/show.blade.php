@@ -44,6 +44,14 @@
             </div>
             <div class="card-footer bg-light-lt">
                 <div class="btn-list">
+                    @if($app->status !== \App\Enums\ApplicationStatus::FEE_PAID)
+                    <form action="{{ route('admin.applications.mark-paid', $app) }}" method="POST" class="w-100">
+                        @csrf
+                        <button type="submit" class="btn btn-success w-100 mb-2 shadow-sm" onclick="return confirm('Forcibly mark this candidate as paid?')">
+                            <i class="ti ti-check me-2"></i> Mark as Paid
+                        </button>
+                    </form>
+                    @endif
                     @if($app->examRollno)
                     <a href="{{ route('admin.rollnumbers.slip', $app) }}" target="_blank" class="btn btn-outline-primary w-100">
                         <i class="ti ti-file-download me-2"></i> Print Slip

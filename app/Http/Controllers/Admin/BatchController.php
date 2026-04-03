@@ -33,9 +33,18 @@ class BatchController extends Controller
 
     public function index()
     {
-        $batches = Batch::with(['project', 'center.city'])->latest()->paginate(25);
+        $batchesPaginator = Batch::with(['project', 'center.city'])
+            ->orderBy('is_ready', 'asc')
+            ->orderBy('test_date', 'desc')
+            ->paginate(50);
+            
+        $groupedBatches = collect($batchesPaginator->items())
+            ->groupBy(fn ($b) => $b->is_ready ? 'published' : 'draft')
+            ->map(fn ($group) => $group->groupBy(fn ($b) => $b->center->name));
+
         $projects = Project::whereHas('batches')->orderBy('name')->get();
-        return view('admin.batches.index', compact('batches', 'projects'));
+        
+        return view('admin.batches.index', compact('groupedBatches', 'batchesPaginator', 'projects'));
     }
 
     public function create()

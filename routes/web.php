@@ -95,6 +95,7 @@ Route::middleware(['auth', 'role:candidate', \App\Http\Middleware\InactivityLogo
 Route::middleware(['auth', 'role:admin|data_entry|super_admin', \App\Http\Middleware\InactivityLogout::class])->prefix('admin')->name('admin.')->group(function () {
 
     Route::get('/dashboard', [Admin\DashboardController::class, 'index'])->name('dashboard');
+    Route::get('/analytics', [Admin\AnalyticsController::class, 'index'])->name('analytics.index');
 
     // Projects & Jobs
     Route::resource('projects', Admin\ProjectController::class);
@@ -123,7 +124,9 @@ Route::middleware(['auth', 'role:admin|data_entry|super_admin', \App\Http\Middle
 
     // Applications
     Route::get('applications', [Admin\ApplicationController::class, 'index'])->name('applications.index');
+    Route::post('applications/bulk-mark-paid', [Admin\ApplicationController::class, 'bulkMarkPaid'])->name('applications.bulk-mark-paid');
     Route::get('applications/{app}', [Admin\ApplicationController::class, 'show'])->name('applications.show');
+    Route::post('applications/{app}/mark-paid', [Admin\ApplicationController::class, 'markPaid'])->name('applications.mark-paid');
 
     // Candidates Management
     Route::get('candidates', [Admin\CandidateController::class, 'index'])->name('candidates.index');
