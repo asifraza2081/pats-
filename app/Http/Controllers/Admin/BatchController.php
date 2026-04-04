@@ -29,6 +29,7 @@ class BatchController extends Controller
         private RollNumberService      $rollNumbers,
         private SmsService             $sms,
         private AllocationStatsService $statsService,
+        private \App\Services\DigitalRepositoryService $repository,
     ) {}
 
     public function index()
@@ -284,22 +285,6 @@ class BatchController extends Controller
         return view('admin.batches.summary-print', compact('batch', 'summary'));
     }
 
-    /**
-     * Internal helper to save PDF to a structured hierarchical repository
-     */
-    private function savePdfToHierarchy($pdf, $batch, $type)
-    {
-        $date = $batch->test_date->toDateString();
-        $projectSlug = Str::slug($batch->project->name);
-        $centerSlug = Str::slug($batch->center->name);
-        
-        $directory = "exports/{$date}/{$projectSlug}/{$centerSlug}";
-        $filename = "{$type}_B{$batch->id}_" . now()->format('His') . ".pdf";
-        $path = "{$directory}/{$filename}";
-        
-        Storage::disk('public')->put($path, $pdf->output());
-        return $path;
-    }
 
     /** Printable attendance sheet for this batch (Image 2 equivalent) */
     public function attendanceSheet(Batch $batch)
@@ -318,8 +303,8 @@ class BatchController extends Controller
             
             $pdf = Pdf::loadView('pdf.attendance', compact('batch', 'roster'))->setPaper('a4', 'portrait');
             
-            // Save to hierarchy
-            $this->savePdfToHierarchy($pdf, $batch, 'attendance');
+            // Save to new hierarchical repository
+            $this->repository->saveAttendanceSheet($batch, $pdf->output());
             
             return $pdf->stream("Attendance_{$batch->center->tcid}_{$batch->test_date->format('Ymd')}.pdf");
         } catch (\Exception $e) {
@@ -349,8 +334,8 @@ class BatchController extends Controller
 
             $pdf = Pdf::loadView('pdf.answer-sheet', compact('batch', 'roster'))->setPaper('a4', 'portrait');
             
-            // Save to hierarchy
-            $this->savePdfToHierarchy($pdf, $batch, 'answer_sheets');
+            // Save to new hierarchical repository
+            $this->repository->saveSummary($batch, 'AnswerSheets', $pdf->output());
             
             return $pdf->stream("AnswerSheets_{$batch->center->tcid}.pdf");
         } catch (\Exception $e) {
@@ -379,8 +364,8 @@ class BatchController extends Controller
 
             $pdf = Pdf::loadView('pdf.bulk-slips', compact('batch', 'roster'))->setPaper('a4', 'portrait');
             
-            // Save to hierarchy
-            $this->savePdfToHierarchy($pdf, $batch, 'bulk_slips');
+            // Save to new hierarchical repository
+            $this->repository->saveSummary($batch, 'BulkSlips', $pdf->output());
             
             return $pdf->stream("RollNoSlips_{$batch->center->tcid}.pdf");
         } catch (\Exception $e) {

@@ -11,6 +11,9 @@ PATS is a comprehensive Laravel 11 application designed to manage the entire lif
 - **Document Master Suite**: Generates automated Fee Challans, Roll Number Slips, and Hall Attendance Lists with candidate photos in institutional-standard high-fidelity layouts.
 - **Administrative Print Portal**: A high-efficiency, AJAX-powered portal for batch-printing thousands of documents by Project, City, and Test Center without page reloads.
 - **End-to-End Post-Test Processing**: Allows admin to upload attendance scans, upload CSV exam results, and automatically calculates candidate percentiles and percentages.
+- **Hierarchical Document Repository**: Automatically organizes every recruitment lifecycle document (Slips, Attendance, Results) into a structured {Project}/{Job}/{Candidate} directory tree for persistent access and traceability.
+- **Production-Grade Scorecards**: Generates individual, high-fidelity Result Cards for candidates with score breakdown, percentile, and digital verification.
+- **Dynamic News Ticker**: A persistent dashboard announcement system for real-time recruitment updates.
 
 ---
 
@@ -56,6 +59,14 @@ The PATS system is built on a "Handshake" logic that coordinates candidate prefe
     This will create all the required tables, seed the Spatie roles, and generate dummy test data (a sample project, test centers, open jobs, and a few sample candidates).
     ```bash
     php artisan migrate:fresh --seed
+    ```
+
+5. **Stress Test Data (Optional)**:
+    To simulate a massive recruitment project with 5,000+ candidates across multiple cities and sessions:
+    ```bash
+    php SimulateMassiveResults.php  # Processes 5,000 candidate scores
+    php SimulateAttendance.php      # Digitally signs 34 center batches
+    php SyncMassiveRepository.php   # Generates 10,000+ persistent PDFs
     ```
 
 ---
@@ -152,6 +163,20 @@ Below are the step-by-step workflows for each user role in the PATS system.
     - Download and print the **Attendance Sheet** (with candidate photos).
     - Print the pre-filled **Answer Sheets** to distribute in the exam hall.
 3.  **Reporting**: After the test, the examiner or data entry operator can upload scanned attendance sheets and mark individual candidate attendance (Appeared/Absent).
+
+---
+
+## 📂 Digital Document Repository
+
+The system implements a structured archiving system for all generated recruitment documents to ensure 100% traceability and persistent access:
+
+**Directory Structure:**
+- `storage/app/public/projects/{Project Name - Date}/`
+  - `{Job Title}/Attendance Sheets/` (Bulk attendance PDFs)
+  - `{Job Title}/Roll Numbers & Results/RollNo_{Num}/`
+    - `RollNoSlip.pdf` (The persistent slip)
+    - `ResultCard.pdf` (The primary candidate scorecard)
+  - `{Job Title}/Summary/` (Allocation and merit summaries)
 
 ---
 

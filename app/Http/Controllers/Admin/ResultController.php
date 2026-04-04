@@ -17,7 +17,10 @@ use PhpOffice\PhpSpreadsheet\IOFactory;
 
 class ResultController extends Controller
 {
-    public function __construct(private SmsService $sms) {}
+    public function __construct(
+        private SmsService $sms,
+        private \App\Services\DigitalRepositoryService $repository,
+    ) {}
 
     public function index()
     {

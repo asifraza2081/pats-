@@ -21,23 +21,23 @@ class HomeController extends Controller
             'results'         => Project::where('status', 'closed')->count(),
         ];
 
-        // Dynamic Announcements (Simulated from latest events)
-        $announcements = collect();
+        // Persistent Announcements (Database Driven)
+        $announcements = \App\Models\Announcement::active()->get();
         
-        // Latest open projects
-        foreach($projects->take(2) as $p) {
-            $announcements->push((object)[
-                'text' => "Registration for {$p->org_name} ({$p->name}) is now OPEN.",
-                'type' => 'new'
-            ]);
-        }
-
-        // Latest results
-        foreach($results->take(2) as $r) {
-            $announcements->push((object)[
-                'text' => "Official Results for {$r->name} have been declared.",
-                'type' => 'result'
-            ]);
+        if ($announcements->isEmpty()) {
+            // Fallback for simulation
+            foreach($projects->take(2) as $p) {
+                $announcements->push((object)[
+                    'text' => "Registration for {$p->org_name} ({$p->name}) is now OPEN.",
+                    'type' => 'new'
+                ]);
+            }
+            foreach($results->take(2) as $r) {
+                $announcements->push((object)[
+                    'text' => "Official Results for {$r->name} have been declared.",
+                    'type' => 'result'
+                ]);
+            }
         }
 
         return view('welcome', compact('projects', 'results', 'stats', 'announcements'));

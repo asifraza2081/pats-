@@ -13,17 +13,22 @@ class NotifyBatchOfResults implements ShouldQueue
     {
         $applications = Application::whereIn('id', $event->applicationIds)
             ->whereHas('result')
-            ->with(['candidate.user', 'job', 'result'])
+            ->with(['candidate.user', 'job.project', 'result'])
             ->get();
 
         foreach ($applications as $app) {
             $user = $app->candidate->user;
+            
+            // SMS Notification
             SendSmsJob::dispatch(
                 $user->phone,
                 "PATS: Your result for the post of {$app->job->title} (Roll No: {$app->result->roll_no}) has been declared. Check on portal.",
                 $user->id,
                 'result_published'
             );
+
+            // Email Notification
+            \Illuminate\Support\Facades\Mail::to($user->email)->send(new \App\Mail\ResultPublishedMail($app));
         }
     }
 }

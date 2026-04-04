@@ -10,6 +10,9 @@ use Illuminate\Http\Request;
 
 class RollNumberController extends Controller
 {
+    public function __construct(
+        private \App\Services\DigitalRepositoryService $repository
+    ) {}
     /**
      * Display a listing of all generated roll numbers.
      */
@@ -50,7 +53,11 @@ class RollNumberController extends Controller
         $candidate = $app->candidate;
         
         // Admin can download slips regardless of slip_ready status for printing/distribution
-        $pdf = Pdf::loadView('pdf.slip', compact('app', 'examRollno', 'candidate'));
+        $pdf = Pdf::loadView('pdf.slip', compact('app', 'examRollno', 'candidate'))->setPaper('a4', 'portrait');
+        
+        // Persist to hierarchical repository
+        $this->repository->saveRollNumberSlip($examRollno, $pdf->output());
+
         return $pdf->stream("Slip_{$examRollno->roll_no}.pdf");
     }
 }
