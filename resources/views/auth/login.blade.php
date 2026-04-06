@@ -29,7 +29,7 @@
                     @csrf
                     <div class="mb-3">
                         <label class="form-label required">CNIC or Email</label>
-                        <input type="text" name="cnic" class="form-control @error('cnic') is-invalid @enderror" placeholder="CNIC (XXXXX-XXXXXXX-X) or Email" value="{{ old('cnic') }}" autocomplete="off" required>
+                        <input type="text" name="cnic" id="login_identifier" class="form-control @error('cnic') is-invalid @enderror" placeholder="XXXXX-XXXXXXX-X or Email" value="{{ old('cnic') }}" autocomplete="off" required>
                         <div class="form-hint">Enter your registered CNIC (with dashes) or Email address</div>
                         @error('cnic')<div class="invalid-feedback">{{ $message }}</div>@enderror
                     </div>
@@ -44,7 +44,7 @@
                         <div class="input-group input-group-flat">
                             <input type="password" name="password" class="form-control" placeholder="Your password" autocomplete="off" required>
                             <span class="input-group-text">
-                                <a href="#" class="link-secondary" title="Show password" data-bs-toggle="tooltip">
+                                <a href="#" class="link-secondary toggle-password" title="Show password" data-bs-toggle="tooltip">
                                     <i class="ti ti-eye"></i>
                                 </a>
                             </span>
@@ -70,6 +70,44 @@
         </div>
     </div>
 </div>
+
+@push('scripts')
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    // 1. Password Toggle
+    const toggleBtns = document.querySelectorAll('.toggle-password');
+    toggleBtns.forEach(btn => {
+        btn.addEventListener('click', function(e) {
+            e.preventDefault();
+            const input = this.closest('.input-group').querySelector('input');
+            const icon = this.querySelector('i');
+            if (input.type === 'password') {
+                input.type = 'text';
+                icon.classList.replace('ti-eye', 'ti-eye-off');
+            } else {
+                input.type = 'password';
+                icon.classList.replace('ti-eye-off', 'ti-eye');
+            }
+        });
+    });
+
+    // 2. Input Masking (Selective for CNIC)
+    const loginInput = document.getElementById('login_identifier');
+    if (loginInput) {
+        loginInput.addEventListener('input', function(e) {
+            let val = e.target.value;
+            // Only mask if it looks like it could be a CNIC (starts with digits)
+            if (/^\d/.test(val)) {
+                let x = val.replace(/\D/g, '').match(/(\d{0,5})(\d{0,7})(\d{0,1})/);
+                if (x[1]) {
+                    e.target.value = !x[2] ? x[1] : x[1] + '-' + x[2] + (x[3] ? '-' + x[3] : '');
+                }
+            }
+        });
+    }
+});
+</script>
+@endpush
 
 @push('styles')
 <style>

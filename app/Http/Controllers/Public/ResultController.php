@@ -10,25 +10,30 @@ class ResultController extends Controller
 {
     public function search(Request $request)
     {
-        $query = $request->input('query');
-        
-        // If no query is provided, we just return the view with the search form
-        if (!$request->has('query')) {
+        // If no inputs are provided, just return the view with the search form
+        if (!$request->has('cnic') && !$request->has('roll_no')) {
             return view('public.results');
         }
 
-        // If a query is provided, attempt to find the results by roll number or CNIC
-        $results = collect();
-        if ($query) {
-            $results = Result::with(['application.candidate.user', 'application.job.project'])
-                ->where('published_at', '<=', now()) // ONLY SHOW PUBLISHED RESULTS
-                ->where(function($q) use ($query) {
-                    $q->where('roll_no', $query)
-                      ->orWhereHas('application.candidate.user', function($u) use ($query) {
-                          $u->where('cnic', $query);
-                      });
-                })
-                ->get();
+        $request->validate([
+            'cnic'    => 'required|string',
+            'roll_no' => 'required|string',
+        ]);
+
+        $cnic = $request->input('cnic');
+        $roll = $request->input('roll_no');
+
+        // Attempt to find the results by BOTH roll number AND CNIC
+        $results = Result::with(['application.candidate.user', 'application.job.project'])
+            ->where('published_at', '<=', now()) // ONLY SHOW PUBLISHED RESULTS
+            ->where('roll_no', $roll)
+            ->whereHas('application.candidate.user', function($u) use ($cnic) {
+                $u->where('cnic', $cnic);
+            })
+            ->get();
+
+        if ($results->isEmpty()) {
+            return back()->with('error', 'No results found for the provided CNIC and Roll Number. Please verify your credentials and try again.');
         }
 
         return view('public.results', ['results' => $results]);

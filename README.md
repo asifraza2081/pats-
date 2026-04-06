@@ -78,8 +78,8 @@ After running the seeders, the following accounts are available for testing:
 | Role | Email Address | Password | Notes |
 |---|---|---|---|
 | **Super Admin** | `admin@pats.test` | `Admin@1234` | Can manage other admin users, assign roles, and access all features. |
-| **Examiner** | `examiner@pats.test` | `password` | Can view assigned sessions and print logistics. |
-| **Candidate** | `testcand@pats.test` | `password` | Sample candidate with a partially completed profile. |
+| **Examiner** | `examiner.lahore@pats.test` | `password` | Sample examiner (Lahore City). Access for field staff. |
+| **Candidate** | `candidate@pats.test` | `password` | Sample candidate with a partially completed profile. |
 
 ---
 

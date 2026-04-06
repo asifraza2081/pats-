@@ -95,7 +95,8 @@
 @endsection
 
 @push('scripts')
-<script src="https://cdn.jsdelivr.net/npm/sortablejs@latest/Sortable.min.js"></script>
+    {{-- Localized SortableJS to avoid CSP issues --}}
+    <script src="{{ asset('js/vendor/sortable.min.js') }}"></script>
 <script>
 document.addEventListener('DOMContentLoaded', function () {
     if (typeof Sortable === 'undefined') {

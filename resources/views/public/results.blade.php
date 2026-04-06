@@ -10,20 +10,40 @@
                 <div class="avatar avatar-xl bg-grad-accent text-white rounded-circle shadow-teal-30 mb-4 mx-auto">
                     <i class="ti ti-chart-bar fs-0"></i>
                 </div>
-                <h2 class="display-4 fw-black text-dark mb-2">Check Your Merit</h2>
-                <p class="text-muted fs-3 opacity-80">Enter your Roll Number or CNIC to access your secure result report.</p>
+                <h2 class="display-4 fw-black text-dark mb-2">Check Your Result</h2>
+                <p class="text-muted fs-3 opacity-80">Enter both your Roll Number and CNIC to access your secure result report.</p>
             </div>
             
+            @if(session('error'))
+            <div class="alert alert-danger rounded-4 mb-4 shadow-sm animate__animated animate__shakeX">
+                <div class="d-flex align-items-center">
+                    <i class="ti ti-alert-triangle me-3 fs-2"></i>
+                    <div class="fw-bold">{{ session('error') }}</div>
+                </div>
+            </div>
+            @endif
+
             <div class="card glass-panel border-0 shadow-lg mb-6 rounded-5 overflow-hidden animate__animated animate__zoomIn">
                 <div class="card-body p-5 p-md-7">
                     <form method="GET" action="{{ route('results.search') }}">
-                        <div class="mb-5">
-                            <label class="form-label fw-black text-dark opacity-60 small uppercase tracking-widest mb-3">Verification ID (CNIC or Roll No)</label>
-                            <div class="input-group input-group-flat shadow-none rounded-4 overflow-hidden border border-teal border-opacity-20">
-                                <span class="input-group-text bg-white border-0 ps-4">
-                                    <i class="ti ti-shield-lock text-teal fs-2"></i>
-                                </span>
-                                <input type="text" name="query" class="form-control form-control-lg border-0 bg-white fs-2 py-4 shadow-none" placeholder="e.g. 01010203-001 or 3520100000000" value="{{ request('query') }}" autofocus required>
+                        <div class="row g-4 mb-4">
+                            <div class="col-md-6">
+                                <label class="form-label fw-black text-dark opacity-60 small uppercase tracking-widest mb-3">Roll Number</label>
+                                <div class="input-group input-group-flat shadow-none rounded-4 overflow-hidden border border-teal border-opacity-20">
+                                    <span class="input-group-text bg-white border-0 ps-3">
+                                        <i class="ti ti-id-badge text-teal fs-3"></i>
+                                    </span>
+                                    <input type="text" name="roll_no" class="form-control form-control-lg border-0 bg-white fs-3 py-3 shadow-none" placeholder="e.g. 102030" value="{{ request('roll_no') }}" autofocus required>
+                                </div>
+                            </div>
+                            <div class="col-md-6">
+                                <label class="form-label fw-black text-dark opacity-60 small uppercase tracking-widest mb-3">CNIC Number</label>
+                                <div class="input-group input-group-flat shadow-none rounded-4 overflow-hidden border border-teal border-opacity-20">
+                                    <span class="input-group-text bg-white border-0 ps-3">
+                                        <i class="ti ti-mask text-teal fs-3"></i>
+                                    </span>
+                                    <input type="text" name="cnic" id="cnic_mask" class="form-control form-control-lg border-0 bg-white fs-3 py-3 shadow-none" placeholder="XXXXX-XXXXXXX-X" value="{{ request('cnic') }}" required>
+                                </div>
                             </div>
                         </div>
                         <button type="submit" class="btn btn-teal w-100 py-4 fs-2 fw-black rounded-pill border-0 shadow-teal-30">
@@ -33,9 +53,8 @@
                 </div>
                 <div class="bg-light py-3 px-5 border-top border-dark border-opacity-5">
                     <div class="d-flex align-items-center justify-content-center gap-4 small fw-bold text-muted opacity-60">
-                        <span><i class="ti ti-lock-check me-1"></i> SSL SECURE</span>
-                        <span><i class="ti ti-database-check me-1"></i> VERIFIED MERIT</span>
-                        <span><i class="ti ti-device-mobile-check me-1"></i> OTP PROTECTED</span>
+                        <span><i class="ti ti-lock-check me-1"></i> SECURE ACCESS</span>
+                        <span><i class="ti ti-shield-check me-1"></i> TWO-FACTOR VERIFICATION</span>
                     </div>
                 </div>
             </div>
@@ -103,11 +122,25 @@
                             <i class="ti ti-alert-triangle-filled fs-0"></i>
                         </div>
                         <h3 class="fw-black h2 mb-2">Result Not Found</h3>
-                        <p class="fs-4 fw-bold opacity-80">No valid record exists for <strong>{{ request('query') }}</strong>. Please ensure the Roll Number or CNIC is correct.</p>
+                        <p class="fs-4 fw-bold opacity-80">No valid record exists for Roll No: <strong>{{ request('roll_no') }}</strong> and CNIC: <strong>{{ request('cnic') }}</strong>. Please ensure the credentials are correct.</p>
                     </div>
                 @endif
             @endif
         </div>
     </div>
 </div>
+
+@push('scripts')
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    const cnicInput = document.getElementById('cnic_mask');
+    if (cnicInput) {
+        cnicInput.addEventListener('input', function(e) {
+            let x = e.target.value.replace(/\D/g, '').match(/(\d{0,5})(\d{0,7})(\d{0,1})/);
+            e.target.value = !x[2] ? x[1] : x[1] + '-' + x[2] + (x[3] ? '-' + x[3] : '');
+        });
+    }
+});
+</script>
+@endpush
 @endsection

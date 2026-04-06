@@ -3,19 +3,40 @@
 <head>
 <meta charset="UTF-8">
 <style>
-  body { font-family: DejaVu Sans, sans-serif; font-size: 11px; color: #111; margin: 0; padding: 20px; }
-  .header { text-align: center; margin-bottom: 15px; border-bottom: 2px solid #0a3d62; padding-bottom: 10px; }
-  .header h1 { font-size: 20px; color: #0a3d62; margin: 0; font-weight: bold; letter-spacing: 1px; }
-  .header h3 { font-size: 12px; color: #555; margin: 3px 0 0; font-weight: normal; }
-  .challan-title { text-align: center; font-size: 14px; font-weight: bold; color: #e84118; margin: 10px 0; text-transform: uppercase; border: 1px dashed #e84118; padding: 4px; }
-  table { width: 100%; border-collapse: collapse; margin-top: 10px; }
-  table td { border: 1px solid #ccc; padding: 6px 10px; }
-  .label { font-weight: bold; width: 35%; background: #f9f9f9; }
-  .amount-box { border: 2px solid #0a3d62; text-align: center; padding: 12px; margin-top: 15px; font-size: 16px; font-weight: bold; color: #0a3d62; }
-  .bank-section { background: #eef4fb; border: 1px solid #0a3d62; padding: 10px; margin-top: 15px; }
-  .bank-section h4 { margin: 0 0 6px; color: #0a3d62; font-size: 12px; }
-  .footer { margin-top: 20px; font-size: 9px; color: #666; border-top: 1px solid #ddd; padding-top: 8px; text-align: center; }
-  .cut-line { border: none; border-top: 2px dashed #999; margin: 20px 0; }
+  @page { margin: 10px; }
+  body { font-family: 'Helvetica', 'Arial', sans-serif; font-size: 10px; color: #333; margin: 0; padding: 10px; line-height: 1.3; }
+  .copy-wrapper { border: 1px solid #000; padding: 15px; margin-bottom: 10px; position: relative; height: 31%; }
+  .header { display: table; width: 100%; border-bottom: 2px solid #000; padding-bottom: 5px; margin-bottom: 10px; }
+  .logo-area { display: table-cell; width: 20%; vertical-align: middle; }
+  .title-area { display: table-cell; width: 60%; text-align: center; vertical-align: middle; }
+  .copy-type { display: table-cell; width: 20%; text-align: right; font-weight: bold; font-size: 12px; vertical-align: middle; color: #d63031; }
+  
+  .org-name { font-size: 16px; font-weight: bold; margin: 0; color: #0a3d62; }
+  .project-name { font-size: 10px; font-weight: normal; margin: 2px 0; color: #555; }
+  
+  .bill-branding { background: #f1f2f6; border: 1px solid #ccc; padding: 5px 10px; margin-bottom: 10px; display: table; width: 100%; }
+  .bill-branding-left { display: table-cell; width: 50%; font-weight: bold; font-size: 11px; }
+  .bill-branding-right { display: table-cell; width: 50%; text-align: right; }
+  
+  .identifier-box { border: 2px solid #000; padding: 10px; background: #fff; margin-bottom: 10px; }
+  .consumer-id-label { font-size: 12px; font-weight: bold; color: #000; display: block; margin-bottom: 4px; }
+  .consumer-id-value { font-size: 22px; font-weight: 800; color: #000; letter-spacing: 2px; }
+  
+  .details-table { width: 100%; border-collapse: collapse; }
+  .details-table td { padding: 4px 0; border: none; vertical-align: top; }
+  .label { font-weight: bold; width: 30%; }
+  .value { width: 70%; border-bottom: 1px dotted #ccc; }
+  
+  .amount-area { display: table; width: 100%; margin-top: 10px; }
+  .amount-box { display: table-cell; width: 60%; background: #0a3d62; color: #fff; padding: 8px; font-size: 14px; font-weight: bold; }
+  .deadline-box { display: table-cell; width: 40%; border: 1px solid #0a3d62; padding: 8px; text-align: center; }
+  
+  .instructions { font-size: 8px; color: #444; margin-top: 8px; border-top: 1px solid #eee; padding-top: 5px; }
+  .instruction-icons { margin-top: 4px; font-weight: bold; color: #000; }
+  
+  .cut-line { position: absolute; bottom: -8px; left: 0; right: 0; border-bottom: 1px dashed #666; font-size: 9px; text-align: center; }
+  .sig-area { margin-top: 15px; display: table; width: 100%; }
+  .sig { display: table-cell; width: 50%; text-align: center; padding-top: 20px; border-top: 1px solid #ccc; font-size: 9px; }
 </style>
 </head>
 <body>
@@ -24,54 +45,65 @@
   $payment = $app->payment;
   $candidate = $app->candidate;
   $user = $candidate->user;
+  $copies = ['BANK COPY', 'PATS COPY', 'CANDIDATE COPY'];
 @endphp
 
-{{-- BANK COPY --}}
-<div class="header">
-  <h1>PRIME ASSESSMENT &amp; TESTING SERVICES</h1>
-  <h3>{{ $project->org_name }}</h3>
+@foreach($copies as $copy)
+<div class="copy-wrapper">
+    <div class="header">
+        <div class="logo-area"><strong style="font-size: 24px;">PATS</strong></div>
+        <div class="title-area">
+            <h1 class="org-name">PRIME ASSESSMENT & TESTING SERVICES</h1>
+            <p class="project-name">{{ $project->name }}</p>
+        </div>
+        <div class="copy-type">{{ $copy }}</div>
+    </div>
+
+    <div class="bill-branding">
+        <div class="bill-branding-left">1LINK / 1BILL Enabled</div>
+        <div class="bill-branding-right">Pay via ATM / Mobile App / Any Bank</div>
+    </div>
+
+    <table class="details-table">
+        <tr>
+            <td class="label">Candidate:</td>
+            <td class="value">{{ $user->full_name }} (CNIC: {{ $user->cnic }})</td>
+        </tr>
+        <tr>
+            <td class="label">Job Post:</td>
+            <td class="value">{{ $app->job->title }} ({{ $app->job->job_code }})</td>
+        </tr>
+    </table>
+
+    <div class="identifier-box" style="margin-top: 10px;">
+        <span class="consumer-id-label">1BILL CONSUMER ID / CHALLAN NO:</span>
+        <span class="consumer-id-value">{{ $payment->challan_ref }}</span>
+    </div>
+
+    <div class="amount-area">
+        <div class="amount-box">TOTAL AMOUNT: PKR {{ number_format($payment->amount) }}/-</div>
+        <div class="deadline-box">
+            <span style="font-size: 8px; display: block;">PAYMENT DEADLINE:</span>
+            <strong>{{ $project->close_date?->format('d-M-Y') ?? 'N/A' }}</strong>
+        </div>
+    </div>
+
+    <div class="instructions">
+        <strong>How to pay:</strong> 1. Open any Banking App (HBL, Alfalah, EasyPaisa, JazzCash etc.) 2. Go to <strong>Bill Payments</strong> 3. Select <strong>1BILL</strong> 4. Select <strong>Invoice/Voucher</strong> 5. Enter Consumer ID and Pay.
+        <div class="instruction-icons">M-Banking | ATM | OTC | Internet Banking</div>
+    </div>
+
+    <div class="sig-area">
+        <div class="sig" style="border-top: none;"></div>
+        <div class="sig">Candidate's Signature</div>
+        <div class="sig" style="border-right: none;">Bank Officer Stamp & Signature</div>
+    </div>
+
+    @if($copy != 'CANDIDATE COPY')
+    <div class="cut-line">- - - - - - - - - - - - - - - - - - - - - - - - - - - Cut Here - - - - - - - - - - - - - - - - - - - - - - - - - - -</div>
+    @endif
 </div>
-<div class="challan-title">Fee Deposit Challan — Bank Copy</div>
+@endforeach
 
-<table>
-  <tr><td class="label">Challan Reference No.</td><td><strong>{{ $payment->challan_ref }}</strong></td></tr>
-  <tr><td class="label">Candidate Name</td><td>{{ $user->full_name }}</td></tr>
-  <tr><td class="label">Father's Name</td><td>{{ $candidate->father_name }}</td></tr>
-  <tr><td class="label">CNIC</td><td>{{ $user->cnic }}</td></tr>
-  <tr><td class="label">Post Applied For</td><td>{{ $app->job->title }} (Code: {{ str_pad($app->job->job_code, 2, '0', STR_PAD_LEFT) }})</td></tr>
-  <tr><td class="label">Project</td><td>{{ $project->name }}</td></tr>
-  <tr><td class="label">Application Deadline</td><td>{{ $project->close_date?->format('d M, Y') ?? 'N/A' }}</td></tr>
-</table>
-
-<div class="amount-box">
-  Fee Amount: PKR {{ number_format($payment->amount, 2) }}
-</div>
-
-<div class="bank-section">
-  <h4>Payment Instructions</h4>
-  Deposit this amount at any branch of the designated bank. Keep bank receipt for your records. Challan is valid until <strong>{{ $project->close_date?->format('d M, Y') ?? 'the application deadline' }}</strong>.
-</div>
-
-<div class="footer">Generated on {{ now()->format('d M Y, H:i') }} &nbsp;|&nbsp; PATS &nbsp;|&nbsp; This is a computer-generated document.</div>
-
-<hr class="cut-line">
-
-{{-- CANDIDATE COPY --}}
-<div class="header">
-  <h1>PRIME ASSESSMENT &amp; TESTING SERVICES</h1>
-  <h3>{{ $project->org_name }}</h3>
-</div>
-<div class="challan-title">Fee Deposit Challan — Candidate Copy</div>
-
-<table>
-  <tr><td class="label">Challan Reference No.</td><td><strong>{{ $payment->challan_ref }}</strong></td></tr>
-  <tr><td class="label">Candidate Name</td><td>{{ $user->full_name }}</td></tr>
-  <tr><td class="label">CNIC</td><td>{{ $user->cnic }}</td></tr>
-  <tr><td class="label">Post Applied For</td><td>{{ $app->job->title }}</td></tr>
-  <tr><td class="label">Project</td><td>{{ $project->name }}</td></tr>
-  <tr><td class="label">Fee Amount</td><td><strong>PKR {{ number_format($payment->amount, 2) }}</strong></td></tr>
-</table>
-
-<div class="footer">Keep this copy for your records. Generated on {{ now()->format('d M Y, H:i') }}</div>
 </body>
 </html>

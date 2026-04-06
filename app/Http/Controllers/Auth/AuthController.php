@@ -17,7 +17,10 @@ class AuthController extends Controller
     public function __construct(private SmsService $sms) {}
 
     // ── Registration ──────────────────────────────────────────
-    public function showRegister() { return view('auth.register'); }
+    public function showRegister() 
+    { 
+        return view('auth.register'); 
+    }
 
     public function register(Request $request)
     {
@@ -27,15 +30,20 @@ class AuthController extends Controller
             'email'       => 'required|email|unique:users',
             'cnic'        => ['nullable', 'regex:/^\d{5}-\d{7}-\d{1}$/', 'unique:users'],
             'phone'       => 'required|string|max:15',
-            'nationality' => 'required|in:Pakistani,Foreigner',
+            'captcha'     => 'required|captcha',
             'password'    => ['required', 'confirmed', PasswordRule::min(8)],
         ], [
             'cnic.regex' => 'CNIC must be in the format XXXXX-XXXXXXX-X.',
+            'captcha.captcha' => 'The CAPTCHA code is incorrect.',
         ]);
 
         $user = User::create([
-            ...$data,
-            'password' => Hash::make($data['password']),
+            'first_name' => $data['first_name'],
+            'last_name'  => $data['last_name'],
+            'email'      => $data['email'],
+            'cnic'       => $data['cnic'],
+            'phone'      => $data['phone'],
+            'password'   => Hash::make($data['password']),
         ]);
 
         // Create blank candidate profile

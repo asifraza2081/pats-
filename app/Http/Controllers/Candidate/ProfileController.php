@@ -54,13 +54,7 @@ class ProfileController extends Controller
             $data['photo_path'] = $request->file('photo')->store('photos', 'public');
         }
 
-        // CNIC copy upload
-        if ($request->hasFile('cnic_copy')) {
-            if ($candidate->cnic_front_path) Storage::delete($candidate->cnic_front_path);
-            $data['cnic_front_path'] = $request->file('cnic_copy')->store('cnic_copies', 'public');
-        }
-
-        // Capture CNIC before unsetting it from the $data array (which goes into Candidate::$fillable)
+        // Capture CNIC before unsetting it from the $data array
         $cnicFromForm = $data['cnic'] ?? null;
         unset($data['photo'], $data['cnic_copy'], $data['cnic']);
 
@@ -83,7 +77,16 @@ class ProfileController extends Controller
         $candidate = $this->candidate();
         $this->authorize('update', $candidate);
         $data = $request->validated();
-        $candidate->education()->create($data);
+        $edu = $candidate->education()->create($data);
+
+        if ($request->ajax()) {
+            return response()->json([
+                'success' => true,
+                'message' => 'Education record added.',
+                'html' => view('candidate.partials._education_row', ['edu' => $edu, 'candidate' => $candidate])->render()
+            ]);
+        }
+
         return back()->with('success', 'Education record added.');
     }
 
@@ -109,7 +112,16 @@ class ProfileController extends Controller
         $this->authorize('update', $candidate);
         $data = $request->validated();
         if ($request->boolean('is_current')) $data['to_date'] = null;
-        $candidate->experience()->create($data);
+        $exp = $candidate->experience()->create($data);
+
+        if ($request->ajax()) {
+            return response()->json([
+                'success' => true,
+                'message' => 'Experience record added.',
+                'html' => view('candidate.partials._experience_row', ['exp' => $exp, 'candidate' => $candidate])->render()
+            ]);
+        }
+
         return back()->with('success', 'Experience record added.');
     }
 

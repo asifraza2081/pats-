@@ -176,25 +176,9 @@
                                 
                                 <div class="col-12 mt-3"><hr class="my-2"></div>
 
-                                <div class="col-md-6">
-                                    <label class="form-label">Age Relaxation Claim (if applicable)</label>
-                                    <select name="age_relaxation_type" class="form-select">
-                                        <option value="">— None —</option>
-                                        <option value="Government Employee" {{ old('age_relaxation_type') === 'Government Employee' ? 'selected' : '' }}>Government Employee</option>
-                                        <option value="Ex-Service Person" {{ old('age_relaxation_type') === 'Ex-Service Person' ? 'selected' : '' }}>Ex-Service Person</option>
-                                        <option value="Disabled Person" {{ old('age_relaxation_type') === 'Disabled Person' ? 'selected' : '' }}>Disabled Person</option>
-                                        <option value="Tribal Area" {{ old('age_relaxation_type') === 'Tribal Area' ? 'selected' : '' }}>Tribal Area</option>
-                                        <option value="Other" {{ old('age_relaxation_type') === 'Other' ? 'selected' : '' }}>Other</option>
-                                    </select>
-                                </div>
-                                
-                                <div class="col-md-6">
-                                    <label class="form-label">Relaxation Years</label>
-                                    <div class="input-group">
-                                        <input type="number" name="age_relaxation_years" class="form-control" value="{{ old('age_relaxation_years') }}" min="1" max="10">
-                                        <span class="input-group-text">Years</span>
-                                    </div>
-                                </div>
+                                <!-- Age Relaxation Hidden as per Client Request -->
+                                <input type="hidden" name="age_relaxation_type" value="">
+                                <input type="hidden" name="age_relaxation_years" value="0">
 
                                 <div class="col-12 mt-4">
                                     <div class="alert bg-blue-lt mb-4 border-0">
@@ -206,12 +190,8 @@
                                         </div>
                                     </div>
                                     
-                                    <label class="form-check fw-semibold mb-4">
-                                        <input class="form-check-input" type="checkbox" id="confirmDecl" required>
-                                        <span class="form-check-label text-muted lh-base">
-                                            I hereby solemnly affirm and declare that all information provided in my profile is correct to the best of my knowledge. I understand that any false, forged, or hidden information will result in immediate disqualification of my candidature.
-                                        </span>
-                                    </label>
+                                    <!-- Disclaimer/Declaration Hidden as per Client Request -->
+                                    <input type="hidden" id="confirmDecl" value="1" required>
                                     
                                     <button type="submit" class="btn btn-primary w-100 py-3 fs-3 fw-bold">
                                         <i class="ti ti-send me-2"></i> Submit Final Application

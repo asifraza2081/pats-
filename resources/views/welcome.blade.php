@@ -45,7 +45,7 @@
 
                     <!-- Open Projects -->
                     <div class="col-6">
-                        <a href="#" class="text-decoration-none d-block">
+                        <a href="{{ route('projects') }}" class="text-decoration-none d-block">
                             <div class="pats-card h-100">
                                 <div class="card-content text-center">
                                     <div class="icon-wrap">
@@ -59,16 +59,16 @@
                         </a>
                     </div>
 
-                    <!-- Candidate List -->
+                    <!-- Candidate Portal -->
                     <div class="col-6">
-                        <a href="" class="text-decoration-none d-block">
+                        <a href="{{ route('login') }}" class="text-decoration-none d-block">
                             <div class="pats-card h-100">
                                 <div class="card-content text-center">
                                     <div class="icon-wrap">
                                         <i class="ti ti-users"></i>
                                     </div>
-                                    <h5>Candidate List</h5>
-                                    <p>View registered candidates</p>
+                                    <h5>Candidate Portal</h5>
+                                    <p>Login to your secure account</p>
                                 </div>
                                 <div class="shine"></div>
                             </div>
@@ -77,7 +77,7 @@
 
                     <!-- Results -->
                     <div class="col-6">
-                        <a href="" class="text-decoration-none d-block">
+                        <a href="{{ route('results.search') }}" class="text-decoration-none d-block">
                             <div class="pats-card h-100">
                                 <div class="card-content text-center">
                                     <div class="icon-wrap">
@@ -93,7 +93,7 @@
 
                     <!-- Apply Now -->
                     <div class="col-6">
-                        <a href="" class="text-decoration-none d-block">
+                        <a href="{{ route('projects') }}" class="text-decoration-none d-block">
                             <div class="pats-card h-100">
                                 <div class="card-content text-center">
                                     <div class="icon-wrap">
