@@ -62,7 +62,7 @@ class SystemStagingSeeder extends Seeder
                 'email' => "examiner." . strtolower(str_replace(' ', '', $city->name)) . "@pats.test",
                 'cnic' => '77777' . str_pad($index, 8, '0', STR_PAD_LEFT),
                 'phone' => '0377' . str_pad($index, 7, '0', STR_PAD_LEFT),
-                'password' => Hash::make('password'),
+                'password' => Hash::make(env('USER_DEFAULT_PASSWORD', 'password')),
                 'phone_verified_at' => now(),
                 'email_verified_at' => now(),
             ]);
@@ -134,7 +134,7 @@ class SystemStagingSeeder extends Seeder
                 'email' => "candidate." . ($i + 1) . "@example.com",
                 'cnic' => '55555' . str_pad($i, 8, '0', STR_PAD_LEFT),
                 'phone' => '0300' . str_pad($i, 7, '0', STR_PAD_LEFT),
-                'password' => Hash::make('password'),
+                'password' => Hash::make(env('USER_DEFAULT_PASSWORD', 'password')),
                 'nationality' => 'Pakistani',
                 'phone_verified_at' => now(),
                 'email_verified_at' => now(),

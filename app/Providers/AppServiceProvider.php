@@ -4,6 +4,9 @@ namespace App\Providers;
 
 use Illuminate\Support\Facades\Blade;
 use Illuminate\Support\ServiceProvider;
+use Illuminate\Cache\RateLimiting\Limit;
+use Illuminate\Http\Request;
+use Illuminate\Support\Facades\RateLimiter;
 
 class AppServiceProvider extends ServiceProvider
 {
@@ -11,6 +14,15 @@ class AppServiceProvider extends ServiceProvider
 
     public function boot(): void
     {
+        // Hardening: Rate Limiters
+        RateLimiter::for('login', function (Request $request) {
+            return Limit::perMinutes(15, 5)->by($request->input('email', $request->input('cnic', $request->ip())));
+        });
+
+        RateLimiter::for('global', function (Request $request) {
+            return Limit::perMinute(60)->by($request->user()?->id ?: $request->ip());
+        });
+
         // Financial Module: auto-post revenue to ledger on payment verification
         \App\Models\Payment::observe(\App\Observers\PaymentObserver::class);
 

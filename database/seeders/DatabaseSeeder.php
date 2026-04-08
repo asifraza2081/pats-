@@ -44,10 +44,10 @@ class DatabaseSeeder extends Seeder
 
         $this->command->info('─── SEEDING COMPLETE! ───');
         $this->command->table(['User Type', 'Email', 'Password'], [
-            ['Super Admin', 'admin@pats.test', 'Admin@1234'],
-            ['Data Entry', 'data@pats.test', 'password'],
-            ['Examiner (LHR)', 'examiner.lahore@pats.test', 'password'],
-            ['Test Candidate', 'candidate@pats.test', 'password'],
+            ['Super Admin', 'admin@pats.test', env('ADMIN_DEFAULT_PASSWORD', 'Admin@1234')],
+            ['Data Entry', 'data@pats.test', env('USER_DEFAULT_PASSWORD', 'password')],
+            ['Examiner (LHR)', 'examiner.lahore@pats.test', env('USER_DEFAULT_PASSWORD', 'password')],
+            ['Test Candidate', 'candidate@pats.test', env('USER_DEFAULT_PASSWORD', 'password')],
         ]);
     }
 
@@ -86,7 +86,7 @@ class DatabaseSeeder extends Seeder
             [
                 'first_name' => 'System', 'last_name' => 'Admin', 'cnic' => '0000000000001',
                 'phone' => '03000000000', 'nationality' => 'Pakistani',
-                'password' => Hash::make('Admin@1234'), 'email_verified_at' => now(),
+                'password' => Hash::make(env('ADMIN_DEFAULT_PASSWORD', 'Admin@1234')), 'email_verified_at' => now(),
             ]
         );
         $admin->assignRole('super_admin');
@@ -96,7 +96,7 @@ class DatabaseSeeder extends Seeder
             [
                 'first_name' => 'Data', 'last_name' => 'Entry', 'cnic' => '0000000000002',
                 'phone' => '03000000001', 'nationality' => 'Pakistani',
-                'password' => Hash::make('password'), 'email_verified_at' => now(),
+                'password' => Hash::make(env('USER_DEFAULT_PASSWORD', 'password')), 'email_verified_at' => now(),
             ]
         );
         $dataEntry->assignRole('data_entry');
@@ -147,7 +147,7 @@ class DatabaseSeeder extends Seeder
                     'first_name' => 'Examiner', 'last_name' => $city->name,
                     'cnic' => '99999' . str_pad($index, 8, '0', STR_PAD_LEFT),
                     'phone' => '0399' . str_pad($index, 7, '0', STR_PAD_LEFT),
-                    'password' => Hash::make('password'), 'email_verified_at' => now(),
+                    'password' => Hash::make(env('USER_DEFAULT_PASSWORD', 'password')), 'email_verified_at' => now(),
                 ]
             );
             $examiner->assignRole('examiner');
@@ -201,7 +201,7 @@ class DatabaseSeeder extends Seeder
             [
                 'first_name' => 'Jane', 'last_name' => 'Doe', 'cnic' => '3520200000001',
                 'phone' => '03001234567', 'nationality' => 'Pakistani',
-                'password' => Hash::make('password'), 'phone_verified_at' => now(),
+                'password' => Hash::make(env('USER_DEFAULT_PASSWORD', 'password')), 'phone_verified_at' => now(),
             ]
         );
         $testCandUser->assignRole('candidate');
@@ -232,7 +232,7 @@ class DatabaseSeeder extends Seeder
                 'email' => "candidate." . ($i + 1) . "@example.com",
                 'cnic' => '55555' . str_pad($i, 8, '0', STR_PAD_LEFT),
                 'phone' => '0300' . str_pad($i, 7, '0', STR_PAD_LEFT),
-                'password' => Hash::make('password'), 'nationality' => 'Pakistani',
+                'password' => Hash::make(env('USER_DEFAULT_PASSWORD', 'password')), 'nationality' => 'Pakistani',
                 'phone_verified_at' => now(), 'email_verified_at' => now(),
             ]);
             $user->assignRole('candidate');

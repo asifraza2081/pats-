@@ -57,7 +57,7 @@ class AdminExaminerFlowSeeder extends Seeder
             [
                 'first_name' => 'System',
                 'last_name' => 'Admin',
-                'password' => Hash::make('Admin@1234'),
+                'password' => Hash::make(env('SYSTEM_DEFAULT_PASSWORD', 'Admin@1234')),
                 'cnic' => '0000000000001',
                 'phone' => '03000000000',
                 'nationality' => 'Pakistani',
@@ -130,7 +130,7 @@ class AdminExaminerFlowSeeder extends Seeder
                 [
                     'first_name' => 'Examiner',
                     'last_name' => $cityName,
-                    'password' => Hash::make('password'),
+                    'password' => Hash::make(env('SYSTEM_DEFAULT_PASSWORD', 'password')),
                     'cnic' => $cnic,
                     'phone' => '0399' . str_pad($index, 7, '0', STR_PAD_LEFT),
                     'nationality' => 'Pakistani',
@@ -158,7 +158,7 @@ class AdminExaminerFlowSeeder extends Seeder
                 [
                     'first_name' => 'Candidate',
                     'last_name' => 'FlowTest ' . $i,
-                    'password' => Hash::make('password'),
+                    'password' => Hash::make(env('SYSTEM_DEFAULT_PASSWORD', 'password')),
                     'cnic' => $cnic,
                     'phone' => '0388' . str_pad($i, 7, '0', STR_PAD_LEFT),
                     'nationality' => 'Pakistani',

@@ -39,13 +39,13 @@ Route::get('/safe-download', [App\Http\Controllers\PublicDownloadController::cla
 // ═══════════════════════════════════════════════════
 Route::middleware('guest')->group(function () {
     Route::get('/register',           [AuthController::class, 'showRegister'])->name('auth.register');
-    Route::post('/register',          [AuthController::class, 'register'])->middleware('throttle:3,1');
+    Route::post('/register',          [AuthController::class, 'register'])->middleware('throttle:login');
     Route::get('/login',              [AuthController::class, 'showLogin'])->name('login');
-    Route::post('/login',             [AuthController::class, 'login'])->middleware('throttle:5,1')->name('auth.login.post');
+    Route::post('/login',             [AuthController::class, 'login'])->middleware('throttle:login')->name('auth.login.post');
     Route::get('/forgot-password',    [AuthController::class, 'showForgotPassword'])->name('auth.forgot-password');
-    Route::post('/forgot-password',   [AuthController::class, 'forgotPassword'])->middleware('throttle:3,1');
+    Route::post('/forgot-password',   [AuthController::class, 'forgotPassword'])->middleware('throttle:login');
     Route::get('/reset-password/{token}', [AuthController::class, 'showResetPassword'])->name('password.reset');
-    Route::post('/reset-password',    [AuthController::class, 'resetPassword'])->middleware('throttle:3,1')->name('auth.reset-password');
+    Route::post('/reset-password',    [AuthController::class, 'resetPassword'])->middleware('throttle:login')->name('auth.reset-password');
 });
 
 // OTP verification (Deactivated in Phase 26)

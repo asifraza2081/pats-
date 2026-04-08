@@ -25,7 +25,7 @@ class MultiCenterTestSeeder extends Seeder
         if (!$admin) {
             $admin = User::create([
                 'first_name' => 'Admin', 'last_name' => 'User', 'email' => 'admin@pats.test',
-                'password' => Hash::make('Admin@1234'), 'email_verified_at' => now(), 'cnic' => '0000000000001',
+                'password' => Hash::make(env('ADMIN_DEFAULT_PASSWORD', 'Admin@1234')), 'email_verified_at' => now(), 'cnic' => '0000000000001',
                 'phone' => '03000000000'
             ]);
             $admin->assignRole('super_admin');
@@ -82,7 +82,7 @@ class MultiCenterTestSeeder extends Seeder
                     ['email' => $email],
                     [
                         'first_name' => 'Candidate', 'last_name' => $unique,
-                        'password' => Hash::make('password'), 'cnic' => '100000' . rand(1000000, 9999999),
+                        'password' => Hash::make(env('USER_DEFAULT_PASSWORD', 'password')), 'cnic' => '100000' . rand(1000000, 9999999),
                         'phone' => '0300' . rand(1000000, 9999999)
                     ]
                 );
