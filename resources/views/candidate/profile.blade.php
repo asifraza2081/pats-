@@ -8,8 +8,17 @@
     <div class="col-lg-3">
         <div class="card mb-3 border-0 shadow-sm rounded-4 overflow-hidden">
             <div class="card-body text-center p-4">
-                <div class="position-relative d-inline-block mb-3">
-                    <span class="avatar avatar-xl rounded-circle border-4 border-white shadow-sm" style="background-image: url('{{ $candidate->photo_path ? Storage::url($candidate->photo_path) : 'https://ui-avatars.com/api/?name='.urlencode(auth()->user()->first_name) }}'); width: 100px; height: 100px;"></span>
+                <div class="mb-4">
+                    <img id="sidebar_photo_preview" src="{{ $candidate->photo_path ? Storage::url($candidate->photo_path) : 'https://ui-avatars.com/api/?name='.urlencode(auth()->user()->first_name) }}" 
+                         class="rounded-circle border-4 border-white shadow-sm object-cover" 
+                         style="width: 120px; height: 120px;"
+                         onerror="this.src='https://ui-avatars.com/api/?name={{ urlencode(auth()->user()->first_name) }}&background=f1f5f9&color=64748b'">
+                </div>
+                <div class="mb-3">
+                    <label for="side_photo_input" class="btn btn-white btn-sm px-3 shadow-sm border">
+                        <i class="ti ti-camera me-1"></i> Change Photo
+                    </label>
+                    <input type="file" id="side_photo_input" name="photo" form="profileSaveForm" class="d-none" accept="image/*" onchange="previewPhoto(this)">
                 </div>
                 <h3 class="m-0 mb-1 fw-black">{{ auth()->user()->first_name }} {{ auth()->user()->last_name }}</h3>
                 <div class="text-muted small mb-3"><i class="ti ti-id-badge me-1"></i> {{ auth()->user()->cnic }}</div>
@@ -54,23 +63,7 @@
                 </div>
                 <div class="card-body p-4 p-md-5">
                     <div class="row g-4">
-                        <!-- Profile Header -->
-                        <div class="col-12 mb-4">
-                            <div class="d-flex align-items-center gap-4 bg-light p-4 rounded-4 border">
-                                <div class="position-relative">
-                                    <span class="avatar avatar-xl rounded-circle border-3 border-white shadow-sm" id="profile_photo_preview" style="background-image: url('{{ $candidate->photo_path ? Storage::url($candidate->photo_path) : 'https://ui-avatars.com/api/?name='.urlencode(auth()->user()->first_name) }}'); width: 100px; height: 100px;"></span>
-                                    <label class="btn btn-icon btn-sm btn-pats position-absolute bottom-0 end-0 rounded-circle shadow-sm">
-                                        <i class="ti ti-camera"></i>
-                                        <input type="file" name="photo" class="d-none" accept="image/*" onchange="previewPhoto(this)">
-                                    </label>
-                                </div>
-                                <div>
-                                    <h2 class="fw-black m-0 fs-1">{{ auth()->user()->full_name }}</h2>
-                                    <p class="text-muted m-0"><i class="ti ti-id me-1"></i> {{ auth()->user()->cnic }}</p>
-                                    <p class="text-muted m-0 small"><i class="ti ti-mail me-1"></i> {{ auth()->user()->email }}</p>
-                                </div>
-                            </div>
-                        </div>
+                        <!-- Removed redundant header banner as requested by client -->
 
                         <!-- Core Details -->
                         <div class="col-md-6">
@@ -130,8 +123,8 @@
                         </div>
                         
                         <div class="col-md-6">
-                            <label class="form-label required">Province of Domicile</label>
-                            <select name="province_of_domicile" id="domicile_province" class="form-select" required>
+                            <label class="form-label">Province of Domicile</label>
+                            <select name="province_of_domicile" id="domicile_province" class="form-select">
                                 <option value="">— Select Province —</option>
                                 @foreach(['Punjab', 'Sindh', 'KPK', 'Balochistan', 'Federal', 'AJK', 'Gilgit Baltistan'] as $prov)
                                     <option value="{{ $prov }}" {{ old('province_of_domicile', $candidate->province_of_domicile) == $prov ? 'selected' : '' }}>{{ $prov }}</option>
@@ -139,9 +132,11 @@
                             </select>
                         </div>
                         <div class="col-md-6">
-                            <label class="form-label required">District of Domicile</label>
-                            <select name="district_of_domicile" id="domicile_district" class="form-select" required>
-                                <option value="{{ $candidate->district_of_domicile }}">{{ $candidate->district_of_domicile ?? '— Select District —' }}</option>
+                            <label class="form-label">District of Domicile</label>
+                            <input type="hidden" name="domicile_city_id" id="hidden_domicile_city_id" value="{{ old('domicile_city_id', $candidate->domicile_city_id) }}">
+                            <input type="hidden" name="address_city_id" id="hidden_address_city_id" value="{{ old('address_city_id', $candidate->address_city_id) }}">
+                            <select name="district_of_domicile" id="domicile_district" class="form-select">
+                                <option value="">— Select District —</option>
                             </select>
                         </div>
 
@@ -288,7 +283,17 @@
 
 @push('scripts')
 <script>
-const districts = {
+const dbCities = @json($cities);
+const districts = {};
+
+// Categorize database cities by province
+dbCities.forEach(city => {
+    if (!districts[city.province]) districts[city.province] = [];
+    districts[city.province].push({ id: city.id, name: city.name });
+});
+
+// Fallback for missing provinces in DB if any
+const defaultDistricts = {
     'Punjab': ['Lahore', 'Faisalabad', 'Multan', 'Rawalpindi', 'Gujranwala', 'Sargodha', 'Bahawalpur', 'Sialkot', 'Sheikhupura', 'Rahim Yar Khan', 'Jhang', 'Dera Ghazi Khan', 'Gujrat', 'Sahiwal', 'Sargodha', 'Kasur', 'Chiniot', 'Okara'],
     'Sindh': ['Karachi', 'Hyderabad', 'Sukkur', 'Larkana', 'Nawabshah', 'Mirpur Khas', 'Jacobabad', 'Shikarpur', 'Khairpur', 'Thatta'],
     'KPK': ['Peshawar', 'Mardan', 'Mingora', 'Kohat', 'Abbottabad', 'Nowshera', 'Swabi', 'Dera Ismail Khan', 'Charsadda', 'Mansehra'],
@@ -297,6 +302,12 @@ const districts = {
     'AJK': ['Muzaffarabad', 'Mirpur', 'Rawalakot', 'Bagh', 'Kotli'],
     'Gilgit Baltistan': ['Gilgit', 'Skardu', 'Hunza', 'Diamer']
 };
+
+Object.keys(defaultDistricts).forEach(prov => {
+    if (!districts[prov]) {
+        districts[prov] = defaultDistricts[prov].map(d => ({ id: null, name: d }));
+    }
+});
 
 function togglePostal(checked) {
     const field = document.getElementById('postalField');
@@ -314,29 +325,47 @@ function previewPhoto(input) {
     if (input.files && input.files[0]) {
         const reader = new FileReader();
         reader.onload = function(e) {
-            document.getElementById('profile_photo_preview').style.backgroundImage = 'url(' + e.target.result + ')';
+            document.getElementById('sidebar_photo_preview').src = e.target.result;
         }
         reader.readAsDataURL(input.files[0]);
     }
 }
 
 document.addEventListener('DOMContentLoaded', function() {
-    // 1. Province -> District Dropdown
     const provinceSelect = document.getElementById('domicile_province');
     const districtSelect = document.getElementById('domicile_district');
+    const hiddenDomicileId = document.getElementById('hidden_domicile_city_id');
+    const hiddenAddressId = document.getElementById('hidden_address_city_id');
     
-    provinceSelect.addEventListener('change', function() {
-        const province = this.value;
+    function populateDistricts(province, selectedDistrictValue = null) {
         districtSelect.innerHTML = '<option value="">— Select District —</option>';
         if (districts[province]) {
             districts[province].forEach(d => {
                 const opt = document.createElement('option');
-                opt.value = d;
-                opt.textContent = d;
+                opt.value = d.name;
+                opt.textContent = d.name;
+                opt.dataset.id = d.id;
+                if (selectedDistrictValue === d.name) opt.selected = true;
                 districtSelect.appendChild(opt);
             });
         }
+    }
+
+    provinceSelect.addEventListener('change', function() {
+        populateDistricts(this.value);
     });
+
+    districtSelect.addEventListener('change', function() {
+        const selectedOpt = this.options[this.selectedIndex];
+        const cityId = selectedOpt.dataset.id;
+        hiddenDomicileId.value = cityId;
+        hiddenAddressId.value = cityId; // Syncing for now as address_city_id is also required
+    });
+
+    // Initial populate on load
+    if (provinceSelect.value) {
+        populateDistricts(provinceSelect.value, "{{ old('district_of_domicile', $candidate->district_of_domicile) }}");
+    }
 
     // 2. Input Masking
     const cnicInput = document.getElementById('cnic_mask');
