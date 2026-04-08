@@ -8,17 +8,12 @@
     <div class="col-lg-3">
         <div class="card mb-3 border-0 shadow-sm rounded-4 overflow-hidden">
             <div class="card-body text-center p-4">
-                <div class="mb-4">
-                    <img id="sidebar_photo_preview" src="{{ $candidate->photo_path ? Storage::url($candidate->photo_path) : 'https://ui-avatars.com/api/?name='.urlencode(auth()->user()->first_name) }}" 
+                <!-- Reduced sidebar avatar as it moved to main form -->
+                <div class="mb-4 d-none d-lg-block">
+                    <img src="{{ $candidate->photo_path ? asset('storage/'.$candidate->photo_path) : 'https://ui-avatars.com/api/?name='.urlencode(auth()->user()->first_name) }}" 
                          class="rounded-circle border-4 border-white shadow-sm object-cover" 
                          style="width: 120px; height: 120px;"
                          onerror="this.src='https://ui-avatars.com/api/?name={{ urlencode(auth()->user()->first_name) }}&background=f1f5f9&color=64748b'">
-                </div>
-                <div class="mb-3">
-                    <label for="side_photo_input" class="btn btn-white btn-sm px-3 shadow-sm border">
-                        <i class="ti ti-camera me-1"></i> Change Photo
-                    </label>
-                    <input type="file" id="side_photo_input" name="photo" form="profileSaveForm" class="d-none" accept="image/*" onchange="previewPhoto(this)">
                 </div>
                 <h3 class="m-0 mb-1 fw-black">{{ auth()->user()->first_name }} {{ auth()->user()->last_name }}</h3>
                 <div class="text-muted small mb-3"><i class="ti ti-id-badge me-1"></i> {{ auth()->user()->cnic }}</div>
@@ -64,6 +59,22 @@
                 <div class="card-body p-4 p-md-5">
                     <div class="row g-4">
                         <!-- Removed redundant header banner as requested by client -->
+
+                        <!-- Profile Picture Upload -->
+                        <div class="col-12 text-center mb-4">
+                            <div class="position-relative d-inline-block">
+                                <img id="sidebar_photo_preview" src="{{ $candidate->photo_path ? asset('storage/'.$candidate->photo_path) : 'https://ui-avatars.com/api/?name='.urlencode(auth()->user()->first_name) }}" 
+                                     class="rounded-circle border border-4 border-white shadow-sm object-cover" 
+                                     style="width: 130px; height: 130px; background: #fff;"
+                                     onerror="this.src='https://ui-avatars.com/api/?name={{ urlencode(auth()->user()->first_name) }}&background=f1f5f9&color=64748b'">
+                                
+                                <label for="side_photo_input" class="btn btn-icon btn-pats shadow-sm rounded-circle position-absolute" style="bottom: 0; right: 0; width: 40px; height: 40px; cursor: pointer;" title="Upload or Change Photo">
+                                    <i class="ti ti-camera fs-2"></i>
+                                </label>
+                                <input type="file" id="side_photo_input" name="photo" class="d-none" accept="image/jpeg,image/png,image/jpg" onchange="previewPhoto(this)">
+                            </div>
+                            <div class="form-hint mt-2 mb-0">Upload a professional passport-size photo. Max 5MB.</div>
+                        </div>
 
                         <!-- Core Details -->
                         <div class="col-md-6">
@@ -176,7 +187,7 @@
             <div class="card-body p-4 p-md-5">
                 <div class="collapse mb-5" id="addEduForm">
                     <div class="card card-body bg-light border-dashed p-4 rounded-4">
-                        <form id="ajaxEduForm" action="{{ route('candidate.education.store') }}">
+                        <form id="ajaxEduForm" action="{{ route('candidate.education.store') }}" class="no-spinner">
                             @csrf
                             <div class="row g-3">
                                 <div class="col-md-3">
@@ -234,7 +245,7 @@
             <div class="card-body p-4 p-md-5">
                 <div class="collapse mb-5" id="addExpForm">
                     <div class="card card-body bg-light border-dashed p-4 rounded-4">
-                        <form id="ajaxExpForm" action="{{ route('candidate.experience.store') }}">
+                        <form id="ajaxExpForm" action="{{ route('candidate.experience.store') }}" class="no-spinner">
                             @csrf
                             <div class="row g-3">
                                 <div class="col-md-3">
@@ -428,6 +439,26 @@ document.addEventListener('DOMContentLoaded', function() {
             });
         });
     }
+
+    // Unsaved changes warning
+    let isDirty = false;
+    const mainForm = document.getElementById('profileSaveForm');
+    
+    // Mark form as dirty when inputs change
+    mainForm.querySelectorAll('input, select, textarea').forEach(input => {
+        input.addEventListener('change', () => { isDirty = true; });
+    });
+
+    // Remove dirty warning when submitting
+    mainForm.addEventListener('submit', () => { isDirty = false; });
+
+    window.addEventListener('beforeunload', function (e) {
+        if (isDirty) {
+            e.preventDefault();
+            e.returnValue = ''; // Required for most browsers
+        }
+    });
+
 });
 </script>
 @endpush

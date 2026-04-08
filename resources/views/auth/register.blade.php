@@ -70,17 +70,17 @@
                             <div class="bg-light p-3 rounded-3 border">
                                 <label class="form-label required mb-2">Security Verification (CAPTCHA)</label>
                                 <div class="row align-items-center g-3">
-                                    <div class="col-auto">
+                                    <div class="col-12 col-md-auto">
                                         <div class="captcha-container d-flex align-items-center gap-2">
                                             <div id="captcha-img-wrapper">
-                                                {!! captcha_img('flat') !!}
+                                                <img src="{{ captcha_src('flat') }}" alt="captcha" class="img-fluid rounded border">
                                             </div>
                                             <button type="button" class="btn btn-icon btn-ghost-primary rounded-circle" id="refresh-captcha" title="Refresh CAPTCHA">
                                                 <i class="ti ti-refresh fs-2"></i>
                                             </button>
                                         </div>
                                     </div>
-                                    <div class="col">
+                                    <div class="col-12 col-md">
                                         <input type="text" name="captcha" class="form-control @error('captcha') is-invalid @enderror" placeholder="Enter characters above" required>
                                         @error('captcha')<div class="invalid-feedback">{{ $message }}</div>@enderror
                                     </div>
@@ -170,8 +170,16 @@ document.addEventListener('DOMContentLoaded', function() {
         refreshBtn.addEventListener('click', function() {
             const img = document.querySelector('#captcha-img-wrapper img');
             if (img) {
-                // Append timestamp to prevent caching
-                img.src = '/captcha/flat?' + Math.random();
+                // Fetch a new captcha via AJAX endpoint to ensure session sync
+                fetch('/captcha/api/flat')
+                    .then(response => response.json())
+                    .then(data => {
+                        img.src = data.img;
+                    })
+                    .catch(e => {
+                        // fallback
+                        img.src = '{{ captcha_src("flat") }}' + Math.random();
+                    });
             }
         });
     }

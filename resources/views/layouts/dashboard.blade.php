@@ -150,7 +150,7 @@
                     </div>
                     <div class="nav-item dropdown">
                         <a href="#" class="nav-link d-flex lh-1 text-reset p-0 dropdown-toggle" data-bs-toggle="dropdown" aria-label="Open user menu">
-                            <span class="avatar avatar-sm" style="background-image: url('{{ auth()->user()->candidate?->photo_path ? Storage::url(auth()->user()->candidate->photo_path) : 'https://ui-avatars.com/api/?name='.urlencode(auth()->user()->first_name) }}')"></span>
+                            <span class="avatar avatar-sm" style="background-image: url('{{ auth()->user()->candidate?->photo_path ? asset('storage/'.auth()->user()->candidate->photo_path) : 'https://ui-avatars.com/api/?name='.urlencode(auth()->user()->first_name) }}')"></span>
                             <div class="d-none d-xl-block ps-2">
                                 <div>{{ auth()->user()->first_name }} {{ auth()->user()->last_name }}</div>
                                 <div class="mt-1 small text-muted">{{ auth()->user()->roles->first()->name ?? 'User' }}</div>
@@ -245,6 +245,25 @@
                                     </a>
                                 </li>
                                 @endrole
+
+                                @hasanyrole('admin|super_admin')
+                                <li class="nav-item @if(request()->routeIs('admin.financials.*') || request()->routeIs('admin.expenses.*') || request()->routeIs('admin.tax-reports.*')) active @endif dropdown">
+                                    <a class="nav-link dropdown-toggle" href="#navbar-financials" data-bs-toggle="dropdown" data-bs-auto-close="outside" role="button" aria-expanded="false">
+                                        <span class="nav-link-icon d-md-none d-lg-inline-block"><i class="ti ti-report-money fs-2"></i></span>
+                                        <span class="nav-link-title">Financials</span>
+                                    </a>
+                                    <div class="dropdown-menu">
+                                        <a class="dropdown-item" href="{{ route('admin.financials.index') }}"><i class="ti ti-chart-bar me-2 text-primary"></i>Dashboard</a>
+                                        <a class="dropdown-item" href="{{ route('admin.expenses.index') }}"><i class="ti ti-receipt me-2 text-danger"></i>Expenses</a>
+                                        <a class="dropdown-item" href="{{ route('admin.financials.ledger') }}"><i class="ti ti-list me-2 text-teal"></i>Ledger</a>
+                                        @role('super_admin')
+                                        <div class="dropdown-divider"></div>
+                                        <a class="dropdown-item" href="{{ route('admin.tax-reports.index') }}"><i class="ti ti-receipt-tax me-2 text-warning"></i>Tax Reports (FBR)</a>
+                                        <a class="dropdown-item" href="{{ route('admin.financials.settings') }}"><i class="ti ti-settings me-2 text-muted"></i>Settings</a>
+                                        @endrole
+                                    </div>
+                                </li>
+                                @endhasanyrole
 
                                 @hasanyrole('examiner|super_admin')
                                 <li class="nav-item @if(request()->is('examiner*')) active @endif dropdown">
@@ -457,23 +476,7 @@
             });
         });
     </script>
-    <script>
-        document.addEventListener('submit', function(e) {
-            const form = e.target;
-            if (form.classList.contains('no-spinner') || form.getAttribute('target') === '_blank') return;
-            const btn = form.querySelector('button[type="submit"]');
-            if (btn) {
-                if (btn.dataset.submitted) { e.preventDefault(); return; }
-                btn.dataset.submitted = 'true';
-                btn.style.minWidth = btn.offsetWidth + 'px';
-                const originalText = btn.innerHTML;
-                setTimeout(() => {
-                    btn.classList.add('disabled', 'opacity-75', 'pe-none');
-                    btn.innerHTML = '<i class="ti ti-loader ti-spin me-2 animate__animated animate__fadeIn"></i> Processing...';
-                }, 10);
-            }
-        });
-    </script>
+    @include('partials._global_spinner')
     @stack('scripts')
 </body>
 </html>

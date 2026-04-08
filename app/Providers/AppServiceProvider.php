@@ -11,6 +11,9 @@ class AppServiceProvider extends ServiceProvider
 
     public function boot(): void
     {
+        // Financial Module: auto-post revenue to ledger on payment verification
+        \App\Models\Payment::observe(\App\Observers\PaymentObserver::class);
+
         \Illuminate\Support\Facades\Gate::define('view-session', function ($user, \App\Models\Batch $batch) {
             if ($user->hasAnyRole(['admin', 'super_admin', 'data_entry'])) return true;
             if ($user->hasRole('examiner')) {
@@ -38,11 +41,7 @@ class AppServiceProvider extends ServiceProvider
 
         // Hardening: Secure Signed URLs for Documents
         \Illuminate\Support\Facades\URL::macro('patsDownload', function ($app, $type = 'challan') {
-            return \Illuminate\Support\Facades\URL::temporarySignedRoute(
-                "candidate.{$type}",
-                now()->addHours(2),
-                ['app' => $app->id]
-            );
+            return route("candidate.{$type}", ['app' => $app->id]);
         });
     }
 }

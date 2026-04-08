@@ -11,7 +11,7 @@
                     <i class="ti ti-chart-bar fs-0"></i>
                 </div>
                 <h2 class="display-4 fw-black text-dark mb-2">Check Your Result</h2>
-                <p class="text-muted fs-3 opacity-80">Enter both your Roll Number and CNIC to access your secure result report.</p>
+                <p class="text-muted fs-3 opacity-80">Enter your Roll Number or CNIC to access your secure result report.</p>
             </div>
             
             @if(session('error'))
@@ -26,23 +26,14 @@
             <div class="card glass-panel border-0 shadow-lg mb-6 rounded-5 overflow-hidden animate__animated animate__zoomIn">
                 <div class="card-body p-5 p-md-7">
                     <form method="GET" action="{{ route('results.search') }}">
-                        <div class="row g-4 mb-4">
-                            <div class="col-md-6">
-                                <label class="form-label fw-black text-dark opacity-60 small uppercase tracking-widest mb-3">Roll Number</label>
+                        <div class="row g-4 mb-4 justify-content-center">
+                            <div class="col-md-10">
+                                <label class="form-label fw-black text-dark opacity-60 small uppercase tracking-widest mb-3">Roll Number or CNIC</label>
                                 <div class="input-group input-group-flat shadow-none rounded-4 overflow-hidden border border-teal border-opacity-20">
                                     <span class="input-group-text bg-white border-0 ps-3">
                                         <i class="ti ti-id-badge text-teal fs-3"></i>
                                     </span>
-                                    <input type="text" name="roll_no" class="form-control form-control-lg border-0 bg-white fs-3 py-3 shadow-none" placeholder="e.g. 102030" value="{{ request('roll_no') }}" autofocus required>
-                                </div>
-                            </div>
-                            <div class="col-md-6">
-                                <label class="form-label fw-black text-dark opacity-60 small uppercase tracking-widest mb-3">CNIC Number</label>
-                                <div class="input-group input-group-flat shadow-none rounded-4 overflow-hidden border border-teal border-opacity-20">
-                                    <span class="input-group-text bg-white border-0 ps-3">
-                                        <i class="ti ti-mask text-teal fs-3"></i>
-                                    </span>
-                                    <input type="text" name="cnic" id="cnic_mask" class="form-control form-control-lg border-0 bg-white fs-3 py-3 shadow-none" placeholder="XXXXX-XXXXXXX-X" value="{{ request('cnic') }}" required>
+                                    <input type="text" name="identifier" class="form-control form-control-lg border-0 bg-white fs-3 py-3 shadow-none" placeholder="e.g. 102030 or XXXXX-XXXXXXX-X" value="{{ request('identifier') }}" autofocus required>
                                 </div>
                             </div>
                         </div>
@@ -122,7 +113,7 @@
                             <i class="ti ti-alert-triangle-filled fs-0"></i>
                         </div>
                         <h3 class="fw-black h2 mb-2">Result Not Found</h3>
-                        <p class="fs-4 fw-bold opacity-80">No valid record exists for Roll No: <strong>{{ request('roll_no') }}</strong> and CNIC: <strong>{{ request('cnic') }}</strong>. Please ensure the credentials are correct.</p>
+                        <p class="fs-4 fw-bold opacity-80">No valid record exists for: <strong>{{ request('identifier') }}</strong>. Please ensure the credentials are correct.</p>
                     </div>
                 @endif
             @endif
@@ -133,13 +124,7 @@
 @push('scripts')
 <script>
 document.addEventListener('DOMContentLoaded', function() {
-    const cnicInput = document.getElementById('cnic_mask');
-    if (cnicInput) {
-        cnicInput.addEventListener('input', function(e) {
-            let x = e.target.value.replace(/\D/g, '').match(/(\d{0,5})(\d{0,7})(\d{0,1})/);
-            e.target.value = !x[2] ? x[1] : x[1] + '-' + x[2] + (x[3] ? '-' + x[3] : '');
-        });
-    }
+    // We removed the strict CNIC mask since the input is now generic (Roll or CNIC).
 });
 </script>
 @endpush

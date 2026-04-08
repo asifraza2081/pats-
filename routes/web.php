@@ -84,8 +84,8 @@ Route::middleware(['auth', 'role:candidate', \App\Http\Middleware\InactivityLogo
     Route::post('/apply/{job}',             [ApplicationController::class, 'store'])->name('apply.store');
     Route::get('/applications',             [ApplicationController::class, 'index'])->name('applications');
     Route::get('/applications/{app}',       [ApplicationController::class, 'show'])->name('applications.show');
-    Route::get('/applications/{app}/challan',  [ApplicationController::class, 'challan'])->name('challan')->middleware('signed');
-    Route::get('/applications/{app}/slip',     [ApplicationController::class, 'slip'])->name('slip')->middleware('signed');
+    Route::get('/applications/{app}/challan',  [ApplicationController::class, 'challan'])->name('challan');
+    Route::get('/applications/{app}/slip',     [ApplicationController::class, 'slip'])->name('slip');
     Route::get('/applications/{app}/result',   [ApplicationController::class, 'result'])->name('result');
 });
 
@@ -163,6 +163,29 @@ Route::middleware(['auth', 'role:admin|data_entry|super_admin', \App\Http\Middle
         Route::post('users/{user}/toggle', [Admin\UserController::class, 'toggle'])->name('users.toggle');
         Route::get('activity-logs', [Admin\ActivityLogController::class, 'index'])->name('activity-logs.index');
         Route::get('activity-logs/{log}', [Admin\ActivityLogController::class, 'show'])->name('activity-logs.show');
+    });
+
+    // ── Financial Management ──────────────────────────────────────────────────
+    Route::get('financials', [Admin\FinancialController::class, 'index'])->name('financials.index');
+    Route::get('financials/ledger', [Admin\FinancialController::class, 'ledger'])->name('financials.ledger');
+    Route::get('financials/settings', [Admin\FinancialController::class, 'settings'])->name('financials.settings');
+    Route::post('financials/settings', [Admin\FinancialController::class, 'saveSettings'])->name('financials.settings.save');
+
+    // Expenses CRUD
+    Route::resource('expenses', Admin\ExpenseController::class);
+    Route::get('expenses/{expense}/print-voucher', [Admin\ExpenseController::class, 'printVoucher'])->name('expenses.print-voucher');
+
+    // Financial Categories CRUD
+    Route::resource('financial-categories', Admin\FinancialCategoryController::class)->except(['show', 'create', 'edit']);
+
+    // Tax Reports (super_admin only)
+    Route::middleware('role:super_admin')->group(function () {
+        Route::get('tax-reports', [Admin\TaxReportController::class, 'index'])->name('tax-reports.index');
+        Route::get('tax-reports/annex-a', [Admin\TaxReportController::class, 'annexA'])->name('tax-reports.annex-a');
+        Route::get('tax-reports/annex-a/print', [Admin\TaxReportController::class, 'printAnnexA'])->name('tax-reports.annex-a.print');
+        Route::get('tax-reports/annex-a/export', [Admin\TaxReportController::class, 'exportAnnexA'])->name('tax-reports.annex-a.export');
+        Route::get('tax-reports/income-summary', [Admin\TaxReportController::class, 'incomeSummary'])->name('tax-reports.income-summary');
+        Route::get('tax-reports/income-summary/print', [Admin\TaxReportController::class, 'printIncomeSummary'])->name('tax-reports.income-summary.print');
     });
 });
 

@@ -9,7 +9,7 @@
         <div class="card">
             <div class="card-body">
                 <div class="d-flex align-items-center">
-                    <span class="avatar avatar-xl me-3 rounded" style="background-image: url('{{ $candidate?->photo_path ? Storage::url($candidate->photo_path) : 'https://ui-avatars.com/api/?name='.urlencode($user->first_name) }}')"></span>
+                    <span class="avatar avatar-xl me-3 rounded" style="background-image: url('{{ $candidate?->photo_path ? asset('storage/'.$candidate->photo_path) : 'https://ui-avatars.com/api/?name='.urlencode($user->first_name) }}')"></span>
                     <div>
                         <h2 class="m-0 mb-1">Welcome back, {{ $user->first_name }}! 👋</h2>
                         <div class="text-muted mb-2">CNIC: <strong>{{ $user->cnic }}</strong> • Applied to <strong>{{ $applications->count() }}</strong> jobs.</div>

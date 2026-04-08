@@ -131,8 +131,9 @@ class AuthController extends Controller
             'password' => 'required',
         ]);
 
-        $loginField = filter_var($request->cnic, FILTER_VALIDATE_EMAIL) ? 'email' : 'cnic';
-        $user = User::where($loginField, $request->cnic)->first();
+        $identifier = trim($request->cnic);
+        $loginField = filter_var($identifier, FILTER_VALIDATE_EMAIL) ? 'email' : 'cnic';
+        $user = User::where($loginField, $identifier)->first();
 
         if (!$user || !Hash::check($request->password, $user->password)) {
             return back()->withErrors(['cnic' => 'Invalid credentials.'])->withInput();

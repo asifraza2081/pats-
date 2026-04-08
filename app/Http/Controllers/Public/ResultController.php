@@ -11,29 +11,29 @@ class ResultController extends Controller
     public function search(Request $request)
     {
         // If no inputs are provided, just return the view with the search form
-        if (!$request->has('cnic') && !$request->has('roll_no')) {
+        if (!$request->has('identifier')) {
             return view('public.results');
         }
 
         $request->validate([
-            'cnic'    => 'required|string',
-            'roll_no' => 'required|string',
+            'identifier' => 'required|string',
         ]);
 
-        $cnic = $request->input('cnic');
-        $roll = $request->input('roll_no');
+        $identifier = $request->input('identifier');
 
-        // Attempt to find the results by BOTH roll number AND CNIC
+        // Attempt to find the results by EITHER roll number OR CNIC
         $results = Result::with(['application.candidate.user', 'application.job.project'])
             ->where('published_at', '<=', now()) // ONLY SHOW PUBLISHED RESULTS
-            ->where('roll_no', $roll)
-            ->whereHas('application.candidate.user', function($u) use ($cnic) {
-                $u->where('cnic', $cnic);
+            ->where(function($query) use ($identifier) {
+                $query->where('roll_no', $identifier)
+                      ->orWhereHas('application.candidate.user', function($u) use ($identifier) {
+                          $u->where('cnic', $identifier);
+                      });
             })
             ->get();
 
         if ($results->isEmpty()) {
-            return back()->with('error', 'No results found for the provided CNIC and Roll Number. Please verify your credentials and try again.');
+            return back()->with('error', 'No results found for the provided Roll Number or CNIC. Please verify your credentials and try again.');
         }
 
         return view('public.results', ['results' => $results]);
