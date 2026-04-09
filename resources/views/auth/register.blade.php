@@ -70,7 +70,7 @@
                             <div class="bg-light p-3 rounded-3 border">
                                 <label class="form-label required mb-2">Security Verification (CAPTCHA)</label>
                                 <div class="row align-items-center g-3">
-                                    <div class="col-12 col-md-auto">
+                                    <div class="col-12 col-md-12">
                                         <div class="captcha-container d-flex align-items-center gap-2">
                                             <div id="captcha-img-wrapper">
                                                 <img src="{{ captcha_src('flat') }}" alt="captcha" class="img-fluid rounded border">
