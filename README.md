@@ -14,6 +14,8 @@ PATS is a comprehensive Laravel 11 application designed to manage the entire lif
 - **Hierarchical Document Repository**: Automatically organizes every recruitment lifecycle document (Slips, Attendance, Results) into a structured {Project}/{Job}/{Candidate} directory tree for persistent access and traceability.
 - **Production-Grade Scorecards**: Generates individual, high-fidelity Result Cards for candidates with score breakdown, percentile, and digital verification.
 - **Dynamic News Ticker**: A persistent dashboard announcement system for real-time recruitment updates.
+- **Financial & Audit Module (FBR Ready)**: Includes an immutable financial ledger to track application revenue instantly. Features an operational expense tracker, automatic Withholding Tax (WHT) estimators, FBR IRIS compatible exports (Annex-A), and printable PDF vouchers.
+- **Advanced Codebase Security**: Hardened globally with strict rate limiters (max 5 login attempts per 15 min), a robust HTMLPurifier middle layer that proactively scrubs XSS injections, decoupled environment secrets, and strict payload bound limitations.
 
 ---
 
@@ -48,6 +50,8 @@ The PATS system is built on a "Handshake" logic that coordinates candidate prefe
     php artisan key:generate
     ```
     *Ensure you set `DB_DATABASE`, `DB_USERNAME`, `APP_URL`, and any SMTP/SMS settings in the `.env` file.*
+    
+    *Optional Security Override:* If you are generating seeders in a non-local environment, you MUST define `ADMIN_DEFAULT_PASSWORD` and `USER_DEFAULT_PASSWORD` in your `.env` so passwords aren't locked to codebase defaults.
 
 3. **Storage Link**:
     To ensure uploaded profile pictures and attendance scans are publicly accessible, run:
@@ -80,6 +84,8 @@ After running the seeders, the following accounts are available for testing:
 | **Super Admin** | `admin@pats.test` | `Admin@1234` | Can manage other admin users, assign roles, and access all features. |
 | **Examiner** | `examiner.lahore@pats.test` | `password` | Sample examiner (Lahore City). Access for field staff. |
 | **Candidate** | `candidate@pats.test` | `password` | Sample candidate with a partially completed profile. |
+
+*Note: The test credentials are bound to standard fallback values. To dynamically change these during deployment seeding, declare `ADMIN_DEFAULT_PASSWORD` and `USER_DEFAULT_PASSWORD` inside your base `.env` file.*
 
 ---
 
@@ -151,6 +157,9 @@ Below are the step-by-step workflows for each user role in the PATS system.
     - Print **Attendance Sheets** and **Answer Sheets** for the examiners.
     - After the test, use **"Upload Results"** to import a CSV file.
     - Once reviewed, click **"Publish Results"** to make them live for candidates.
+8.  **Financial Integrity**:
+    - Record daily operating expenses securely via **"Financials -> Expenses"**.
+    - Toggle **"Enable FBR Mode"** in the Settings to unlock advanced Pakistan Tax Law (ITO 2001) compliance features, generating 1-click I&E summarizations and Excel-ready Annex-A registers.
 
 ---
 
