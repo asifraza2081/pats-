@@ -4,6 +4,9 @@
 
 @section('page-actions')
 <div class="btn-list">
+    <a href="{{ route('admin.batches.export') }}" class="btn btn-outline-success">
+        <i class="ti ti-table-export me-2"></i> Export Selection List
+    </a>
     <button type="button" class="btn btn-outline-info" data-bs-toggle="modal" data-bs-target="#modal-print-portal">
         <i class="ti ti-printer me-2"></i> Print Portal
     </button>
@@ -191,7 +194,18 @@ document.addEventListener('DOMContentLoaded', function () {
                     return;
                 }
 
-                let html = '<div class="row g-3">';
+                let html = `
+                    <div class="d-flex justify-content-between align-items-end mb-3 pb-2 border-bottom">
+                        <div>
+                            <h4 class="m-0 fw-bold text-dark">Centers & Sessions Map</h4>
+                            <small class="text-muted">Total active centers: ${data.length}</small>
+                        </div>
+                        <a href="/admin/batches/export/${projectId}" class="btn btn-success fw-bold">
+                            <i class="ti ti-file-spreadsheet me-2"></i> Export Master List (CSV)
+                        </a>
+                    </div>
+                    <div class="row g-3">
+                `;
                 data.forEach(center => {
                     html += `
                         <div class="col-12">

@@ -498,4 +498,82 @@ class BatchController extends Controller
 
         return response()->json($data);
     }
+
+    /** Export Master Candidate CSV (Point 1 of Client Requests) */
+    public function export(Project $project)
+    {
+        $filename = "{$project->org_name}_Candidate_List_All_Centers_" . now()->format('Ymd_His') . ".csv";
+
+        $headers = [
+            "Content-type"        => "text/csv",
+            "Content-Disposition" => "attachment; filename=$filename",
+            "Pragma"              => "no-cache",
+            "Cache-Control"       => "must-revalidate, post-check=0, pre-check=0",
+            "Expires"             => "0"
+        ];
+
+        // We use a stream callback for high-performance direct download with no memory bloat.
+        $callback = function () use ($project) {
+            $file = fopen('php://output', 'w');
+            
+            // Add BOM for proper UTF-8 Excel support
+            fputs($file, "\xEF\xBB\xBF");
+            
+            // Strict columns requested by client
+            fputcsv($file, [
+                'S#', 'Roll No', 'Name', 'FatherName', 'CNIC', 'Post_Name', 
+                'TC ID', 'Test_City', 'Batch', 'Test_Date', 'Reporting_time', 
+                'Test_time', 'Department'
+            ]);
+
+            // Query safely joining relationships
+            $rollnos = ExamRollno::whereHas('batch', function($q) use ($project) {
+                    $q->where('project_id', $project->id);
+                })
+                ->with([
+                    'application.candidate.user', 
+                    'application.candidate',
+                    'job', 
+                    'batch.center.city'
+                ])
+                ->orderBy('roll_no')
+                ->cursor(); // Cursor prevents memory exhaust
+
+            $counter = 1;
+
+            foreach ($rollnos as $roll) {
+                // Safety null checks
+                $user = $roll->application->candidate->user ?? null;
+                $candidate = $roll->application->candidate ?? null;
+                $job = $roll->job ?? null;
+                $batch = $roll->batch ?? null;
+                $center = $batch->center ?? null;
+
+                // Format times exactly as required (e.g. 8:00 AM)
+                $repTime = Carbon::parse($batch->reporting_time)->format('g:i A');
+                $testTime = Carbon::parse($batch->start_time)->format('g:i A');
+                $testDate = Carbon::parse($batch->test_date)->format('jS F, Y');
+
+                fputcsv($file, [
+                    $counter++, // S#
+                    $roll->roll_no,
+                    $user->full_name ?? '',
+                    $candidate->father_name ?? '',
+                    $user->cnic ?? '',
+                    $job->title ?? '',
+                    $center->id ?? '',
+                    $center->city->name ?? '',
+                    'Batch-' . ($batch->batch_number ?? ''),
+                    $testDate,
+                    $repTime,
+                    $testTime,
+                    $job->department ?: $project->org_name
+                ]);
+            }
+
+            fclose($file);
+        };
+
+        return response()->stream($callback, 200, $headers);
+    }
 }

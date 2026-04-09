@@ -162,19 +162,16 @@
                                         <input type="number" name="envelope_size" class="form-control" value="{{ old('envelope_size', 30) }}" min="10" max="100" required>
                                         <div class="form-hint">Answer sheet packing size</div>
                                     </div>
-                                    <div class="col-md-6">
-                                        <label class="form-label required fw-bold text-secondary">Reporting Time</label>
-                                        <div class="input-icon">
-                                            <span class="input-icon-addon"><i class="ti ti-clock text-indigo"></i></span>
-                                            <input type="time" name="reporting_time" id="reporting_time" class="form-control" value="{{ old('reporting_time', '08:00') }}" required>
-                                        </div>
-                                    </div>
-                                    <div class="col-md-6">
-                                        <label class="form-label required fw-bold text-secondary">Test Start Time</label>
-                                        <div class="input-icon">
-                                            <span class="input-icon-addon"><i class="ti ti-clock-play text-success"></i></span>
-                                            <input type="time" name="start_time" id="start_time" class="form-control" value="{{ old('start_time', '09:00') }}" required>
-                                        </div>
+                                    <div class="col-md-12">
+                                        <label class="form-label required fw-bold text-secondary">Batch Shift Time (Predefined)</label>
+                                        <select class="form-select fs-3" id="shift_selector" required>
+                                            <option value="">-- Select Shift Time --</option>
+                                            <option value="08:00|09:00" {{ old('reporting_time') == '08:00' ? 'selected' : '' }}>Morning (Reporting time 8:00 AM, Test time 9:00 AM)</option>
+                                            <option value="11:00|12:00" {{ old('reporting_time') == '11:00' ? 'selected' : '' }}>AfterNoon (Reporting time 11:00 AM, Test time 12:00 PM)</option>
+                                            <option value="14:00|15:00" {{ old('reporting_time') == '14:00' ? 'selected' : '' }}>Evening (Reporting time 2:00 PM, Test time 3:00 PM)</option>
+                                        </select>
+                                        <input type="hidden" name="reporting_time" id="reporting_time" value="{{ old('reporting_time', '') }}">
+                                        <input type="hidden" name="start_time" id="start_time" value="{{ old('start_time', '') }}">
                                     </div>
                                 </div>
                             </div>
@@ -589,6 +586,29 @@ document.addEventListener('DOMContentLoaded', () => {
         if (!tsInstance) return;
         tsInstance.clear();
     };
+
+    // Preset Shift Logic
+    const shiftSelector = document.getElementById('shift_selector');
+    const reportingInput = document.getElementById('reporting_time');
+    const startupInput = document.getElementById('start_time');
+    
+    // Initialize if old value was preserved
+    if (reportingInput.value && startupInput.value) {
+        shiftSelector.value = reportingInput.value.substring(0,5) + '|' + startupInput.value.substring(0,5);
+    }
+    
+    shiftSelector.addEventListener('change', function() {
+        if (!this.value) {
+            reportingInput.value = '';
+            startupInput.value = '';
+            return;
+        }
+        const parts = this.value.split('|');
+        if (parts.length === 2) {
+            reportingInput.value = parts[0];
+            startupInput.value = parts[1];
+        }
+    });
     
     window.showBatchConfirm = () => {
         const count = parseInt(allocationInput.value) || 0;
