@@ -36,7 +36,7 @@ class QuickCandidateSeeder extends Seeder
                 [
                     'first_name'          => 'Candidate',
                     'last_name'           => 'FlowTest ' . $i,
-                    'password'            => Hash::make('password'),
+                    'password'            => Hash::make(env('USER_DEFAULT_PASSWORD', 'password')),
                     'cnic'                => $cnic,
                     'phone'               => '0388' . str_pad($i, 7, '0', STR_PAD_LEFT),
                     'nationality'         => 'Pakistani',
