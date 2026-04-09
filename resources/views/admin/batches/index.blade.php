@@ -4,9 +4,6 @@
 
 @section('page-actions')
 <div class="btn-list">
-    <a href="{{ route('admin.batches.export') }}" class="btn btn-outline-success">
-        <i class="ti ti-table-export me-2"></i> Export Selection List
-    </a>
     <button type="button" class="btn btn-outline-info" data-bs-toggle="modal" data-bs-target="#modal-print-portal">
         <i class="ti ti-printer me-2"></i> Print Portal
     </button>
