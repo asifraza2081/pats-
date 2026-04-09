@@ -482,7 +482,7 @@ class BatchController extends Controller
             return [
                 'id' => $center->id,
                 'name' => $center->name,
-                'city' => $center->city->name,
+                'city' => $center->city?->name ?? 'N/A',
                 'batches' => $center->batches->map(function ($batch) {
                     return [
                         'id' => $batch->id,
