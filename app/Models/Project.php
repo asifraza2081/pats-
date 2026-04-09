@@ -25,6 +25,23 @@ class Project extends Model
         ];
     }
 
+    protected static function booted()
+    {
+        static::saved(function ($project) {
+            \Illuminate\Support\Facades\Cache::forget('home_projects');
+            \Illuminate\Support\Facades\Cache::forget('home_results');
+            \Illuminate\Support\Facades\Cache::forget('home_stats');
+            \Illuminate\Support\Facades\Cache::forget('home_announcements');
+        });
+
+        static::deleted(function ($project) {
+            \Illuminate\Support\Facades\Cache::forget('home_projects');
+            \Illuminate\Support\Facades\Cache::forget('home_results');
+            \Illuminate\Support\Facades\Cache::forget('home_stats');
+            \Illuminate\Support\Facades\Cache::forget('home_announcements');
+        });
+    }
+
     public function jobs()         { return $this->hasMany(PatsJob::class, 'project_id'); }
     public function centers()      { return $this->belongsToMany(TestCenter::class, 'project_centers', 'project_id', 'center_id')->withPivot('examiner_id'); }
     public function batches()      { return $this->hasMany(Batch::class, 'project_id'); }

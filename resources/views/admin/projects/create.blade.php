@@ -85,9 +85,15 @@
                     </div>
                 </div>
             </div>
-            <div class="card-footer text-end">
-                <a href="{{ route('admin.projects.index') }}" class="btn btn-link">Cancel</a>
-                <button type="submit" class="btn btn-primary"><i class="ti ti-check me-2"></i> Save & Create Project</button>
+            <div class="card-footer d-flex align-items-center justify-content-between gap-3">
+                <div class="text-muted small d-flex align-items-center gap-2">
+                    <i class="ti ti-clock text-info fs-4"></i>
+                    <span>Once saved, this project may take <strong>up to 2 hours</strong> to appear on the public portal due to caching. Set the Status to <em>Open</em> only when you are ready to go live.</span>
+                </div>
+                <div class="d-flex gap-2">
+                    <a href="{{ route('admin.projects.index') }}" class="btn btn-link">Cancel</a>
+                    <button type="submit" class="btn btn-primary"><i class="ti ti-check me-2"></i> Save & Create Project</button>
+                </div>
             </div>
         </form>
     </div>

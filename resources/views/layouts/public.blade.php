@@ -3,8 +3,51 @@
 <head>
     <meta charset="utf-8">
     <meta name="viewport" content="width=device-width, initial-scale=1">
-    <title>@yield('title', 'PATS') - Prime Assessment & Testing Services</title>
-    <link rel="icon" href="{{ asset('favicon.png') }}" type="image/png">
+
+    {{-- ════════════════════════════════════════════════════
+         SEO: CORE TAGS
+    ════════════════════════════════════════════════════ --}}
+    @php
+        $seoTitle       = trim(View::yieldContent('title', 'PATS')) . ' — Prime Assessment & Testing Services';
+        $seoDescription = View::yieldContent('meta_description', 'PATS is Pakistan\'s leading autonomous testing and assessment agency. Browse open recruitment projects, check results, and apply for government jobs online.');
+        $seoKeywords    = View::yieldContent('meta_keywords', 'PATS, Pakistan testing service, government recruitment, online jobs, assessment, test results, merit, NTS alternative');
+        $seoImage       = View::yieldContent('meta_image', asset('assets/og-image.png'));
+        $canonicalUrl   = url()->current();
+    @endphp
+
+    <title>{{ $seoTitle }}</title>
+    <meta name="description" content="{{ $seoDescription }}">
+    <meta name="keywords"    content="{{ $seoKeywords }}">
+    <meta name="author"      content="PATS — Prime Assessment & Testing Services">
+    <meta name="robots"      content="index, follow">
+    <link rel="canonical"    href="{{ $canonicalUrl }}">
+
+    {{-- ════════════════════════════════════════════════════
+         SEO: OPEN GRAPH (Facebook / WhatsApp / LinkedIn)
+    ════════════════════════════════════════════════════ --}}
+    <meta property="og:type"        content="website">
+    <meta property="og:url"         content="{{ $canonicalUrl }}">
+    <meta property="og:title"       content="{{ $seoTitle }}">
+    <meta property="og:description" content="{{ $seoDescription }}">
+    <meta property="og:image"       content="{{ $seoImage }}">
+    <meta property="og:site_name"   content="PATS — Prime Assessment & Testing Services">
+    <meta property="og:locale"      content="en_PK">
+
+    {{-- ════════════════════════════════════════════════════
+         SEO: TWITTER CARDS
+    ════════════════════════════════════════════════════ --}}
+    <meta name="twitter:card"        content="summary_large_image">
+    <meta name="twitter:title"       content="{{ $seoTitle }}">
+    <meta name="twitter:description" content="{{ $seoDescription }}">
+    <meta name="twitter:image"       content="{{ $seoImage }}">
+
+    {{-- ════════════════════════════════════════════════════
+         FAVICONS
+    ════════════════════════════════════════════════════ --}}
+    <link rel="icon"             href="{{ asset('favicon.png') }}" type="image/png">
+    <link rel="shortcut icon"    href="{{ asset('favicon.png') }}" type="image/png">
+    <link rel="apple-touch-icon" href="{{ asset('favicon.png') }}">
+
     <!-- Tabler Core & Vendor -->
     <link rel="stylesheet" href="{{ asset('assets/vendor/css/tabler.min.css') }}">
     <link rel="stylesheet" href="{{ asset('assets/vendor/css/tabler-icons.min.css') }}">

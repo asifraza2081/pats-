@@ -1,5 +1,7 @@
 @extends('layouts.public')
-@section('title', $project->name . ' — PATS')
+@section('title', $project->name)
+@section('meta_description', 'Apply for ' . $project->name . ' by ' . $project->org_name . '. View eligibility, available positions, and application deadlines on PATS.')
+@section('meta_keywords', $project->name . ', ' . $project->org_name . ', government jobs Pakistan, PATS recruitment, ' . $project->org_name . ' jobs')
 @section('header-title', 'Project Details')
 @section('header-breadcrumb')
     <a href="{{ route('home') }}" class="text-white text-decoration-none">Home</a> 
@@ -65,7 +67,7 @@
                 
                 @if($project->logo_path)
                 <div class="col-12 col-md-3 mt-3 mt-md-0 border-start-md px-md-4 d-flex justify-content-center align-items-center">
-                    <img src="{{ asset('storage/'.$project->logo_path) }}" alt="{{ $project->org_name }} Logo" class="img-fluid rounded shadow-sm" style="max-height: 120px;">
+                    <img src="{{ asset('storage/'.$project->logo_path) }}" alt="{{ $project->org_name }} Logo" class="img-fluid rounded shadow-sm" style="max-height: 120px;" loading="lazy" decoding="async">
                 </div>
                 @endif
             </div>

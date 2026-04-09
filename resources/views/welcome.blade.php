@@ -335,7 +335,7 @@
             <div class="col-lg-6">
                 <div class="position-relative">
                     <div class="card border-0 shadow-2xl overflow-hidden rounded-5 hover-rotate-sm transition-all duration-700">
-                        <img src="{{ asset('assets/pats_process.png') }}" alt="PATS Process Flow" class="img-fluid">
+                        <img src="{{ asset('assets/pats_process.png') }}" alt="PATS Assessment Process Flow" class="img-fluid" loading="lazy" decoding="async">
                         <div class="card-img-overlay d-flex align-items-end p-0">
                             <div class="w-100 p-4 glass-panel-dark text-white rounded-0">
                                 <div class="d-flex align-items-center">

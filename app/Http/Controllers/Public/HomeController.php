@@ -10,35 +10,45 @@ class HomeController extends Controller
 {
     public function index()
     {
-        $projects = Project::where('status', 'open')->latest()->take(6)->get();
-        $results = Project::where('status', 'closed')->latest()->take(6)->get();
+        $projects = \Illuminate\Support\Facades\Cache::remember('home_projects', now()->addHours(2), function () {
+            return Project::where('status', 'open')->latest()->take(6)->get();
+        });
+        
+        $results = \Illuminate\Support\Facades\Cache::remember('home_results', now()->addHours(2), function () {
+            return Project::where('status', 'closed')->latest()->take(6)->get();
+        });
 
         // Dynamic Stats
-        $stats = [
-            'active_projects' => Project::where('status', 'open')->count(),
-            'job_posts'       => PatsJob::whereHas('project', function($q){ $q->where('status', 'open'); })->count(),
-            'applications'    => \App\Models\Application::count(),
-            'results'         => Project::where('status', 'closed')->count(),
-        ];
+        $stats = \Illuminate\Support\Facades\Cache::remember('home_stats', now()->addMinutes(30), function () {
+            return [
+                'active_projects' => Project::where('status', 'open')->count(),
+                'job_posts'       => PatsJob::whereHas('project', function($q){ $q->where('status', 'open'); })->count(),
+                'applications'    => \App\Models\Application::count(),
+                'results'         => Project::where('status', 'closed')->count(),
+            ];
+        });
 
         // Persistent Announcements (Database Driven)
-        $announcements = \App\Models\Announcement::active()->get();
-        
-        if ($announcements->isEmpty()) {
-            // Fallback for simulation
-            foreach($projects->take(2) as $p) {
-                $announcements->push((object)[
-                    'text' => "Registration for {$p->org_name} ({$p->name}) is now OPEN.",
-                    'type' => 'new'
-                ]);
+        $announcements = \Illuminate\Support\Facades\Cache::remember('home_announcements', now()->addHours(2), function () use ($projects, $results) {
+            $anns = \App\Models\Announcement::active()->get();
+            
+            if ($anns->isEmpty()) {
+                // Fallback for simulation
+                foreach($projects->take(2) as $p) {
+                    $anns->push((object)[
+                        'text' => "Registration for {$p->org_name} ({$p->name}) is now OPEN.",
+                        'type' => 'new'
+                    ]);
+                }
+                foreach($results->take(2) as $r) {
+                    $anns->push((object)[
+                        'text' => "Official Results for {$r->name} have been declared.",
+                        'type' => 'result'
+                    ]);
+                }
             }
-            foreach($results->take(2) as $r) {
-                $announcements->push((object)[
-                    'text' => "Official Results for {$r->name} have been declared.",
-                    'type' => 'result'
-                ]);
-            }
-        }
+            return $anns;
+        });
 
         return view('welcome', compact('projects', 'results', 'stats', 'announcements'));
     }

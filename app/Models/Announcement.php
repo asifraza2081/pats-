@@ -22,4 +22,15 @@ class Announcement extends Model
     {
         return $query->where('is_active', true)->orderBy('priority', 'desc')->latest();
     }
+
+    protected static function booted()
+    {
+        static::saved(function ($announcement) {
+            \Illuminate\Support\Facades\Cache::forget('home_announcements');
+        });
+
+        static::deleted(function ($announcement) {
+            \Illuminate\Support\Facades\Cache::forget('home_announcements');
+        });
+    }
 }

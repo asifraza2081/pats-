@@ -30,6 +30,17 @@ class PatsJob extends Model
         ];
     }
 
+    protected static function booted()
+    {
+        static::saved(function ($job) {
+            \Illuminate\Support\Facades\Cache::forget('home_stats');
+        });
+
+        static::deleted(function ($job) {
+            \Illuminate\Support\Facades\Cache::forget('home_stats');
+        });
+    }
+
     public function project()
     {
         return $this->belongsTo(Project::class);
