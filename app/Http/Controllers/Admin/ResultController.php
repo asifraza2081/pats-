@@ -6,9 +6,11 @@ use App\Events\ResultsPublished;
 use App\Http\Controllers\Controller;
 use App\Models\Application;
 use App\Models\PatsJob;
-use App\Models\Project;
 use App\Models\Result;
 use App\Services\SmsService;
+use App\Enums\ProjectStatus;
+use App\Enums\ApplicationStatus;
+use App\Enums\ResultStatus;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\DB;
@@ -31,7 +33,9 @@ class ResultController extends Controller
 
     public function showUpload()
     {
-        $projects = Project::where('status', 'open')->orWhere('status', 'closed')->latest()->get();
+        $projects = Project::where('status', ProjectStatus::OPEN)
+            ->orWhere('status', ProjectStatus::CLOSED)
+            ->latest()->get();
         return view('admin.results.upload', compact('projects'));
     }
 
@@ -89,7 +93,7 @@ class ResultController extends Controller
                 'job_title'      => $application->job->title,
                 'score'         => floatval($row['score'] ?? $row[1] ?? 0),
                 'total_marks'   => floatval($row['total_marks'] ?? $row[2] ?? 100),
-                'result_status' => strtolower(trim($row['status'] ?? $row[3] ?? 'fail')),
+                'result_status' => trim(strtolower($row['result_status'] ?? $row['status'] ?? $row[3] ?? 'fail')),
                 'scan_path'     => $scanPaths[$roll] ?? null,
             ];
         }
@@ -125,8 +129,8 @@ class ResultController extends Controller
 
                 $score        = $row['score'];
                 $totalMarks   = $row['total_marks'];
-                $resultStatus = in_array($row['result_status'], ['pass','fail','absent','withheld'])
-                    ? $row['result_status'] : 'fail';
+                
+                $resultStatus = ResultStatus::tryFrom($row['result_status']) ?? ResultStatus::FAIL;
                 $percentage   = $totalMarks > 0 ? round(($score / $totalMarks) * 100, 2) : 0;
 
                 $resultsData[] = [
@@ -135,7 +139,7 @@ class ResultController extends Controller
                     'score'             => $score,
                     'total_marks'       => $totalMarks,
                     'percentage'        => $percentage,
-                    'result_status'     => $resultStatus,
+                    'result_status'     => $resultStatus->value,
                     'uploaded_by'       => $authId,
                     'published_at'      => $now,
                     'scanned_sheet_path'=> $row['scan_path'],
@@ -154,7 +158,7 @@ class ResultController extends Controller
             }
 
             // 2. Bulk Update Application Status
-            Application::whereIn('id', $appIds)->update(['status' => 'result_declared']);
+            Application::whereIn('id', $appIds)->update(['status' => ApplicationStatus::RESULT_DECLARED]);
 
             // 3. Compute percentiles GLOBALLY per job category and update
             foreach ($jobAppeared as $jobId => $newEntries) {
@@ -167,24 +171,29 @@ class ResultController extends Controller
 
                 if (!empty($allScores)) {
                     $sorted = collect($allScores)->sortByDesc('percentage')->values();
-                    $total = count($sorted);
+                    $total  = count($sorted);
                     $upsertData = [];
 
-                    foreach ($allScores as $entry) {
-                        $rank = $sorted->search(fn($s) => $s['application_id'] == $entry['application_id']) + 1;
+                    foreach ($sorted as $index => $entry) {
+                        $rank = $index + 1;
                         $entry['percentile'] = round((($total - $rank) / $total) * 100, 2);
-                        // Filter array to keep only data columns, letting MySQL handle updated_at
-                        $upsertData[] = array_filter($entry, fn($k) => !in_array($k, ['created_at', 'updated_at']) && !is_numeric($k), ARRAY_FILTER_USE_KEY);
+                        
+                        // Prepare data for bulk upsert, filtering out extraneous model properties
+                        $cleanEntry = array_filter($entry, function($k) {
+                            return !in_array($k, ['created_at', 'updated_at', 'application', 'job']) && !is_numeric($k);
+                        }, ARRAY_FILTER_USE_KEY);
+                        
+                        $upsertData[] = $cleanEntry;
                     }
 
-                    // Bulk update percentiles using upsert with full data to satisfy strict mode defaults
+                    // Bulk update percentiles using upsert
                     if (!empty($upsertData)) {
                         Result::upsert($upsertData, ['application_id'], ['percentile']);
                     }
                 }
             }
 
-            $project->update(['status' => 'result_declared']);
+            $project->update(['status' => ProjectStatus::RESULT_DECLARED]);
 
             // 4. Dispatch Event for Notifications
             ResultsPublished::dispatch($appIds);

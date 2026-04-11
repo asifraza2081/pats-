@@ -97,6 +97,7 @@ class ApplicationController extends Controller
                       });
                 })
                 ->with(['job', 'payment'])
+                ->lockForUpdate()
                 ->get();
 
             foreach ($applications as $app) {

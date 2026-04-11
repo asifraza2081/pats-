@@ -108,16 +108,17 @@ class FinancialService
 
     public function getFbrAnnexA(string $fiscalYear): Collection
     {
-        // Only expenses with tax > 0 qualify for Annex-A
+        // Only active expenses with tax > 0 qualify for Annex-A
         return \App\Models\Expense::withTrashed()
             ->with(['project', 'category', 'creator'])
             ->where('tax_amount', '>', 0)
-            ->whereHas('ledgerEntry', fn($q) => $q->where('fiscal_year', $fiscalYear))
-            ->orWhere(fn($q) =>
-                $q->whereYear('expense_date', '>=', $this->fyStartDate($fiscalYear)->year)
-                  ->whereYear('expense_date', '<=', $this->fyEndDate($fiscalYear)->year)
-                  ->where('tax_amount', '>', 0)
-            )
+            ->where(function ($query) use ($fiscalYear) {
+                $query->whereHas('ledgerEntry', fn($q) => $q->where('fiscal_year', $fiscalYear))
+                    ->orWhere(fn($q) => $q
+                        ->whereYear('expense_date', '>=', $this->fyStartDate($fiscalYear)->year)
+                        ->whereYear('expense_date', '<=', $this->fyEndDate($fiscalYear)->year)
+                    );
+            })
             ->orderBy('expense_date')
             ->get();
     }

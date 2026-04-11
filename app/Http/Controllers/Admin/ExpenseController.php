@@ -53,22 +53,9 @@ class ExpenseController extends Controller
 
     // ── Store ────────────────────────────────────────────────────────────────
 
-    public function store(Request $request)
+    public function store(\App\Http\Requests\StoreExpenseRequest $request)
     {
-        $data = $request->validate([
-            'project_id'     => 'nullable|exists:projects,id',
-            'category_id'    => 'required|exists:financial_categories,id',
-            'expense_date'   => 'required|date',
-            'voucher_no'     => 'nullable|string|max:50',
-            'description'    => 'required|string|max:500',
-            'recipient_name' => 'nullable|string|max:150',
-            'recipient_ntn'  => 'nullable|string|max:20',
-            'recipient_cnic' => 'nullable|string|max:20',
-            'gross_amount'   => 'required|numeric|min:0',
-            'tax_rate'       => 'required|numeric|min:0|max:50',
-            'attachment'     => 'nullable|file|mimes:pdf,jpg,jpeg,png|max:5120',
-            'notes'          => 'nullable|string|max:1000',
-        ]);
+        $data = $request->validated();
 
         $taxFields = Expense::computeTaxFields((float)$data['gross_amount'], (float)$data['tax_rate']);
         $data = array_merge($data, $taxFields, ['created_by' => Auth::id()]);
@@ -81,7 +68,7 @@ class ExpenseController extends Controller
         $expense = Expense::create($data);
 
         // Post to ledger
-        $this->postToLedger($expense);
+        $this->updateLedger($expense);
 
         return redirect()->route('admin.expenses.index')
             ->with('success', 'Expense recorded and posted to ledger.');
@@ -101,22 +88,9 @@ class ExpenseController extends Controller
 
     // ── Update ───────────────────────────────────────────────────────────────
 
-    public function update(Request $request, Expense $expense)
+    public function update(\App\Http\Requests\UpdateExpenseRequest $request, Expense $expense)
     {
-        $data = $request->validate([
-            'project_id'     => 'nullable|exists:projects,id',
-            'category_id'    => 'required|exists:financial_categories,id',
-            'expense_date'   => 'required|date',
-            'voucher_no'     => 'nullable|string|max:50',
-            'description'    => 'required|string|max:500',
-            'recipient_name' => 'nullable|string|max:150',
-            'recipient_ntn'  => 'nullable|string|max:20',
-            'recipient_cnic' => 'nullable|string|max:20',
-            'gross_amount'   => 'required|numeric|min:0',
-            'tax_rate'       => 'required|numeric|min:0|max:50',
-            'attachment'     => 'nullable|file|mimes:pdf,jpg,jpeg,png|max:5120',
-            'notes'          => 'nullable|string|max:1000',
-        ]);
+        $data = $request->validated();
 
         $taxFields = Expense::computeTaxFields((float)$data['gross_amount'], (float)$data['tax_rate']);
         $data = array_merge($data, $taxFields);
@@ -129,15 +103,19 @@ class ExpenseController extends Controller
         unset($data['attachment']);
         $expense->update($data);
 
+        // Update ledger
+        $this->updateLedger($expense);
+
         return redirect()->route('admin.expenses.index')
-            ->with('success', 'Expense updated successfully.');
+            ->with('success', 'Expense updated and ledger synchronized.');
     }
 
     // ── Destroy ──────────────────────────────────────────────────────────────
 
     public function destroy(Expense $expense)
     {
-        // Note: ledger entry remains (immutable) for audit trail
+        // Note: ledger entry remains (immutable) for audit trail 
+        // as per accounting best practices, but we could also soft-delete it.
         $expense->delete();
         return back()->with('success', 'Expense deleted. The ledger entry is preserved for audit.');
     }
@@ -159,26 +137,30 @@ class ExpenseController extends Controller
         return $pdf->stream("expense-voucher-{$expense->id}.pdf");
     }
 
-    // ── Private: Post Expense to Ledger ──────────────────────────────────────
+    // ── Private: Post/Update Expense in Ledger ────────────────────────────────
 
-    private function postToLedger(Expense $expense): void
+    private function updateLedger(Expense $expense): void
     {
         $carbonDate = \Carbon\Carbon::parse($expense->expense_date);
         $fyStart    = FinancialSetting::fyStartMonth();
 
-        FinancialLedger::create([
-            'type'        => 'expense',
-            'source_type' => Expense::class,
-            'source_id'   => $expense->id,
-            'project_id'  => $expense->project_id,
-            'category'    => $expense->category->name ?? 'Uncategorized',
-            'description' => $expense->description,
-            'amount'      => $expense->gross_amount,
-            'tax_amount'  => $expense->tax_amount,
-            'net_amount'  => $expense->net_amount,
-            'ledger_date' => $expense->expense_date,
-            'fiscal_year' => FinancialLedger::fiscalYearFor($carbonDate, $fyStart),
-            'created_by'  => Auth::id(),
-        ]);
+        FinancialLedger::updateOrCreate(
+            [
+                'source_type' => Expense::class,
+                'source_id'   => $expense->id,
+            ],
+            [
+                'type'        => 'expense',
+                'project_id'  => $expense->project_id,
+                'category'    => $expense->category->name ?? 'Uncategorized',
+                'description' => $expense->description,
+                'amount'      => $expense->gross_amount,
+                'tax_amount'  => $expense->tax_amount,
+                'net_amount'  => $expense->net_amount,
+                'ledger_date' => $expense->expense_date,
+                'fiscal_year' => FinancialLedger::fiscalYearFor($carbonDate, $fyStart),
+                'created_by'  => Auth::id(),
+            ]
+        );
     }
 }

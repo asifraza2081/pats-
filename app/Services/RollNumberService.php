@@ -5,6 +5,7 @@ namespace App\Services;
 use App\Models\Application;
 use App\Models\Batch;
 use App\Models\ExamRollno;
+use App\Enums\ApplicationStatus;
 use Carbon\Carbon;
 use Illuminate\Support\Facades\DB;
 use Picqer\Barcode\BarcodeGeneratorPNG;
@@ -28,7 +29,7 @@ class RollNumberService
 
             // Core allocation query
             $query = Application::where('applications.project_id', $batch->project_id)
-                ->where('applications.status', 'fee_paid')
+                ->where('applications.status', ApplicationStatus::FEE_PAID)
                 ->where('applications.desired_test_city_id', $batch->center->city_id)
                 ->whereDoesntHave('examRollno')
                 ->whereDoesntHave('candidate.applications.examRollno', function($q) use ($testDateStr) {
@@ -78,15 +79,21 @@ class RollNumberService
                 $jobId = $app->job_id;
                 $serial = ++$jobSerials[$jobId];
 
-                // Robust Format: [ProjID(2)][JobCode(2)][CityID(2)][CenterID(2)][Serial(4+)]
+                // Hardening: Removed modulo 100 to prevent collisions (§2.3)
+                // New Format: [ProjID(3chars)][JobCode(2chars)][CityID(3chars)][CenterID(2chars)][Serial(5chars)]
+                // Example: 001 02 005 01 00001
                 $rollNo = sprintf(
-                    '%02d%02d%02d%02d%04d',
-                    $app->project_id % 100,
-                    ((int) preg_replace('/[^0-9]/', '', $app->job->job_code)) % 100,
-                    $app->desired_test_city_id % 100,
-                    ((int) preg_replace('/[^0-9]/', '', $batch->center->tcid) % 100),
+                    '%03d%02d%03d%02d%05d',
+                    $app->project_id,
+                    ((int) preg_replace('/[^0-9]/', '', $app->job->job_code)) % 100, // Job code 2 digits is standard
+                    $app->desired_test_city_id,
+                    ((int) preg_replace('/[^0-9]/', '', $batch->center->tcid) % 100), // Center ID within city
                     $serial
                 );
+
+                // Generate real PNG barcode (Base64) for the slip
+                $generator = new BarcodeGeneratorPNG();
+                $barcodeBase64 = 'data:image/png;base64,' . base64_encode($generator->getBarcode($rollNo, $generator::TYPE_CODE_128));
 
                 $examRecords[] = [
                     'application_id' => $app->id,
@@ -97,7 +104,7 @@ class RollNumberService
                     'batch_id'       => $batch->id,
                     'roll_no'        => $rollNo,
                     'roll_sequence'  => $serial,
-                    'barcode'        => $rollNo, 
+                    'barcode'        => $barcodeBase64, 
                     'batch_no'       => (string)$batch->batch_number,
                     'slip_ready'     => 0,
                     'created_at'     => now(),
@@ -111,7 +118,7 @@ class RollNumberService
             }
 
             Application::whereIn('id', $appIds)->update([
-                'status'   => 'scheduled',
+                'status'   => ApplicationStatus::SCHEDULED,
                 'batch_id' => $batch->id
             ]);
             

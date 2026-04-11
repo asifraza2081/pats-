@@ -13,12 +13,13 @@ class Batch extends Model
 
     protected $fillable = [
         'project_id', 'center_id', 'batch_number', 'test_date',
-        'reporting_time', 'start_time', 'total_seats', 'booked_seats',
-        'envelope_size', 'is_ready', 'results_published', 'created_by',
+        'reporting_time', 'start_time', 'duration_minutes', 'total_seats', 
+        'booked_seats', 'envelope_size', 'is_ready', 'results_published', 'created_by',
     ];
 
     protected $casts = [
         'test_date'          => 'date',
+        'duration_minutes'   => 'integer',
         'is_ready'           => 'boolean',
         'results_published'  => 'boolean',
     ];

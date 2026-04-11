@@ -29,8 +29,10 @@ class DigitalRepositoryService
         
         $dateStr = $date instanceof \Carbon\Carbon ? $date->toDateString() : (string) $date;
         
-        // We'll use a clean folder name: "Project Name - 2026-04-10"
-        return "projects/{$project->name} - {$dateStr}";
+        // Hardening: Slugify project name to prevent filesystem issues with special characters
+        $projectName = Str::slug($project->name, '-', 'en');
+        
+        return "projects/{$projectName}-{$dateStr}";
     }
 
     /**
@@ -39,9 +41,10 @@ class DigitalRepositoryService
     public function getJobDir($model): string
     {
         if ($model instanceof Batch) {
-            $jobTitle = 'Test Center Documents';
+            // Hardening: Use Center name instead of hardcoded string to prevent folder collisions (§10.6)
+            $jobTitle = Str::slug($model->center->name, '-', 'en');
         } else {
-            $jobTitle = $model->application->job->title;
+            $jobTitle = Str::slug($model->application->job->title, '-', 'en');
         }
         
         return $this->getProjectBaseDir($model) . '/' . $jobTitle;

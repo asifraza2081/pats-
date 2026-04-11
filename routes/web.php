@@ -59,7 +59,7 @@ Route::post('/logout', [AuthController::class, 'logout'])->name('auth.logout');
 // ═══════════════════════════════════════════════════
 // CANDIDATE ROUTES
 // ═══════════════════════════════════════════════════
-Route::middleware(['auth', 'role:candidate', \App\Http\Middleware\InactivityLogout::class])->prefix('candidate')->name('candidate.')->group(function () {
+Route::middleware(['auth', 'role:candidate', 'sanitize', \App\Http\Middleware\InactivityLogout::class])->prefix('candidate')->name('candidate.')->group(function () {
 
     // Dashboard
     Route::get('/dashboard', [DashboardController::class, 'index'])->name('dashboard');
@@ -92,7 +92,7 @@ Route::middleware(['auth', 'role:candidate', \App\Http\Middleware\InactivityLogo
 // ═══════════════════════════════════════════════════
 // ADMIN ROUTES
 // ═══════════════════════════════════════════════════
-Route::middleware(['auth', 'role:admin|data_entry|super_admin', \App\Http\Middleware\InactivityLogout::class])->prefix('admin')->name('admin.')->group(function () {
+Route::middleware(['auth', 'role:admin|data_entry|super_admin', 'sanitize', \App\Http\Middleware\InactivityLogout::class])->prefix('admin')->name('admin.')->group(function () {
 
     Route::get('/dashboard', [Admin\DashboardController::class, 'index'])->name('dashboard');
     Route::get('/analytics', [Admin\AnalyticsController::class, 'index'])->name('analytics.index');
@@ -191,7 +191,7 @@ Route::middleware(['auth', 'role:admin|data_entry|super_admin', \App\Http\Middle
 });
 
     // Examiner Portal
-    Route::middleware(['auth', 'role:super_admin|admin|examiner', \App\Http\Middleware\InactivityLogout::class])->prefix('examiner')->name('examiner.')->group(function () {
+    Route::middleware(['auth', 'role:super_admin|admin|examiner', 'sanitize', \App\Http\Middleware\InactivityLogout::class])->prefix('examiner')->name('examiner.')->group(function () {
         Route::get('/dashboard', [App\Http\Controllers\Examiner\DashboardController::class, 'index'])->name('dashboard');
         Route::get('/sessions/{batch}', [App\Http\Controllers\Examiner\DashboardController::class, 'showSession'])->name('sessions.show');
         

@@ -47,6 +47,7 @@ class SmsService
             'message'    => $message,
             'status'     => $status,
             'sent_at'    => $sent ? now() : null,
+            'created_at' => now(),
         ]);
 
         return $sent;

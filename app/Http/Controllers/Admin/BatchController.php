@@ -55,21 +55,9 @@ class BatchController extends Controller
         return view('admin.batches.create', compact('projects', 'centers'));
     }
 
-    public function store(Request $request)
+    public function store(\App\Http\Requests\StoreBatchRequest $request)
     {
-        $data = $request->validate([
-            'project_id'     => 'required|exists:projects,id',
-            'job_ids'        => 'required|array|min:1',
-            'job_ids.*'      => 'required|exists:pats_jobs,id',
-            'center_ids'     => 'required|array|min:1',
-            'center_ids.*'   => 'required|exists:test_centers,id',
-            'batch_number'   => 'required|integer|min:1',
-            'test_date'      => 'required|date_format:Y-m-d|after_or_equal:today|before:2100-01-01',
-            'reporting_time' => 'required',
-            'start_time'     => 'required|after:reporting_time',
-            'count_to_allocate' => 'required|integer|min:1',
-            'envelope_size'  => 'required|integer|min:10|max:100',
-        ]);
+        $data = $request->validated();
 
         $testDateNormalized = Carbon::parse($data['test_date'])->toDateString();
         $data['test_date']  = $testDateNormalized;
@@ -87,29 +75,32 @@ class BatchController extends Controller
 
         $unallocatedTarget = (int) $data['count_to_allocate'];
 
+        // Preload centers to eliminate N+1 query overhead (§4.1)
+        $centers = TestCenter::whereIn('id', $centerIds)->get()->keyBy('id');
+
         DB::beginTransaction();
         try {
             foreach ($centerIds as $centerId) {
                 if ($unallocatedTarget <= 0) {
-                    break; // All targets have been distributed across centers
+                    break;
                 }
 
-                $center = TestCenter::findOrFail($centerId);
+                $center = $centers->get($centerId);
+                if (!$center) continue;
 
                 // 2. Conflict Detection (Same center, same date, overlapping time)
                 // New logic: Check if (start < current_end AND end > current_start)
-                // We use reporting_time to start_time + 4 hours (estimated) for overlap-safety
                 $startTime = $data['start_time'];
-                $endTime   = Carbon::parse($startTime)->addHours(4)->format('H:i:s');
+                $duration  = $data['duration_minutes'] ?? 240; 
+                $endTime   = Carbon::parse($startTime)->addMinutes($duration)->format('H:i:s');
 
                 $conflict = Batch::where('center_id', $centerId)
                     ->where('test_date', $testDateNormalized)
                     ->where(function($q) use ($startTime, $endTime) {
                          // Improved overlap detection [M5]
                          // Logic: (StartA < EndB) AND (EndA > StartB)
-                         // NOTE: We assume a 4-hour window per batch as duration is not stored in DB.
                          $q->where('start_time', '<', $endTime)
-                           ->whereRaw('DATE_ADD(start_time, INTERVAL 4 HOUR) > ?', [$startTime]);
+                           ->whereRaw('DATE_ADD(start_time, INTERVAL duration_minutes MINUTE) > ?', [$startTime]);
                     })
                     ->exists();
 
@@ -124,7 +115,7 @@ class BatchController extends Controller
                 
                 $cityId = $center->city_id;
                 $eligibleCount = Application::where('project_id', $batchData['project_id'])
-                    ->where('status', 'fee_paid')
+                    ->where('status', \App\Enums\ApplicationStatus::FEE_PAID)
                     ->where('desired_test_city_id', $cityId)
                     ->whereDoesntHave('examRollno')
                     ->whereIn('job_id', $data['job_ids'])

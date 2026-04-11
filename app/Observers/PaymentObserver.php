@@ -11,15 +11,31 @@ use Illuminate\Support\Facades\Auth;
 class PaymentObserver
 {
     /**
-     * When a payment is marked as "paid", automatically post a revenue
-     * entry to the immutable financial ledger.
+     * When a payment is created as "paid", post to ledger.
+     */
+    public function created(Payment $payment): void
+    {
+        if ($payment->status->value === 'paid') {
+            $this->postToLedger($payment);
+        }
+    }
+
+    /**
+     * When a payment is updated to "paid", post to ledger.
      */
     public function updated(Payment $payment): void
     {
-        // Only fire when status transitions TO 'paid'
-        if (! $payment->wasChanged('status')) return;
-        if ($payment->status->value !== 'paid') return;
+        // Only fire if status was changed TO 'paid'
+        if ($payment->wasChanged('status') && $payment->status->value === 'paid') {
+            $this->postToLedger($payment);
+        }
+    }
 
+    /**
+     * Post the revenue entry to the immutable financial ledger.
+     */
+    private function postToLedger(Payment $payment): void
+    {
         // Guard against duplicate ledger entries
         $alreadyPosted = FinancialLedger::where('source_type', Payment::class)
             ->where('source_id', $payment->id)
