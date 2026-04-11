@@ -37,7 +37,7 @@ class DatabaseSeeder extends Seeder
         $infrastructure = $this->seedInfrastructure($cities);
 
         // 5. DEMO PROJECTS & JOBS (WAPDA Theme)
-        $projectData = $this->seedProjects($admin, $infrastructure['centers']);
+        $projectData = $this->seedProjects($admin, $infrastructure);
 
         // 6. CANDIDATES & APPLICATIONS (Bulk Generation)
         $this->seedCandidates($cities, $projectData);
@@ -126,6 +126,7 @@ class DatabaseSeeder extends Seeder
     private function seedInfrastructure($cities)
     {
         $centers = [];
+        $assignments = [];
         foreach ($cities as $index => $city) {
             $center = TestCenter::updateOrCreate(
                 ['tcid' => str_pad($index + 7000, 4, '0', STR_PAD_LEFT)],
@@ -151,11 +152,12 @@ class DatabaseSeeder extends Seeder
                 ]
             );
             $examiner->assignRole('examiner');
+            $assignments[$center->id] = $examiner->id;
         }
-        return ['centers' => $centers];
+        return ['centers' => $centers, 'assignments' => $assignments];
     }
 
-    private function seedProjects($admin, $centers)
+    private function seedProjects($admin, $infrastructure)
     {
         $project = Project::updateOrCreate(
             ['name' => 'WAPDA Mega Recruitment 2026'],
@@ -169,8 +171,14 @@ class DatabaseSeeder extends Seeder
             ]
         );
 
-        // Sync Centers
-        $project->centers()->sync(array_column($centers, 'id'));
+        // Sync Centers with Examiners
+        $syncData = [];
+        foreach ($infrastructure['centers'] as $center) {
+            $syncData[$center->id] = [
+                'examiner_id' => $infrastructure['assignments'][$center->id] ?? null
+            ];
+        }
+        $project->centers()->sync($syncData);
 
         $jobs = [];
         $jobTitles = [

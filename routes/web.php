@@ -191,7 +191,7 @@ Route::middleware(['auth', 'role:admin|data_entry|super_admin', \App\Http\Middle
 });
 
     // Examiner Portal
-    Route::middleware(['auth', 'role:examiner', \App\Http\Middleware\InactivityLogout::class])->prefix('examiner')->name('examiner.')->group(function () {
+    Route::middleware(['auth', 'role:super_admin|admin|examiner', \App\Http\Middleware\InactivityLogout::class])->prefix('examiner')->name('examiner.')->group(function () {
         Route::get('/dashboard', [App\Http\Controllers\Examiner\DashboardController::class, 'index'])->name('dashboard');
         Route::get('/sessions/{batch}', [App\Http\Controllers\Examiner\DashboardController::class, 'showSession'])->name('sessions.show');
         

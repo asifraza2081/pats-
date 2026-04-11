@@ -170,8 +170,14 @@
                                             <option value="11:00|12:00" {{ old('reporting_time') == '11:00' ? 'selected' : '' }}>AfterNoon (Reporting time 11:00 AM, Test time 12:00 PM)</option>
                                             <option value="14:00|15:00" {{ old('reporting_time') == '14:00' ? 'selected' : '' }}>Evening (Reporting time 2:00 PM, Test time 3:00 PM)</option>
                                         </select>
-                                        <input type="hidden" name="reporting_time" id="reporting_time" value="{{ old('reporting_time', '') }}">
-                                        <input type="hidden" name="start_time" id="start_time" value="{{ old('start_time', '') }}">
+                                    <div class="col-md-6 mt-3">
+                                        <label class="form-label required fw-bold text-secondary">Reporting Time (Auto)</label>
+                                        <input type="text" name="reporting_time" id="reporting_time" class="form-control bg-light" value="{{ old('reporting_time', '') }}" readonly placeholder="Select shift first...">
+                                    </div>
+                                    <div class="col-md-6 mt-3">
+                                        <label class="form-label required fw-bold text-secondary">Start Time (Auto)</label>
+                                        <input type="text" name="start_time" id="start_time" class="form-control bg-light" value="{{ old('start_time', '') }}" readonly placeholder="Select shift first...">
+                                    </div>
                                     </div>
                                 </div>
                             </div>
