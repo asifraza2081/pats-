@@ -32,7 +32,7 @@ class ProjectController extends Controller
 
     public function show(Project $project)
     {
-        $project->load('jobs', 'batches.center', 'centers');
+        $project->load(['jobs', 'batches.center', 'centers.city']);
         return view('admin.projects.show', compact('project'));
     }
 

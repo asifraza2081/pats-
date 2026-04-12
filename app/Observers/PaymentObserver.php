@@ -7,6 +7,7 @@ use App\Models\FinancialSetting;
 use App\Models\Payment;
 use Carbon\Carbon;
 use Illuminate\Support\Facades\Auth;
+use Illuminate\Support\Facades\Cache;
 
 class PaymentObserver
 {
@@ -15,6 +16,7 @@ class PaymentObserver
      */
     public function created(Payment $payment): void
     {
+        Cache::forget('admin_dashboard_stats');
         if ($payment->status->value === 'paid') {
             $this->postToLedger($payment);
         }
@@ -25,10 +27,19 @@ class PaymentObserver
      */
     public function updated(Payment $payment): void
     {
+        Cache::forget('admin_dashboard_stats');
         // Only fire if status was changed TO 'paid'
         if ($payment->wasChanged('status') && $payment->status->value === 'paid') {
             $this->postToLedger($payment);
         }
+    }
+
+    /**
+     * When a payment is deleted, clear cache.
+     */
+    public function deleted(Payment $payment): void
+    {
+        Cache::forget('admin_dashboard_stats');
     }
 
     /**
@@ -67,7 +78,7 @@ class PaymentObserver
             'net_amount'  => $payment->amount,
             'ledger_date' => $effectiveDate,
             'fiscal_year' => FinancialLedger::fiscalYearFor($carbonDate, $fyStart),
-            'created_by'  => Auth::id() ?? $payment->verified_by ?? 1,
+            'created_by'  => $payment->verified_by ?? Auth::id(),
         ]);
     }
 }

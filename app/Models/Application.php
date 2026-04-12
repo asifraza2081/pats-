@@ -13,6 +13,12 @@ class Application extends Model
 {
     use HasFactory, Auditable, SoftDeletes;
 
+    protected static function booted()
+    {
+        static::saved(fn() => \Illuminate\Support\Facades\Cache::forget('admin_dashboard_stats'));
+        static::deleted(fn() => \Illuminate\Support\Facades\Cache::forget('admin_dashboard_stats'));
+    }
+
     protected $fillable = [
         'candidate_id', 'job_id', 'project_id', 'batch_id', 'desired_test_city_id',
         'age_relaxation_type', 'age_relaxation_years',

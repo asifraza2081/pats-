@@ -20,8 +20,10 @@ use Carbon\Carbon;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\Storage;
 use Illuminate\Support\Str;
+use App\Enums\ApplicationStatus;
 
 class BatchController extends Controller
 {
@@ -100,7 +102,8 @@ class BatchController extends Controller
                          // Improved overlap detection [M5]
                          // Logic: (StartA < EndB) AND (EndA > StartB)
                          $q->where('start_time', '<', $endTime)
-                           ->whereRaw('DATE_ADD(start_time, INTERVAL duration_minutes MINUTE) > ?', [$startTime]);
+                           // PostgreSQL/MySQL COALESCE to handle legacy rows where duration_minutes is NULL
+                           ->whereRaw('DATE_ADD(start_time, INTERVAL COALESCE(duration_minutes, 240) MINUTE) > ?', [$startTime]);
                     })
                     ->exists();
 
@@ -436,15 +439,15 @@ class BatchController extends Controller
         if (!empty($appearedIds)) {
             Application::whereIn('id', $appearedIds)
                 ->whereHas('examRollno', fn($q) => $q->where('batch_id', $batch->id))
-                ->whereIn('status', ['scheduled', 'absent'])
-                ->update(['status' => 'appeared']);
+                ->whereIn('status', [ApplicationStatus::SCHEDULED, ApplicationStatus::ABSENT])
+                ->update(['status' => ApplicationStatus::APPEARED]);
         }
 
         if (!empty($absentIds)) {
             Application::whereIn('id', $absentIds)
                 ->whereHas('examRollno', fn($q) => $q->where('batch_id', $batch->id))
-                ->whereIn('status', ['scheduled', 'appeared'])
-                ->update(['status' => 'absent']);
+                ->whereIn('status', [ApplicationStatus::SCHEDULED, ApplicationStatus::APPEARED])
+                ->update(['status' => ApplicationStatus::ABSENT]);
         }
 
         return back()->with('success', 'Attendance tracking completed for validated candidates.');

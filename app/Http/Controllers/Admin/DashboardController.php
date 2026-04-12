@@ -7,6 +7,9 @@ use App\Models\Application;
 use App\Models\PatsJob;
 use App\Models\Payment;
 use App\Models\Project;
+use App\Enums\ApplicationStatus;
+use App\Enums\PaymentStatus;
+use App\Enums\ProjectStatus;
 use Illuminate\Support\Facades\DB;
 
 class DashboardController extends Controller
@@ -18,16 +21,16 @@ class DashboardController extends Controller
                 'projects'     => Project::count(),
                 'jobs'          => PatsJob::count(),
                 'applications'  => Application::count(),
-                'pending_pay'   => Payment::where('status', 'unpaid')->count(),
-                'verified_pay'  => Payment::where('status', 'paid')->count(),
-                'appeared'      => Application::where('status', 'appeared')->count(),
+                'pending_pay'   => Payment::where('status', PaymentStatus::UNPAID)->count(),
+                'verified_pay'  => Payment::where('status', PaymentStatus::PAID)->count(),
+                'appeared'      => Application::where('status', ApplicationStatus::APPEARED)->count(),
             ];
         });
 
         $recentApps = Application::with(['candidate.user', 'job.project', 'payment'])
             ->latest('applied_at')->take(10)->get();
 
-        $openProjects = Project::where('status', 'open')->latest()->take(5)->get();
+        $openProjects = Project::where('status', ProjectStatus::OPEN)->latest()->take(5)->get();
 
         return view('admin.dashboard', compact('stats', 'recentApps', 'openProjects'));
     }

@@ -11,10 +11,12 @@ use App\Services\SmsService;
 use App\Enums\ProjectStatus;
 use App\Enums\ApplicationStatus;
 use App\Enums\ResultStatus;
+use App\Models\Project;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Cache;
+use Illuminate\Support\Facades\Storage;
 use PhpOffice\PhpSpreadsheet\IOFactory;
 
 class ResultController extends Controller
@@ -98,7 +100,8 @@ class ResultController extends Controller
             ];
         }
 
-        Cache::put('result_preview_' . Auth::id(), $preview, now()->addMinutes(60));
+        $previewKey = 'temp/result_preview_' . Auth::id() . '.json';
+        Storage::disk('local')->put($previewKey, json_encode($preview));
         session(['result_project_id' => $projectId]);
 
         return view('admin.results.preview', compact('preview', 'warnings', 'projectId'));
@@ -106,7 +109,10 @@ class ResultController extends Controller
 
     public function publish(Request $request, Project $project)
     {
-        $preview = Cache::get('result_preview_' . Auth::id(), []);
+        $previewKey = 'temp/result_preview_' . Auth::id() . '.json';
+        $previewData = Storage::disk('local')->get($previewKey);
+        $preview = $previewData ? json_decode($previewData, true) : [];
+        
         $sessionProjectId = session('result_project_id');
         if (empty($preview) || $sessionProjectId != $project->id) {
             return back()->with('error', 'Result data mismatch. Please upload the file for this specific project again.');
@@ -204,8 +210,11 @@ class ResultController extends Controller
             ]);
         });
 
-        Cache::forget('result_preview_' . Auth::id());
+        // Cleanup
+        $previewKey = 'temp/result_preview_' . Auth::id() . '.json';
+        Storage::disk('local')->delete($previewKey);
         session()->forget('result_project_id');
+        
         return redirect()->route('admin.results.index')->with('success', 'Results published and candidates notified.');
     }
 

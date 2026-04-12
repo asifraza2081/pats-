@@ -23,7 +23,7 @@ class StoreBatchRequest extends FormRequest
             'test_date'        => 'required|date_format:Y-m-d|after_or_equal:today|before:2100-01-01',
             'reporting_time'   => 'required',
             'start_time'       => 'required|after:reporting_time',
-            'duration_minutes' => 'nullable|integer|min:30|max:1440',
+            'duration_minutes' => 'required|integer|min:30|max:1440',
             'count_to_allocate'=> 'required|integer|min:1',
             'envelope_size'    => 'required|integer|min:10|max:100',
         ];

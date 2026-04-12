@@ -170,13 +170,18 @@
                                             <option value="11:00|12:00" {{ old('reporting_time') == '11:00' ? 'selected' : '' }}>AfterNoon (Reporting time 11:00 AM, Test time 12:00 PM)</option>
                                             <option value="14:00|15:00" {{ old('reporting_time') == '14:00' ? 'selected' : '' }}>Evening (Reporting time 2:00 PM, Test time 3:00 PM)</option>
                                         </select>
-                                    <div class="col-md-6 mt-3">
+                                    <div class="col-md-4 mt-3">
                                         <label class="form-label required fw-bold text-secondary">Reporting Time (Auto)</label>
                                         <input type="text" name="reporting_time" id="reporting_time" class="form-control bg-light" value="{{ old('reporting_time', '') }}" readonly placeholder="Select shift first...">
                                     </div>
-                                    <div class="col-md-6 mt-3">
+                                    <div class="col-md-4 mt-3">
                                         <label class="form-label required fw-bold text-secondary">Start Time (Auto)</label>
                                         <input type="text" name="start_time" id="start_time" class="form-control bg-light" value="{{ old('start_time', '') }}" readonly placeholder="Select shift first...">
+                                    </div>
+                                    <div class="col-md-4 mt-3">
+                                        <label class="form-label required fw-bold text-secondary">Duration (Minutes)</label>
+                                        <input type="number" name="duration_minutes" id="duration_minutes" class="form-control" value="{{ old('duration_minutes', 180) }}" min="30" max="1440" required>
+                                        <div class="form-hint">Default: 180m (3 hours)</div>
                                     </div>
                                     </div>
                                 </div>

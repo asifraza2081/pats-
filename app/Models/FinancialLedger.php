@@ -8,6 +8,17 @@ class FinancialLedger extends Model
 {
     // NO SoftDeletes — immutable for audit integrity
     protected $table = 'financial_ledger';
+    
+    protected static function booted()
+    {
+        static::updating(function ($ledger) {
+            throw new \LogicException('Financial ledger entries are immutable and cannot be updated.');
+        });
+
+        static::deleting(function ($ledger) {
+            throw new \LogicException('Financial ledger entries are immutable and cannot be deleted.');
+        });
+    }
 
     protected $fillable = [
         'type', 'source_type', 'source_id', 'project_id',

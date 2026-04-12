@@ -2,8 +2,21 @@
 @section('title', 'Attendance Tracking — Session ' . $batch->id)
 @section('page-title', 'Pre-Result Processing')
 
+@php
+    $isAdmin = request()->is('admin/*');
+    $backRoute = $isAdmin 
+        ? route('admin.batches.show', $batch) 
+        : route('examiner.sessions.show', $batch);
+    $uploadRoute = $isAdmin 
+        ? route('admin.batches.scans.upload', $batch) 
+        : route('examiner.sessions.upload-scan', $batch);
+    $markRoute = $isAdmin 
+        ? route('admin.batches.attendance.mark', $batch) 
+        : route('examiner.sessions.mark-attendance', $batch);
+@endphp
+
 @section('page-actions')
-<a href="{{ route('admin.batches.show', $batch) }}" class="btn btn-outline-secondary">
+<a href="{{ $backRoute }}" class="btn btn-outline-secondary">
     <i class="ti ti-arrow-left me-2"></i> Back to Session
 </a>
 @endsection
@@ -17,7 +30,7 @@
                 <h3 class="card-title fw-bold text-primary"><i class="ti ti-camera me-2"></i> Attendance Sheet Scans</h3>
             </div>
             <div class="card-body">
-                <form method="POST" action="{{ route('admin.batches.scans.upload', $batch) }}" enctype="multipart/form-data">
+                <form method="POST" action="{{ $uploadRoute }}" enctype="multipart/form-data">
                     @csrf
                     <div class="row g-3 align-items-end">
                         <div class="col-md-8">
@@ -67,7 +80,7 @@
                 </span>
             </div>
             <div class="card-body p-0">
-                <form method="POST" action="{{ route('admin.batches.attendance.mark', $batch) }}" id="attendanceForm">
+                <form method="POST" action="{{ $markRoute }}" id="attendanceForm">
                     @csrf
                     <div class="table-responsive">
                         <table class="table card-table table-vcenter text-nowrap table-hover">

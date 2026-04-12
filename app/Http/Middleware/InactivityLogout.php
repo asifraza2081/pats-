@@ -35,7 +35,10 @@ class InactivityLogout
                 return redirect()->route('login')->with('error', 'Session expired due to inactivity. Please login again.');
             }
 
-            session(['last_activity' => time()]);
+            // Only update session on every request if 60 seconds have passed [Performance Hardening §10]
+            if (!$lastActivity || (time() - $lastActivity > 60)) {
+                session(['last_activity' => time()]);
+            }
         }
 
         return $next($request);

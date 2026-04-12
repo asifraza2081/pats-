@@ -31,6 +31,7 @@
             <div class="col-md-3"><label class="form-label fw-semibold">Start Time *</label><input type="time" name="start_time" class="form-control" value="{{ old('start_time',substr($batch->start_time,0,5)) }}" required></div>
             <div class="col-md-4"><label class="form-label fw-semibold">Total Seats *</label><input type="number" name="total_seats" class="form-control" value="{{ old('total_seats',$batch->total_seats) }}" min="1" required></div>
             <div class="col-md-4"><label class="form-label fw-semibold">Envelope Size *</label><input type="number" name="envelope_size" class="form-control" value="{{ old('envelope_size',$batch->envelope_size) }}" min="10" required></div>
+            <div class="col-md-4"><label class="form-label fw-semibold">Duration (Minutes) *</label><input type="number" name="duration_minutes" class="form-control" value="{{ old('duration_minutes',$batch->duration_minutes) }}" min="30" max="1440" required></div>
             <div class="col-12 d-flex gap-2">
                 <button type="submit" class="btn btn-pats px-4">Save Changes</button>
                 <a href="{{ route('admin.batches.show',$batch) }}" class="btn btn-outline-secondary">Cancel</a>

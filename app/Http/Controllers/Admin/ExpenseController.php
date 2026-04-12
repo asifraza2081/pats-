@@ -143,24 +143,54 @@ class ExpenseController extends Controller
     {
         $carbonDate = \Carbon\Carbon::parse($expense->expense_date);
         $fyStart    = FinancialSetting::fyStartMonth();
+        $fiscalYear = FinancialLedger::fiscalYearFor($carbonDate, $fyStart);
 
-        FinancialLedger::updateOrCreate(
-            [
+        $existing = FinancialLedger::where('source_type', Expense::class)
+            ->where('source_id', $expense->id)
+            ->orderBy('id', 'desc')
+            ->first();
+
+        // If a ledger entry exists and the amount, tax, or project has changed, reverse it
+        if ($existing && ($existing->amount != $expense->gross_amount || $existing->tax_amount != $expense->tax_amount || $existing->project_id != $expense->project_id)) {
+            // 1. Create Reversing Entry (Negative values)
+            FinancialLedger::create([
+                'type'        => 'expense',
                 'source_type' => Expense::class,
                 'source_id'   => $expense->id,
-            ],
-            [
-                'type'        => 'expense',
-                'project_id'  => $expense->project_id,
-                'category'    => $expense->category->name ?? 'Uncategorized',
-                'description' => $expense->description,
-                'amount'      => $expense->gross_amount,
-                'tax_amount'  => $expense->tax_amount,
-                'net_amount'  => $expense->net_amount,
-                'ledger_date' => $expense->expense_date,
-                'fiscal_year' => FinancialLedger::fiscalYearFor($carbonDate, $fyStart),
+                'project_id'  => $existing->project_id,
+                'category'    => $existing->category,
+                'description' => "CORRECTION REVERSAL: " . $existing->description,
+                'amount'      => -$existing->amount,
+                'tax_amount'  => -$existing->tax_amount,
+                'net_amount'  => -$existing->net_amount,
+                'ledger_date' => now()->toDateString(),
+                'fiscal_year' => $existing->fiscal_year,
                 'created_by'  => Auth::id(),
-            ]
-        );
+            ]);
+
+            // 2. Create the new corrected entry
+            $this->postNewLedgerEntry($expense, $fiscalYear);
+        } elseif (!$existing) {
+            // If no entry exists, just create one
+            $this->postNewLedgerEntry($expense, $fiscalYear);
+        }
+    }
+
+    private function postNewLedgerEntry(Expense $expense, string $fiscalYear): void
+    {
+        FinancialLedger::create([
+            'type'        => 'expense',
+            'source_type' => Expense::class,
+            'source_id'   => $expense->id,
+            'project_id'  => $expense->project_id,
+            'category'    => $expense->category->name ?? 'Uncategorized',
+            'description' => $expense->description,
+            'amount'      => $expense->gross_amount,
+            'tax_amount'  => $expense->tax_amount,
+            'net_amount'  => $expense->net_amount,
+            'ledger_date' => $expense->expense_date,
+            'fiscal_year' => $fiscalYear,
+            'created_by'  => Auth::id(),
+        ]);
     }
 }

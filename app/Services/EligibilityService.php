@@ -66,10 +66,14 @@ class EligibilityService
             }
         }
 
-        // 5. Domicile check
+        // 5. Domicile check (Hardened)
         if ($job->domicile_required) {
-            $candidateDomicile = strtolower($candidate->province_of_domicile . ' ' . $candidate->district_of_domicile);
-            if (!str_contains($candidateDomicile, strtolower($job->domicile_required))) {
+            $required = strtolower($job->domicile_required);
+            $candidateProv = strtolower($candidate->province_of_domicile);
+            $candidateDist = strtolower($candidate->district_of_domicile);
+            
+            // Check if required matches province OR district exactly
+            if ($candidateProv !== $required && $candidateDist !== $required) {
                 $warnings[] = "Domicile requirement: \"{$job->domicile_required}\". Your domicile: {$candidate->province_of_domicile}, {$candidate->district_of_domicile}.";
             }
         }

@@ -60,8 +60,8 @@ class AllocationStatsService
 
         // 5. Job-specific totals (Optimized: Single query instead of per-job loop)
         $jobCounts = (clone $baseQuery)
-            ->selectRaw('job_id, count(*) as total')
-            ->groupBy('job_id')
+            ->selectRaw('applications.job_id, count(*) as total')
+            ->groupBy('applications.job_id')
             ->pluck('total', 'job_id');
 
         $jobStats = $project->jobs->map(function($j) use ($jobCounts) {
