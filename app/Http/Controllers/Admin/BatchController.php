@@ -93,7 +93,7 @@ class BatchController extends Controller
                 // 2. Conflict Detection (Same center, same date, overlapping time)
                 // New logic: Check if (start < current_end AND end > current_start)
                 $startTime = $data['start_time'];
-                $duration  = $data['duration_minutes'] ?? 240; 
+                $duration  = (int) ($data['duration_minutes'] ?? 240); 
                 $endTime   = Carbon::parse($startTime)->addMinutes($duration)->format('H:i:s');
 
                 $conflict = Batch::where('center_id', $centerId)
