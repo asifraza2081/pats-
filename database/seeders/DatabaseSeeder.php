@@ -40,7 +40,7 @@ class DatabaseSeeder extends Seeder
         $projectData = $this->seedProjects($admin, $infrastructure);
 
         // 6. CANDIDATES & APPLICATIONS (Bulk Generation)
-        $this->seedCandidates($cities, $projectData);
+        $this->seedCandidates($cities, $projectData, $admin);
 
         $this->command->info('─── SEEDING COMPLETE! ───');
         $this->command->table(['User Type', 'Email', 'Password'], [
@@ -201,7 +201,7 @@ class DatabaseSeeder extends Seeder
         return ['project' => $project, 'jobs' => $jobs];
     }
 
-    private function seedCandidates($cities, $projectData)
+    private function seedCandidates($cities, $projectData, $admin)
     {
         // 1. Standard Test Candidate (matched role)
         $testCandUser = User::updateOrCreate(
@@ -269,6 +269,7 @@ class DatabaseSeeder extends Seeder
             Payment::create([
                 'application_id' => $app->id, 'challan_ref' => 'PAY-' . str_pad($app->id, 8, '0', STR_PAD_LEFT),
                 'amount' => $job->fee, 'status' => 'paid', 'deposit_date' => now(),
+                'verified_by' => $admin->id, 'verified_at' => now(),
             ]);
         }
     }

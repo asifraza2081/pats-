@@ -78,7 +78,7 @@ class PaymentObserver
             'net_amount'  => $payment->amount,
             'ledger_date' => $effectiveDate,
             'fiscal_year' => FinancialLedger::fiscalYearFor($carbonDate, $fyStart),
-            'created_by'  => $payment->verified_by ?? Auth::id(),
+            'created_by'  => $payment->verified_by ?? Auth::id() ?? \App\Models\User::role('super_admin')->first()?->id ?? 1,
         ]);
     }
 }
