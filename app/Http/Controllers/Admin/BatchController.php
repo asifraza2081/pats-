@@ -271,6 +271,40 @@ class BatchController extends Controller
         return back()->with('success', "{$count} roll number slips marked ready. Candidates notified.");
     }
 
+    /** Bulk mark all sessions in a group as ready */
+    public function bulkPublish(Request $request)
+    {
+        $request->validate([
+            'batch_ids' => 'required|array',
+            'batch_ids.*' => 'exists:batches,id'
+        ]);
+
+        $count = 0;
+        $allRollsCount = 0;
+
+        DB::transaction(function() use ($request, &$count, &$allRollsCount) {
+            $batches = Batch::whereIn('id', $request->batch_ids)
+                ->where('is_ready', false)
+                ->where('results_published', false)
+                ->get();
+
+            foreach ($batches as $batch) {
+                $allocated = $this->rollNumbers->markBatchReady($batch);
+                $allRollsCount += $allocated;
+                
+                \App\Models\ActivityLog::log('publish_slips', $batch, ['count' => $allocated]);
+                event(new SlipsPublished($batch));
+                $count++;
+            }
+        });
+
+        if ($count === 0) {
+            return back()->with('error', 'No eligible sessions found to publish.');
+        }
+
+        return back()->with('success', "Successfully published {$count} sessions and notified {$allRollsCount} candidates.");
+    }
+
     /** Printable batch summary sheet (Image 1 equivalent) */
     public function summary(Batch $batch)
     {

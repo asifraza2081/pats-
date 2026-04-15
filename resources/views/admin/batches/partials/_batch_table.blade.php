@@ -32,6 +32,19 @@
             </td>
             <td class="text-end">
                 <div class="btn-list flex-nowrap justify-content-end">
+                    @if($batch->is_ready)
+                    <div class="btn-group btn-group-sm rounded-pill shadow-sm">
+                        <a href="{{ route('admin.batches.bulk-slips', $batch) }}" target="_blank" class="btn btn-white" title="Print Roll No Slips">
+                            <i class="ti ti-id me-1"></i> Slips
+                        </a>
+                        <a href="{{ route('admin.batches.attendance-sheet', $batch) }}" target="_blank" class="btn btn-white text-info" title="Print Attendance Sheet">
+                            <i class="ti ti-file-text me-1"></i> Sheet
+                        </a>
+                        <a href="{{ route('admin.batches.answer-sheets', $batch) }}" target="_blank" class="btn btn-white text-warning" title="Print OMR Sheets">
+                            <i class="ti ti-circle-check me-1"></i> OMR
+                        </a>
+                    </div>
+                    @endif
                     <a href="{{ route('admin.batches.show', $batch) }}" class="btn btn-outline-primary btn-icon btn-sm rounded-pill" title="View Session Details">
                         <i class="ti ti-eye"></i>
                     </a>

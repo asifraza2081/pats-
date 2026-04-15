@@ -24,6 +24,8 @@ class UpdateProfileRequest extends FormRequest
             'disability'            => 'nullable|boolean',
             'disability_type'       => 'nullable|string|max:120',
             'domicile_city_id'      => 'nullable|exists:cities,id',
+            'province_of_domicile'  => 'nullable|string|max:120',
+            'district_of_domicile'  => 'nullable|string|max:120',
             'address_city_id'       => 'nullable|exists:cities,id',
             'permanent_address'     => 'required|string',
             'postal_address'        => 'required_without:same_postal_address|nullable|string',

@@ -48,15 +48,21 @@ class ProfileController extends Controller
             $data['postal_address'] = $data['permanent_address'];
         }
 
-        // Photo upload
+        // Photo upload handling
         if ($request->hasFile('photo')) {
             if ($candidate->photo_path) Storage::delete($candidate->photo_path);
             $data['photo_path'] = $request->file('photo')->store('photos', 'public');
         }
 
+        // CNIC Front upload handling
+        if ($request->hasFile('cnic_copy')) {
+            if ($candidate->cnic_front_path) Storage::delete($candidate->cnic_front_path);
+            $data['cnic_front_path'] = $request->file('cnic_copy')->store('cnics', 'public');
+        }
+
         // Capture CNIC before unsetting it from the $data array
         $cnicFromForm = $data['cnic'] ?? null;
-        unset($data['photo'], $data['cnic_copy'], $data['cnic']);
+        unset($data['photo'], $data['cnic_copy'], $data['cnic_front_path'], $data['cnic']);
 
         $candidate->update($data);
 

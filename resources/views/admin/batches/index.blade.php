@@ -50,6 +50,17 @@
                             <i class="ti ti-building-community text-muted me-2"></i> {{ $centerName }} (Drafting)
                             <span class="ms-auto badge bg-yellow-lt me-3">{{ collect($batches)->count() }} session(s)</span>
                         </button>
+                        <div class="px-3 pb-3 bg-white">
+                            <form action="{{ route('admin.batches.bulk-publish') }}" method="POST" onsubmit="return confirm('This will notify all candidates in these sessions via SMS. Proceed?')">
+                                @csrf
+                                @foreach($batches as $b)
+                                    <input type="hidden" name="batch_ids[]" value="{{ $b->id }}">
+                                @endforeach
+                                <button type="submit" class="btn btn-yellow btn-sm w-100 rounded-pill fw-bold">
+                                    <i class="ti ti-notification me-1"></i> Publish All Slips & Notify Candidates
+                                </button>
+                            </form>
+                        </div>
                     </h2>
                     <div id="collapse-draft-{{ Str::slug($centerName) }}" class="accordion-collapse collapse">
                         <div class="table-responsive">
