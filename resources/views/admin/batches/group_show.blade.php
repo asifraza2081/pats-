@@ -94,7 +94,7 @@
                                                 </td>
                                                 <td>
                                                     <div class="font-mono text-muted text-sm">{{ $roll->application->candidate->user->cnic }}</div>
-                                                    <div class="small text-secondary">{{ $roll->application->candidate->user->phone_number }}</div>
+                                                    <div class="small text-secondary">{{ $roll->application->candidate->user->phone }}</div>
                                                 </td>
                                                 <td class="text-end">
                                                     <a href="{{ route('admin.applications.show', $roll->application->id) }}" class="btn btn-outline-secondary btn-sm rounded-pill" target="_blank">View App</a>
