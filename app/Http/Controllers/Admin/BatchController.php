@@ -516,7 +516,7 @@ class BatchController extends Controller
             // Strict columns requested by client
             fputcsv($file, [
                 'S#', 'Roll No', 'Name', 'FatherName', 'CNIC', 'Post_Name', 
-                'TC ID', 'Test_City', 'Batch', 'Test_Date', 'Reporting_time', 
+                'TC ID', 'Test_Center', 'Test_City', 'Batch', 'Test_Date', 'Reporting_time', 
                 'Test_time', 'Department'
             ]);
 
