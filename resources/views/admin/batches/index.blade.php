@@ -85,6 +85,26 @@
                             <i class="ti ti-building-community text-success me-2"></i> {{ $centerName }}
                             <span class="ms-auto badge bg-success-lt text-success border border-success me-3">{{ collect($batches)->count() }} session(s)</span>
                         </button>
+                        <div class="px-3 pb-3 bg-white border-bottom">
+                            <div class="d-flex align-items-center gap-2">
+                                <span class="small fw-bold text-muted text-nowrap"><i class="ti ti-printer me-1"></i> Bulk Print Group:</span>
+                                <form action="{{ route('admin.batches.bulk-print') }}" method="GET" target="_blank" class="d-inline">
+                                    @foreach($batches as $b) <input type="hidden" name="batch_ids[]" value="{{ $b->id }}"> @endforeach
+                                    <input type="hidden" name="type" value="slips">
+                                    <button type="submit" class="btn btn-outline-primary btn-sm rounded-pill">Slips</button>
+                                </form>
+                                <form action="{{ route('admin.batches.bulk-print') }}" method="GET" target="_blank" class="d-inline">
+                                    @foreach($batches as $b) <input type="hidden" name="batch_ids[]" value="{{ $b->id }}"> @endforeach
+                                    <input type="hidden" name="type" value="attendance">
+                                    <button type="submit" class="btn btn-outline-info btn-sm rounded-pill">Attendance</button>
+                                </form>
+                                <form action="{{ route('admin.batches.bulk-print') }}" method="GET" target="_blank" class="d-inline">
+                                    @foreach($batches as $b) <input type="hidden" name="batch_ids[]" value="{{ $b->id }}"> @endforeach
+                                    <input type="hidden" name="type" value="omr">
+                                    <button type="submit" class="btn btn-outline-warning btn-sm rounded-pill">OMR</button>
+                                </form>
+                            </div>
+                        </div>
                     </h2>
                     <div id="collapse-published-{{ Str::slug($centerName) }}" class="accordion-collapse collapse show">
                         <div class="table-responsive">

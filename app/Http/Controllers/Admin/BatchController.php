@@ -305,6 +305,53 @@ class BatchController extends Controller
         return back()->with('success', "Successfully published {$count} sessions and notified {$allRollsCount} candidates.");
     }
 
+    /** Generic handler for bulk printing multiple batches (Slips, Sheets, or OMR) */
+    public function bulkPrintGroup(Request $request)
+    {
+        $request->validate([
+            'batch_ids' => 'required|array',
+            'batch_ids.*' => 'exists:batches,id',
+            'type' => 'required|in:slips,attendance,omr'
+        ]);
+
+        ini_set('memory_limit', '2G');
+        set_time_limit(600);
+
+        $batches = Batch::whereIn('id', $request->batch_ids)->orderBy('id')->get();
+        if ($batches->isEmpty()) return back()->with('error', 'No sessions selected.');
+
+        // Use the first batch for basic context (Project/Center)
+        $batch = $batches->first();
+        $batch->load(['project', 'center.city']);
+
+        // Collection of all roll numbers across all requested batches
+        $roster = ExamRollno::whereIn('batch_id', $request->batch_ids)
+            ->with(['application.candidate.user', 'job.project', 'center.city', 'batch'])
+            ->orderBy('batch_id')
+            ->orderBy('roll_no')
+            ->get();
+
+        if ($roster->isEmpty()) return back()->with('error', 'No candidates found in selected sessions.');
+
+        switch ($request->type) {
+            case 'slips':
+                $view = 'pdf.bulk-slips';
+                $name = "Group_Slips_" . now()->format('His');
+                break;
+            case 'attendance':
+                $view = 'pdf.attendance-sheet';
+                $name = "Group_Attendance_" . now()->format('His');
+                break;
+            case 'omr':
+                $view = 'pdf.answer-sheets';
+                $name = "Group_OMR_" . now()->format('His');
+                break;
+        }
+
+        $pdf = Pdf::loadView($view, compact('batch', 'roster'))->setPaper('a4', 'portrait');
+        return $pdf->stream("{$name}.pdf");
+    }
+
     /** Printable batch summary sheet (Image 1 equivalent) */
     public function summary(Batch $batch)
     {
