@@ -556,6 +556,7 @@ class BatchController extends Controller
                     $user->cnic ?? '',
                     $job->title ?? '',
                     $center->id ?? '',
+                    $center->name ?? '',
                     $center->city->name ?? '',
                     'Batch-' . ($batch->batch_number ?? ''),
                     $testDate,
