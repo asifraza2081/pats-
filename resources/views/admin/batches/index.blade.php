@@ -180,7 +180,8 @@ document.addEventListener('DOMContentLoaded', function () {
         container.innerHTML = '';
         loader.classList.remove('d-none');
 
-        fetch(`/admin/batches/centers-json/${projectId}`)
+        const url = "{{ route('admin.batches.centers-json', ':id') }}".replace(':id', projectId);
+        fetch(url)
             .then(response => response.json())
             .then(data => {
                 loader.classList.add('d-none');
@@ -191,13 +192,14 @@ document.addEventListener('DOMContentLoaded', function () {
                     return;
                 }
 
+                const exportUrlBase = "{{ route('admin.batches.export', ':id') }}";
                 let html = `
                     <div class="d-flex justify-content-between align-items-end mb-3 pb-2 border-bottom">
                         <div>
                             <h4 class="m-0 fw-bold text-dark">Centers & Sessions Map</h4>
                             <small class="text-muted">Total active centers: ${data.length}</small>
                         </div>
-                        <a href="/admin/batches/export/${projectId}" class="btn btn-success fw-bold">
+                        <a href="${exportUrlBase.replace(':id', projectId)}" class="btn btn-success fw-bold">
                             <i class="ti ti-file-spreadsheet me-2"></i> Export Master List (CSV)
                         </a>
                     </div>
