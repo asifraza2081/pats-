@@ -111,13 +111,13 @@ Route::middleware(['auth', 'role:admin|data_entry|super_admin', 'sanitize', \App
     Route::get('batches/stats', [Admin\BatchController::class, 'stats'])->name('batches.stats');
     Route::get('batches/export/{project}', [Admin\BatchController::class, 'export'])->name('batches.export');
     Route::get('batches/centers-json/{project}', [Admin\BatchController::class, 'centersForProject'])->name('batches.centers-json');
-    Route::resource('batches', Admin\BatchController::class);
     Route::post('batches/bulk-publish', [Admin\BatchController::class, 'bulkPublish'])->name('batches.bulk-publish');
     Route::get('batches/bulk-print', [Admin\BatchController::class, 'bulkPrintGroup'])->name('batches.bulk-print');
     Route::get('batches/stickers', [Admin\BatchController::class, 'printStickers'])->name('batches.stickers');
     Route::get('batches/check-stickers', [Admin\BatchController::class, 'checkStickers'])->name('batches.stickers.check');
-    Route::post('batches/{batch}/ready', [Admin\BatchController::class, 'markReady'])->name('batches.ready');
     Route::get('batches/group/{project}/{test_date}/{batch_number}', [Admin\BatchController::class, 'groupShow'])->name('batches.group-show');
+    Route::resource('batches', Admin\BatchController::class);
+    Route::post('batches/{batch}/ready', [Admin\BatchController::class, 'markReady'])->name('batches.ready');
     Route::get('batches/{batch}/summary', [Admin\BatchController::class, 'summary'])->name('batches.summary');
     Route::get('batches/{batch}/attendance', [Admin\BatchController::class, 'attendance'])->name('batches.attendance');
     Route::get('batches/{batch}/attendance-sheet', [Admin\BatchController::class, 'attendanceSheet'])->name('batches.attendance-sheet');
