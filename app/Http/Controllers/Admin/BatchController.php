@@ -476,7 +476,7 @@ class BatchController extends Controller
         $roster = $query->get();
 
         if ($roster->isEmpty()) {
-            return back()->with('error', 'No roll numbers found in the given range.');
+            abort(404, 'No roll numbers found in the given range. Please check the starting and ending roll numbers.');
         }
 
         // Use context from first record

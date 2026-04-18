@@ -43,8 +43,7 @@ class CandidatePolicy
         if ($user->hasAnyRole(['admin', 'super_admin'])) {
             return true;
         }
-        return $user->candidate && $user->candidate->id === $candidate->id 
-               && !$candidate->profile_locked;
+        return $user->candidate && $user->candidate->id === $candidate->id;
     }
 
     /**

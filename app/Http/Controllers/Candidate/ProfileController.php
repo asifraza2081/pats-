@@ -64,6 +64,18 @@ class ProfileController extends Controller
         $cnicFromForm = $data['cnic'] ?? null;
         unset($data['photo'], $data['cnic_copy'], $data['cnic_front_path'], $data['cnic']);
 
+        // Prevent modification of critical identity/eligibility data if profile is locked
+        if ($candidate->profile_locked) {
+            unset(
+                $data['dob'], 
+                $data['father_name'], 
+                $data['gender'], 
+                $data['domicile_city_id'], 
+                $data['province_of_domicile'], 
+                $data['district_of_domicile']
+            );
+        }
+
         $candidate->update($data);
 
         // Update core user fields if not locked
