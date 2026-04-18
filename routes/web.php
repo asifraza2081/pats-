@@ -30,7 +30,7 @@ Route::get('/projects/{project}/jobs/{job}', [HomeController::class, 'job'])->na
 Route::get('/results', [ResultController::class, 'search'])->name('results.search');
 Route::post('/results', [ResultController::class, 'search'])->name('results.search.post');
 Route::get('/results/verify/{roll}', [ResultController::class, 'verify'])->name('results.verify');
-Route::get('/safe-download', [App\Http\Controllers\PublicDownloadController::class, 'download'])
+Route::get('/safe-download', [App\Http\Controllers\Public\PublicDownloadController::class, 'download'])
     ->name('public.download.signed')
     ->middleware('signed');
 

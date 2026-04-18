@@ -26,18 +26,6 @@ class AppServiceProvider extends ServiceProvider
         // Financial Module: auto-post revenue to ledger on payment verification
         \App\Models\Payment::observe(\App\Observers\PaymentObserver::class);
 
-        \Illuminate\Support\Facades\Gate::define('view-session', function ($user, \App\Models\Batch $batch) {
-            if ($user->hasAnyRole(['admin', 'super_admin', 'data_entry'])) return true;
-            if ($user->hasRole('examiner')) {
-                return $user->assignedCenters()->where('test_centers.id', $batch->center_id)->exists();
-            }
-            return false;
-        });
-
-        \Illuminate\Support\Facades\Gate::define('publish results', function ($user) {
-            return $user->hasAnyRole(['admin', 'super_admin']);
-        });
-
         // Hardening: Prevent N+1 and other common pitfalls in development
         \Illuminate\Database\Eloquent\Model::shouldBeStrict(! $this->app->isProduction());
         // Job Failure Monitoring

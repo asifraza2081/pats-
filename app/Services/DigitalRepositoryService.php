@@ -7,56 +7,45 @@ use App\Models\ExamRollno;
 use App\Models\Result;
 use Illuminate\Support\Facades\Storage;
 use Illuminate\Support\Str;
+use Carbon\Carbon;
 
 class DigitalRepositoryService
 {
     /**
-     * Get the base directory for a project with standardized naming.
-     * Format: "Project Name - YYYY-MM-DD"
+     * Build the center-level storage path.
+     * Required structure: {date}/{project-slug}/{city-slug}/{center-slug}/
      */
-    public function getProjectBaseDir(Batch|ExamRollno|Result $model): string
+    public function buildCenterPath(Batch $batch): string
     {
-        if ($model instanceof Batch) {
-            $project = $model->project;
-            $date = $model->test_date;
-        } elseif ($model instanceof Result) {
-            $project = $model->application->project;
-            $date = $model->published_at ?? ($model->application->project->close_date ?? now());
-        } else { // ExamRollno
-            $project = $model->application->project;
-            $date = $model->batch->test_date ?? ($model->application->project->close_date ?? now());
-        }
+        $batch->loadMissing(['project', 'center.city']);
         
-        $dateStr = $date instanceof \Carbon\Carbon ? $date->toDateString() : (string) $date;
+        $date = $batch->test_date instanceof Carbon ? $batch->test_date->toDateString() : (string) $batch->test_date;
+        $projectSlug = Str::slug($batch->project->name ?? 'Project', '-', 'en');
+        $citySlug = Str::slug($batch->center->city->name ?? 'City', '-', 'en');
+        $centerSlug = Str::slug($batch->center->name ?? 'Center', '-', 'en');
         
-        // Hardening: Slugify project name to prevent filesystem issues with special characters
-        $projectName = Str::slug($project->name, '-', 'en');
-        
-        return "projects/{$projectName}-{$dateStr}";
+        return "{$date}/{$projectSlug}/{$citySlug}/{$centerSlug}";
     }
 
     /**
-     * Get the job directory.
+     * Build the candidate-level storage path.
+     * Required structure: {date}/{project-slug}/{city-slug}/{center-slug}/{roll-no}/
      */
-    public function getJobDir($model): string
+    public function buildCandidatePath(ExamRollno $roll): string
     {
-        if ($model instanceof Batch) {
-            // Hardening: Use Center name instead of hardcoded string to prevent folder collisions (§10.6)
-            $jobTitle = Str::slug($model->center->name, '-', 'en');
-        } else {
-            $jobTitle = Str::slug($model->application->job->title, '-', 'en');
+        $roll->loadMissing(['batch.project', 'batch.center.city']);
+        
+        $batch = $roll->batch;
+        if (!$batch) {
+            // Fallback if no batch is linked (e.g., tests without batches, though PATS uses batches)
+            $date = date('Y-m-d');
+            $projectSlug = Str::slug($roll->application->project->name ?? 'Project', '-', 'en');
+            $citySlug = Str::slug($roll->city->name ?? 'City', '-', 'en');
+            $centerSlug = Str::slug($roll->center->name ?? 'Center', '-', 'en');
+            return "{$date}/{$projectSlug}/{$citySlug}/{$centerSlug}/{$roll->roll_no}";
         }
         
-        return $this->getProjectBaseDir($model) . '/' . $jobTitle;
-    }
-
-    /**
-     * Get the candidate specific folder.
-     */
-    public function getCandidateDir(ExamRollno|Result $model): string
-    {
-        $rollNo = $model->roll_no;
-        return $this->getJobDir($model) . "/Roll Numbers & Results/RollNo_{$rollNo}";
+        return $this->buildCenterPath($batch) . '/' . $roll->roll_no;
     }
 
     /**
@@ -64,9 +53,9 @@ class DigitalRepositoryService
      */
     public function saveAttendanceSheet(Batch $batch, $pdfOutput): string
     {
-        $dir = $this->getJobDir($batch) . "/Attendance Sheets";
-        $filename = "Attendance_{$batch->center->name}_Batch_{$batch->batch_number}";
-        $path = "{$dir}/" . Str::slug($filename, '_', 'en') . ".pdf";
+        $dir = $this->buildCenterPath($batch);
+        $filename = "attendance-sheet-batch-{$batch->batch_number}.pdf";
+        $path = "{$dir}/{$filename}";
         
         Storage::disk('public')->put($path, $pdfOutput);
         return $path;
@@ -77,8 +66,20 @@ class DigitalRepositoryService
      */
     public function saveRollNumberSlip(ExamRollno $roll, $pdfOutput): string
     {
-        $dir = $this->getCandidateDir($roll);
-        $path = "{$dir}/RollNoSlip.pdf";
+        $dir = $this->buildCandidatePath($roll);
+        $path = "{$dir}/roll-slip.pdf";
+        
+        Storage::disk('public')->put($path, $pdfOutput);
+        return $path;
+    }
+
+    /**
+     * Save a Fee Challan for a candidate.
+     */
+    public function saveChallan(ExamRollno $roll, $pdfOutput): string
+    {
+        $dir = $this->buildCandidatePath($roll);
+        $path = "{$dir}/challan.pdf";
         
         Storage::disk('public')->put($path, $pdfOutput);
         return $path;
@@ -89,20 +90,68 @@ class DigitalRepositoryService
      */
     public function saveResultCard(Result $result, $pdfOutput): string
     {
-        $dir = $this->getCandidateDir($result);
-        $path = "{$dir}/ResultCard.pdf";
+        $result->loadMissing(['application.examRollno']);
+        $roll = $result->application->examRollno;
+        
+        if ($roll) {
+            $dir = $this->buildCandidatePath($roll);
+        } else {
+            // Fallback for results without roll numbers
+            $date = $result->published_at ? $result->published_at->toDateString() : date('Y-m-d');
+            $projectSlug = Str::slug($result->application->project->name ?? 'Project', '-', 'en');
+            $dir = "{$date}/{$projectSlug}/Results/App_{$result->application_id}";
+        }
+        
+        $path = "{$dir}/result-card.pdf";
+        Storage::disk('public')->put($path, $pdfOutput);
+        return $path;
+    }
+
+    /**
+     * Save OMR sheets for a test center.
+     */
+    public function saveOmrSheets(Batch $batch, $pdfOutput): string
+    {
+        $dir = $this->buildCenterPath($batch);
+        $filename = "omr-sheets-batch-{$batch->batch_number}.pdf";
+        $path = "{$dir}/{$filename}";
         
         Storage::disk('public')->put($path, $pdfOutput);
         return $path;
     }
 
     /**
-     * Save a Summary report.
+     * Save bulk roll number slips for a test center.
+     */
+    public function saveBulkSlips(Batch $batch, $pdfOutput): string
+    {
+        $dir = $this->buildCenterPath($batch);
+        $filename = "bulk-slips-batch-{$batch->batch_number}.pdf";
+        $path = "{$dir}/{$filename}";
+        
+        Storage::disk('public')->put($path, $pdfOutput);
+        return $path;
+    }
+
+    /**
+     * Save a generic Summary report.
+     * Retained for compatibility with existing code.
      */
     public function saveSummary($model, $type, $pdfOutput): string
     {
-        $dir = $this->getJobDir($model) . "/Summary";
-        $filename = Str::slug("{$type}_Summary", '_', 'en') . ".pdf";
+        if ($model instanceof Batch) {
+            if ($type === 'AnswerSheets') {
+                return $this->saveOmrSheets($model, $pdfOutput);
+            }
+            if ($type === 'BulkSlips') {
+                return $this->saveBulkSlips($model, $pdfOutput);
+            }
+            $dir = $this->buildCenterPath($model);
+        } else {
+            $dir = "Misc_Summaries";
+        }
+        
+        $filename = Str::slug("{$type}_Summary", '-', 'en') . ".pdf";
         $path = "{$dir}/{$filename}";
         
         Storage::disk('public')->put($path, $pdfOutput);
