@@ -25,7 +25,7 @@ Homestead.json
 Homestead.yaml
 Thumbs.db
 
-# Diagnostic & Session Tools
-/export_repo.py
-/repo_snapshot.txt
-*.md
+# Dev/diagnostic tools (never commit these)
+debug_*.php
+export_repo.py
+repo_snapshot.txt

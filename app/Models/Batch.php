@@ -53,4 +53,9 @@ class Batch extends Model
     {
         return max(0, $this->total_seats - $this->booked_seats);
     }
+
+    // ── Query Scopes ────────────────────────────────────
+    public function scopeReady($query)    { return $query->where('is_ready', true); }
+    public function scopeDraft($query)    { return $query->where('is_ready', false); }
+    public function scopePublished($query){ return $query->where('results_published', true); }
 }

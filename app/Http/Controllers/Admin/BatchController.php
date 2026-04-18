@@ -201,7 +201,7 @@ class BatchController extends Controller
     /** View Mega Session across all test centers within a city for a given date/time slot */
     public function groupShow($projectId, $testDate, $batchNumber)
     {
-        $batches = Batch::with(['center.city', 'examRollnos.job', 'examRollnos.application.candidate.user'])
+        $batches = Batch::with(['project', 'center.city', 'examRollnos.job', 'examRollnos.application.candidate.user'])
             ->where('project_id', $projectId)
             ->where('test_date', $testDate)
             ->where('batch_number', $batchNumber)

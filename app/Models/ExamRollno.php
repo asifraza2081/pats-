@@ -57,4 +57,7 @@ class ExamRollno extends Model
     {
         return $this->belongsTo(Batch::class);
     }
+
+    // ── Query Scopes ────────────────────────────────────
+    public function scopeReady($query) { return $query->where('slip_ready', true); }
 }
