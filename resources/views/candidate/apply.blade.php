@@ -12,27 +12,27 @@
         </div>
 
         <!-- Job Header Banner -->
-        <div class="card border-0 shadow-sm mb-4 bg-primary text-primary-fg">
+        <div class="card border-0 shadow-lg rounded-5 mb-4 text-white overflow-hidden" style="background: linear-gradient(135deg, #0a3d62 0%, #1e5a8c 100%);">
             <div class="card-body p-4 p-md-5">
                 <div class="row align-items-center">
                     <div class="col-md-9 mb-3 mb-md-0">
                         <div class="text-white-50 small mb-2 text-uppercase tracking-wide fw-bold">
-                            {{ $project->name }} &bull; {{ $project->org_name }}
+                            <i class="ti ti-building me-1"></i> {{ $project->org_name }} <span class="mx-2 opacity-50">•</span> {{ $project->name }}
                         </div>
-                        <h2 class="h1 fw-bold mb-3 text-white">{{ $job->title }}</h2>
+                        <h2 class="display-6 fw-black mb-3 text-white">{{ $job->title }}</h2>
                         <div class="d-flex flex-wrap gap-3 small">
                             @if($job->bps_grade)
-                            <span class="d-flex align-items-center"><i class="ti ti-rosette me-2"></i> BPS-{{ $job->bps_grade }}</span>
+                            <span class="d-flex align-items-center badge bg-white bg-opacity-20 text-white rounded-pill px-3 py-2 fs-4 shadow-sm border border-white border-opacity-10"><i class="ti ti-rosette me-2 text-pats-gold"></i> BPS-{{ $job->bps_grade }}</span>
                             @endif
                             @if($job->department)
-                            <span class="d-flex align-items-center"><i class="ti ti-building me-2"></i> {{ $job->department }}</span>
+                            <span class="d-flex align-items-center badge bg-white bg-opacity-20 text-white rounded-pill px-3 py-2 fs-4 shadow-sm border border-white border-opacity-10"><i class="ti ti-building me-2 text-cyan"></i> {{ $job->department }}</span>
                             @endif
-                            <span class="d-flex align-items-center"><i class="ti ti-users me-2"></i> {{ $job->total_seats }} Allocated Seats</span>
+                            <span class="d-flex align-items-center badge bg-white bg-opacity-20 text-white rounded-pill px-3 py-2 fs-4 shadow-sm border border-white border-opacity-10"><i class="ti ti-users me-2 text-green"></i> {{ $job->total_seats }} Seats</span>
                         </div>
                     </div>
-                    <div class="col-md-3 text-md-end border-start-md border-white-50 ps-md-4">
-                        <div class="text-white-50 small mb-1">Application Fee</div>
-                        <div class="fw-bold fs-2 text-pats-gold" style="color: #f9ca24;">PKR {{ number_format($job->fee) }}</div>
+                    <div class="col-md-3 text-md-end border-start border-white border-opacity-25 ps-md-4 mt-3 mt-md-0">
+                        <div class="text-white-50 small mb-1 tracking-widest text-uppercase fw-bold">Processing Fee</div>
+                        <div class="fw-black display-6 text-yellow">PKR {{ number_format($job->fee) }}</div>
                     </div>
                 </div>
             </div>
@@ -71,9 +71,9 @@
         <div class="row row-cards">
             <!-- Criteria Display -->
             <div class="col-md-5 col-lg-4">
-                <div class="card shadow-sm border-0 h-100">
-                    <div class="card-header border-0 pb-0">
-                        <h3 class="card-title fw-bold"><i class="ti ti-list-check text-primary me-2"></i> Required Criteria</h3>
+                <div class="card shadow-lg border-0 rounded-5 h-100 overflow-hidden">
+                    <div class="card-header border-0 bg-light py-4 px-4">
+                        <h3 class="card-title fw-black fs-2 text-dark m-0"><i class="ti ti-list-check text-primary me-2"></i> Required Criteria</h3>
                     </div>
                     <div class="card-body">
                         <div class="datagrid">
@@ -137,9 +137,9 @@
 
             <!-- Application Form -->
             <div class="col-md-7 col-lg-8">
-                <div class="card shadow-sm border-0 border-top border-primary border-3 h-100">
-                    <div class="card-header border-0 pb-0">
-                        <h3 class="card-title fw-bold"><i class="ti ti-file-text text-primary me-2"></i> Application Configuration</h3>
+                <div class="card shadow-lg border-0 rounded-5 h-100 overflow-hidden">
+                    <div class="card-header border-0 bg-light py-4 px-4">
+                        <h3 class="card-title fw-black fs-2 text-dark m-0"><i class="ti ti-file-text text-primary me-2"></i> Application Configuration</h3>
                     </div>
                     <div class="card-body">
                         <form method="POST" action="{{ route('candidate.apply.store', $job) }}" autocomplete="off">
@@ -193,7 +193,7 @@
                                     <!-- Disclaimer/Declaration Hidden as per Client Request -->
                                     <input type="hidden" id="confirmDecl" value="1" required>
                                     
-                                    <button type="submit" class="btn btn-primary w-100 py-3 fs-3 fw-bold">
+                                    <button type="submit" class="btn btn-primary w-100 py-3 fs-3 fw-black rounded-pill shadow-sm hover-shadow-lg transition-all">
                                         <i class="ti ti-send me-2"></i> Submit Final Application
                                     </button>
                                 </div>

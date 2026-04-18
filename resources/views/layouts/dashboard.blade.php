@@ -135,7 +135,7 @@
                                     </div>
                                 </div>
                                 <div class="card-footer text-center">
-                                    <form method="POST" action="{{ route('admin.notifications.mark-all-read') }}">
+                                    <form method="POST" action="{{ route('global.notifications.mark-all-read') }}">
                                         @csrf
                                         <button type="submit" class="btn btn-link link-secondary btn-sm">Clear All</button>
                                     </form>
@@ -361,17 +361,42 @@
     <script src="{{ asset('assets/vendor/js/tabler.min.js') }}"></script>
     <script src="{{ asset('assets/vendor/js/tom-select.complete.min.js') }}"></script>
     <script src="{{ asset('assets/vendor/js/toastr.min.js') }}"></script>
+    <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
     {{-- ApexCharts is pushed by pages that need it via @push('scripts') --}}
     
     <!-- Initialize Toastr & Global Components -->
     <script>
         toastr.options = { "positionClass": "toast-bottom-right", "progressBar": true };
-        @if(session('success')) toastr.success(@json(session('success'))); @endif
-        @if(session('error')) toastr.error(@json(session('error'))); @endif
+        
+        @if(session('success'))
+            Swal.fire({
+                title: 'Success!',
+                text: @json(session('success')),
+                icon: 'success',
+                confirmButtonText: 'Great!',
+                customClass: { confirmButton: 'btn btn-primary rounded-pill shadow-sm px-4' },
+                buttonsStyling: false
+            });
+        @elseif(session('toast_success'))
+            toastr.success(@json(session('toast_success')));
+        @endif
+
+        @if(session('error'))
+            Swal.fire({
+                title: 'Action Required',
+                text: @json(session('error')),
+                icon: 'error',
+                confirmButtonText: 'Understood',
+                customClass: { confirmButton: 'btn btn-danger rounded-pill shadow-sm px-4' },
+                buttonsStyling: false
+            });
+        @elseif(session('toast_error'))
+            toastr.error(@json(session('toast_error')));
+        @endif
 
         // Real-time Notification Poller
         function pollNotifications() {
-            $.get("{{ route('admin.notifications.unread') }}", function(data) {
+            $.get("{{ route('global.notifications.unread') }}", function(data) {
                 const badge = $('#notif-badge');
                 const list  = $('#notif-list');
                 $('#notif-skeleton').remove(); // clear shimmer on first response
@@ -413,7 +438,7 @@
         }
 
         function markRead(id) {
-            $.post("{{ route('admin.notifications.mark-read') }}", { _token: "{{ csrf_token() }}", id: id }, function() {
+            $.post("{{ route('global.notifications.mark-read') }}", { _token: "{{ csrf_token() }}", id: id }, function() {
                 pollNotifications();
             });
         }
@@ -433,47 +458,26 @@
         });
     </script>
     <script>
-        // Global Confirmation Helper — uses branded Bootstrap modal instead of native confirm()
+        // Global Confirmation Helper — powered by SweetAlert2
         (function() {
-            let _confirmResolve = null;
-            // Inject the modal once
-            const modalHtml = `
-            <div class="modal fade" id="pats-confirm-modal" tabindex="-1" aria-hidden="true">
-              <div class="modal-dialog modal-sm modal-dialog-centered">
-                <div class="modal-content rounded-4 border-0 shadow-lg">
-                  <div class="modal-header border-0 pb-0">
-                    <div class="modal-title d-flex align-items-center gap-2">
-                      <span class="avatar avatar-sm bg-warning-lt text-warning rounded-3" id="pats-confirm-icon"><i class="ti ti-alert-triangle"></i></span>
-                      <span id="pats-confirm-title" class="fw-bold">Confirm Action</span>
-                    </div>
-                  </div>
-                  <div class="modal-body pt-2 text-muted small" id="pats-confirm-body"></div>
-                  <div class="modal-footer border-0 pt-0 gap-2">
-                    <button class="btn btn-secondary btn-sm rounded-pill px-3" data-bs-dismiss="modal">Cancel</button>
-                    <button class="btn btn-sm rounded-pill px-3" id="pats-confirm-ok">Confirm</button>
-                  </div>
-                </div>
-              </div>
-            </div>`;
-            document.body.insertAdjacentHTML('beforeend', modalHtml);
-
-            const modalEl  = document.getElementById('pats-confirm-modal');
-            const bsModal  = new bootstrap.Modal(modalEl);
-            const okBtn    = document.getElementById('pats-confirm-ok');
-            const bodyEl   = document.getElementById('pats-confirm-body');
-            const iconEl   = document.getElementById('pats-confirm-icon');
-            const okColors = { warning: 'btn-warning', danger: 'btn-danger', primary: 'btn-primary' };
-
-            modalEl.addEventListener('hidden.bs.modal', () => { if (_confirmResolve) { _confirmResolve(false); _confirmResolve = null; } });
-            okBtn.addEventListener('click', () => { if (_confirmResolve) { _confirmResolve(true); _confirmResolve = null; } bsModal.hide(); });
-
             window.confirmAction = function(message, type = 'warning') {
-                return new Promise(resolve => {
-                    _confirmResolve = resolve;
-                    bodyEl.textContent = message;
-                    okBtn.className = 'btn btn-sm rounded-pill px-3 ' + (okColors[type] || 'btn-warning');
-                    iconEl.className = 'avatar avatar-sm bg-' + type + '-lt text-' + type + ' rounded-3';
-                    bsModal.show();
+                const colors = { warning: 'btn-warning', danger: 'btn-danger', primary: 'btn-primary' };
+                const btnClass = colors[type] || 'btn-primary';
+                
+                return Swal.fire({
+                    title: 'Confirm Action',
+                    text: message,
+                    icon: type === 'danger' ? 'error' : type,
+                    showCancelButton: true,
+                    confirmButtonText: 'Yes, proceed',
+                    cancelButtonText: 'Cancel',
+                    customClass: {
+                        confirmButton: `btn ${btnClass} rounded-pill px-4 shadow-sm me-2`,
+                        cancelButton: 'btn btn-secondary rounded-pill px-4 shadow-sm'
+                    },
+                    buttonsStyling: false
+                }).then((result) => {
+                    return result.isConfirmed;
                 });
             };
         })();

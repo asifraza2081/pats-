@@ -3,8 +3,20 @@
 
 @section('content')
 <div class="row row-cards">
+    <div class="col-12 mb-2">
+        <div class="card border-0 shadow-sm rounded-5 overflow-hidden text-white" style="background: linear-gradient(135deg, #0a3d62 0%, #174b76 100%);">
+            <div class="card-body p-4 p-md-5 d-flex align-items-center">
+                <div class="bg-white bg-opacity-20 p-3 rounded-circle me-4 d-none d-md-flex">
+                    <i class="ti ti-folder fs-1 text-white"></i>
+                </div>
+                <div>
+                    <h2 class="display-6 fw-black mb-1">My Applications</h2>
+                    <p class="m-0 fs-3 opacity-75">Track the status of all your submitted job applications and download your slips.</p>
+                </div>
+            </div>
+        </div>
+    </div>
     <div class="col-12">
-        <h2 class="mb-4">My Submitted Applications</h2>
 
         @if($applications->isEmpty())
         <div class="empty bg-white rounded border">
@@ -24,54 +36,54 @@
         @else
         <div class="d-flex flex-column gap-3">
             @foreach($applications as $app)
-            <div class="card shadow-sm">
-                <div class="card-body">
-                    <div class="row align-items-center">
-                        <div class="col-md-6 mb-3 mb-md-0">
-                            <div class="text-muted small mb-1"><i class="ti ti-building me-1"></i> {{ $app->job->project->org_name }}</div>
-                            <h3 class="m-0 fw-bold fs-3 text-pats-primary">{{ $app->job->title }}</h3>
+                <div class="card border-0 shadow-lg rounded-5 overflow-hidden transition-all hover-shadow-xl" style="border-left: 6px solid var(--pats-primary) !important;">
+                <div class="card-body p-4 p-md-5 bg-white">
+                    <div class="row align-items-center g-4">
+                        <div class="col-md-6">
+                            <div class="opacity-75 small mb-2 fw-bold tracking-widest text-uppercase"><i class="ti ti-building me-1"></i> {{ $app->job->project->org_name }}</div>
+                            <h3 class="m-0 fw-black fs-2 text-dark">{{ $app->job->title }}</h3>
                             
-                            <div class="d-flex flex-wrap gap-3 mt-2 small text-muted">
+                            <div class="d-flex flex-wrap gap-3 mt-3">
                                 @if($app->job->bps_grade)
-                                <span><i class="ti ti-rosette me-1"></i> BPS-{{ $app->job->bps_grade }}</span>
+                                <span class="badge bg-light text-dark shadow-sm border border-secondary border-opacity-25 px-3 py-2 rounded-pill"><i class="ti ti-rosette me-1 text-primary"></i> BPS-{{ $app->job->bps_grade }}</span>
                                 @endif
                                 @if($app->examRollno)
-                                <span><i class="ti ti-building-bank me-1"></i> {{ $app->examRollno->center->name ?? 'N/A' }}</span>
+                                <span class="badge bg-light text-dark shadow-sm border border-secondary border-opacity-25 px-3 py-2 rounded-pill"><i class="ti ti-building-bank me-1 text-primary"></i> {{ $app->examRollno->center->name ?? 'N/A' }}</span>
                                 @endif
                             </div>
                         </div>
 
-                        <div class="col-md-3 mb-3 mb-md-0">
-                            <div class="text-muted small mb-1">Application Status</div>
-                            <span class="badge bg-{{ $app->status->color() }} text-{{ $app->status->color() }}-fg px-3 py-2 text-uppercase tracking-wide fs-5">
+                        <div class="col-md-3 border-start border-md-0 ps-md-4">
+                            <div class="text-muted small mb-2 fw-bold tracking-widest">CURRENT STATUS</div>
+                            <span class="badge bg-{{ $app->status->color() }}-lt text-{{ $app->status->color() }} px-3 py-2 rounded-pill shadow-sm text-uppercase tracking-wide">
                                 {{ $app->status->label() }}
                             </span>
                             
                             @if($app->status === \App\Enums\ApplicationStatus::SCHEDULED && !$app->examRollno)
-                            <div class="text-info small mt-1"><i class="ti ti-hourglass-empty me-1"></i> Assigning center...</div>
+                            <div class="text-info small mt-2 fw-bold"><i class="ti ti-loader ti-spin me-1"></i> Assigning center...</div>
                             @endif
                         </div>
 
-                        <div class="col-md-3 d-flex flex-column gap-2 text-md-end">
-                            <a href="{{ route('candidate.applications.show', $app) }}" class="btn btn-outline-secondary btn-sm">
+                        <div class="col-md-3 d-flex flex-column gap-2 text-md-end border-start border-md-0 ps-md-4">
+                            <a href="{{ route('candidate.applications.show', $app) }}" class="btn btn-outline-secondary rounded-pill shadow-sm fw-bold">
                                 <i class="ti ti-eye me-1"></i> View Details
                             </a>
                             
                             @if($app->status === \App\Enums\ApplicationStatus::SUBMITTED && $app->payment)
-                            <a href="{{ URL::patsDownload($app, 'challan') }}" class="btn btn-warning btn-sm" target="_blank">
-                                <i class="ti ti-download me-1"></i> Download Challan
+                            <a href="{{ URL::patsDownload($app, 'challan') }}" class="btn btn-dark rounded-pill shadow-sm fw-bold" target="_blank">
+                                <i class="ti ti-receipt me-1"></i> Download Challan
                             </a>
                             @endif
                             
                             @if($app->examRollno && $app->examRollno->roll_no)
-                            <a href="{{ URL::patsDownload($app, 'slip') }}" class="btn btn-success btn-sm" target="_blank">
+                            <a href="{{ URL::patsDownload($app, 'slip') }}" class="btn btn-teal rounded-pill shadow-sm fw-bold" target="_blank">
                                 <i class="ti ti-ticket me-1"></i> Roll No Slip
                             </a>
                             @endif
                             
                             @if($app->result?->isPublished())
-                            <a href="{{ route('candidate.result', $app) }}" class="btn btn-info btn-sm">
-                                <i class="ti ti-chart-bar me-1"></i> View Result
+                            <a href="{{ route('candidate.result', $app) }}" class="btn btn-green rounded-pill shadow-sm fw-bold">
+                                <i class="ti ti-award me-1"></i> View Result Report
                             </a>
                             @endif
                         </div>
@@ -79,18 +91,18 @@
                 </div>
                 
                 @if($app->examRollno && $app->examRollno->batch?->test_date)
-                <div class="card-footer bg-transparent py-3">
-                    <div class="row align-items-center small text-muted">
-                        <div class="col-12 col-md-auto mb-2 mb-md-0">
-                            <i class="ti ti-calendar text-success me-1"></i> Test Date: <strong class="text-dark">{{ \Carbon\Carbon::parse($app->examRollno->batch->test_date)->format('d M Y') }}</strong>
+                <div class="card-footer bg-light bg-opacity-50 py-3 px-4 px-md-5 border-0 border-top">
+                    <div class="row align-items-center small">
+                        <div class="col-12 col-md-auto mb-2 mb-md-0 fw-bold">
+                            <i class="ti ti-calendar text-primary me-1 fs-3"></i> Test Date: <strong class="text-dark">{{ \Carbon\Carbon::parse($app->examRollno->batch->test_date)->format('d M Y') }}</strong>
                         </div>
-                        <div class="col-12 col-md-auto mb-2 mb-md-0">
-                            <i class="ti ti-clock text-warning me-1"></i> Reporting Time: <strong class="text-dark">{{ $app->examRollno->batch->reporting_time ? \Carbon\Carbon::parse($app->examRollno->batch->reporting_time)->format('h:i A') : 'TBD' }}</strong>
+                        <div class="col-12 col-md-auto mb-2 mb-md-0 ms-md-4 fw-bold">
+                            <i class="ti ti-clock text-warning me-1 fs-3"></i> Reporting Time: <strong class="text-dark">{{ $app->examRollno->batch->reporting_time ? \Carbon\Carbon::parse($app->examRollno->batch->reporting_time)->format('h:i A') : 'TBD' }}</strong>
                         </div>
-                        <div class="col-12 col-md-auto mb-2 mb-md-0">
-                            <i class="ti ti-map-pin text-primary me-1"></i> City: <strong class="text-dark">{{ $app->examRollno->city->name ?? 'N/A' }}</strong>
+                        <div class="col-12 col-md-auto mb-2 mb-md-0 ms-md-4 fw-bold">
+                            <i class="ti ti-map-pin text-danger me-1 fs-3"></i> City: <strong class="text-dark">{{ $app->examRollno->city->name ?? 'N/A' }}</strong>
                         </div>
-                        <div class="col-12 col-md-auto ms-md-auto ms-auto">
+                        <div class="col-12 col-md-auto ms-md-auto ms-auto opacity-75">
                             Applied: {{ $app->applied_at->format('d M Y') }}
                         </div>
                     </div>

@@ -52,9 +52,9 @@
             @csrf @method('PUT')
             
             <!-- Personal Info & Address Consolidated -->
-            <div class="card mb-4 border-0 shadow-sm rounded-4 overflow-hidden" id="personal">
-                <div class="card-header bg-pats-primary py-3">
-                    <h3 class="card-title text-white m-0 fw-black"><i class="ti ti-user-check me-2"></i> General Profile Information</h3>
+            <div class="card mb-4 border-0 shadow-lg rounded-5 overflow-hidden" id="personal">
+                <div class="card-header border-0 py-4 px-5 text-white" style="background: linear-gradient(135deg, #0a3d62 0%, #1e5a8c 100%);">
+                    <h3 class="card-title text-white m-0 fw-black fs-2"><i class="ti ti-user-check me-2 fs-1"></i> General Profile Information</h3>
                 </div>
                 <div class="card-body p-4 p-md-5">
                     <div class="row g-4">
@@ -177,10 +177,10 @@
         </form>
 
         <!-- Education History (Collections - AJAX) -->
-        <div class="card mb-4 border-0 shadow-sm rounded-4 overflow-hidden" id="education">
-            <div class="card-header bg-indigo py-3 d-flex justify-content-between align-items-center">
-                <h3 class="card-title text-white m-0 fw-black"><i class="ti ti-school me-2"></i> Education Records</h3>
-                <button type="button" class="btn btn-white btn-sm fw-bold rounded-pill" data-bs-toggle="collapse" data-bs-target="#addEduForm">
+        <div class="card mb-4 border-0 shadow-lg rounded-5 overflow-hidden" id="education">
+            <div class="card-header border-0 py-4 px-5 text-white d-flex justify-content-between align-items-center" style="background: linear-gradient(135deg, #4f46e5 0%, #312e81 100%);">
+                <h3 class="card-title text-white m-0 fw-black fs-2"><i class="ti ti-school me-2 fs-1 text-white opacity-75"></i> Education Records</h3>
+                <button type="button" class="btn bg-white text-indigo btn-sm fw-bold rounded-pill px-3 shadow-sm hover-bg-light" data-bs-toggle="collapse" data-bs-target="#addEduForm">
                     <i class="ti ti-plus me-1"></i> ADD EDUCATION
                 </button>
             </div>
@@ -235,10 +235,10 @@
         </div>
 
         <!-- Experience (Collections - AJAX) -->
-        <div class="card mb-4 border-0 shadow-sm rounded-4 overflow-hidden" id="experience">
-            <div class="card-header bg-secondary py-3 d-flex justify-content-between align-items-center">
-                <h3 class="card-title text-white m-0 fw-black"><i class="ti ti-briefcase me-2"></i> Work Experience</h3>
-                <button type="button" class="btn btn-white btn-sm fw-bold rounded-pill" data-bs-toggle="collapse" data-bs-target="#addExpForm">
+        <div class="card mb-4 border-0 shadow-lg rounded-5 overflow-hidden" id="experience">
+            <div class="card-header border-0 py-4 px-5 text-white d-flex justify-content-between align-items-center" style="background: linear-gradient(135deg, #0f766e 0%, #134e4a 100%);">
+                <h3 class="card-title text-white m-0 fw-black fs-2"><i class="ti ti-briefcase me-2 fs-1 text-white opacity-75"></i> Work Experience</h3>
+                <button type="button" class="btn bg-white text-teal btn-sm fw-bold rounded-pill px-3 shadow-sm hover-bg-light" data-bs-toggle="collapse" data-bs-target="#addExpForm">
                     <i class="ti ti-plus me-1"></i> ADD EXPERIENCE
                 </button>
             </div>

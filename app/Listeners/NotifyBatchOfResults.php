@@ -26,6 +26,13 @@ class NotifyBatchOfResults implements ShouldQueue
                 $user->id,
                 'result_published'
             );
+            
+            // Real-time Dashboard Notification
+            $user->notify(new \App\Notifications\SystemAlert(
+                "Your result for {$app->job->title} has been declared. Click to check your score.",
+                'info',
+                route('candidate.applications.show', $app->id)
+            ));
 
             // Email Notification
             \Illuminate\Support\Facades\Mail::to($user->email)->send(new \App\Mail\ResultPublishedMail($app));

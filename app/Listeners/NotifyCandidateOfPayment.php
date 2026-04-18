@@ -19,5 +19,11 @@ class NotifyCandidateOfPayment implements ShouldQueue
             $user->id,
             'payment_verified'
         );
+        
+        $user->notify(new \App\Notifications\SystemAlert(
+            "Payment of PKR {$payment->amount} (Ref: {$payment->challan_ref}) verified.",
+            'success',
+            route('candidate.applications.show', $payment->application_id)
+        ));
     }
 }

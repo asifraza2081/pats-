@@ -57,6 +57,16 @@ Route::middleware('guest')->group(function () {
 Route::post('/logout', [AuthController::class, 'logout'])->name('auth.logout');
 
 // ═══════════════════════════════════════════════════
+// GLOBAL AUTH ROUTES (Both Candidate & Admin)
+// ═══════════════════════════════════════════════════
+Route::middleware(['auth'])->group(function () {
+    // Notifications API
+    Route::get('notifications/unread', [Admin\NotificationController::class, 'unread'])->name('global.notifications.unread');
+    Route::post('notifications/mark-read', [Admin\NotificationController::class, 'markAsRead'])->name('global.notifications.mark-read');
+    Route::post('notifications/mark-all-read', [Admin\NotificationController::class, 'markAllAsRead'])->name('global.notifications.mark-all-read');
+});
+
+// ═══════════════════════════════════════════════════
 // CANDIDATE ROUTES
 // ═══════════════════════════════════════════════════
 Route::middleware(['auth', 'role:candidate', 'sanitize', \App\Http\Middleware\InactivityLogout::class])->prefix('candidate')->name('candidate.')->group(function () {
@@ -152,11 +162,6 @@ Route::middleware(['auth', 'role:admin|data_entry|super_admin', 'sanitize', \App
     Route::post('results/upload', [Admin\ResultController::class, 'upload'])->name('results.upload.post');
     Route::post('results/publish/{project}', [Admin\ResultController::class, 'publish'])->name('results.publish');
     Route::get('results/{app}', [Admin\ResultController::class, 'show'])->name('results.show');
-
-    // Notifications API
-    Route::get('notifications/unread', [Admin\NotificationController::class, 'unread'])->name('notifications.unread');
-    Route::post('notifications/mark-read', [Admin\NotificationController::class, 'markAsRead'])->name('notifications.mark-read');
-    Route::post('notifications/mark-all-read', [Admin\NotificationController::class, 'markAllAsRead'])->name('notifications.mark-all-read');
 
     // Attendance Sheets
     Route::get('attendance', [Admin\AttendanceController::class, 'index'])->name('attendance.index');

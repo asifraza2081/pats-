@@ -1,58 +1,51 @@
-@extends('layouts.public')
+@extends('layouts.auth')
 @section('title', 'Reset Password — PATS')
 
 @section('content')
-<div class="page page-center h-100">
-    <div class="container container-tight py-5">
-        <div class="text-center mb-4 mt-5">
-            <a href="{{ route('home') }}" class="navbar-brand navbar-brand-autodark">
-                <i class="ti ti-award text-pats-gold fs-1 me-2" style="color: #f9ca24;"></i>
-                <span class="fs-1 fw-bold text-pats-primary" style="color: #0a3d62;">PATS</span>
-            </a>
-        </div>
-        
-        <div class="card card-md shadow-sm border-0 rounded-3">
-            <div class="card-body py-5 px-sm-5 text-center">
-                <i class="ti ti-lock-check text-success fs-1 mb-3 d-block" style="font-size: 3rem !important;"></i>
-                <h2 class="h2 text-center mb-1 fw-bold">Set New Password</h2>
-                <p class="text-muted text-center small mb-4">You have successfully verified your identity. Please create a new strong password.</p>
-
-                @if($errors->any())
-                <div class="alert alert-important alert-danger alert-dismissible" role="alert">
-                    <div class="d-flex">
-                        <div><i class="ti ti-alert-circle fs-2 me-2"></i></div>
-                        <div>{{ $errors->first() }}</div>
-                    </div>
-                </div>
-                @endif
-
-                <form method="POST" action="{{ route('auth.reset-password') }}" class="text-start" autocomplete="off">
-                    @csrf
-                    <input type="hidden" name="token" value="{{ $token }}">
-                    <input type="hidden" name="email" value="{{ $email }}">
-                    
-                    <div class="mb-3">
-                        <label class="form-label required">New Password</label>
-                        <input type="password" name="password" class="form-control" placeholder="Min 8 characters" minlength="8" required>
-                    </div>
-                    <div class="mb-4">
-                        <label class="form-label required">Confirm New Password</label>
-                        <input type="password" name="password_confirmation" class="form-control" placeholder="Type password again" required>
-                    </div>
-                    
-                    <div class="form-footer mt-2">
-                        <button type="submit" class="btn btn-success w-100 fw-bold py-2"><i class="ti ti-device-floppy me-2"></i> Save & Login</button>
-                    </div>
-                </form>
-            </div>
-        </div>
-    </div>
+<div class="text-center mb-4">
+    <i class="ti ti-lock-check text-green fs-1 d-block mx-auto mb-3" style="font-size: 3rem !important;"></i>
+    <h2 class="h2 mb-1 fw-black text-dark">Set New Password</h2>
+    <p class="text-muted small mb-4">You have successfully verified your identity. Please create a new strong password.</p>
 </div>
 
-@push('styles')
-<style>
-    body.layout-fluid .page-body { margin-top: 0 !important; }
-    .page-center { min-height: 70vh; display: flex; flex-direction: column; justify-content: center; }
-</style>
-@endpush
+@if($errors->any())
+<div class="alert alert-important alert-danger alert-dismissible rounded-4" role="alert">
+    <div class="d-flex">
+        <div><i class="ti ti-alert-circle fs-2 me-2"></i></div>
+        <div>{{ $errors->first() }}</div>
+    </div>
+</div>
+@endif
+
+<form method="POST" action="{{ route('auth.reset-password') }}" autocomplete="off">
+    @csrf
+    <input type="hidden" name="token" value="{{ $token }}">
+    <input type="hidden" name="email" value="{{ $email }}">
+    
+    <div class="mb-3">
+        <label class="form-label required small tracking-widest text-dark opacity-60">New Password</label>
+        <div class="input-group input-group-flat border border-dark border-opacity-10 rounded-pill overflow-hidden bg-light px-2 py-1">
+            <span class="input-group-text bg-transparent border-0 pe-2">
+                <i class="ti ti-lock text-pats-primary fs-3"></i>
+            </span>
+            <input type="password" name="password" class="form-control border-0 bg-transparent shadow-none" placeholder="Min 8 characters" minlength="8" required>
+        </div>
+    </div>
+    
+    <div class="mb-4">
+        <label class="form-label required small tracking-widest text-dark opacity-60">Confirm New Password</label>
+        <div class="input-group input-group-flat border border-dark border-opacity-10 rounded-pill overflow-hidden bg-light px-2 py-1">
+            <span class="input-group-text bg-transparent border-0 pe-2">
+                <i class="ti ti-lock-check text-pats-primary fs-3"></i>
+            </span>
+            <input type="password" name="password_confirmation" class="form-control border-0 bg-transparent shadow-none" placeholder="Type password again" required>
+        </div>
+    </div>
+    
+    <div class="form-footer mt-5">
+        <button type="submit" class="btn btn-green w-100 rounded-pill py-3 fw-bold fs-3 text-uppercase tracking-widest shadow-sm">
+            <i class="ti ti-device-floppy me-2"></i> Save & Login
+        </button>
+    </div>
+</form>
 @endsection

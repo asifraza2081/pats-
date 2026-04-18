@@ -22,6 +22,12 @@ class NotifyBatchOfSlips implements ShouldQueue
                     $user->id,
                     'slip_ready'
                 );
+                
+                $user->notify(new \App\Notifications\SystemAlert(
+                    "Your Test Session Slip for {$app->job->title} has been assigned. Click to view.",
+                    'success',
+                    route('candidate.applications.show', $app->id)
+                ));
             }
         }
     }
