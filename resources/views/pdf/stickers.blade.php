@@ -84,7 +84,7 @@
   @for ($row = 0; $row < 10; $row++)
   <tr>
     @for ($col = 0; $col < 3; $col++)
-    @php $idx = $row * 3 + $col; $roll = $slice[$idx] ?? null; @endphp
+    @php $idx = $col * 10 + $row; $roll = $slice[$idx] ?? null; @endphp
     @if($roll)
     <td class="sticker-cell">
       <span class="roll-no">{{ $roll->roll_no }}</span>
