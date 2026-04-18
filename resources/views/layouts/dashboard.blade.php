@@ -366,6 +366,7 @@
     <script src="{{ asset('assets/vendor/js/tabler.min.js') }}"></script>
     <script src="{{ asset('assets/vendor/js/tom-select.complete.min.js') }}"></script>
     <script src="{{ asset('assets/vendor/js/toastr.min.js') }}"></script>
+    <script src="{{ asset('assets/vendor/js/apexcharts.min.js') }}"></script>
     
     <!-- Initialize Toastr & Global Components -->
     <script>

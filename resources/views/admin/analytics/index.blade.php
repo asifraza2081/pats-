@@ -84,6 +84,63 @@
                 </div>
             </div>
 
+            <!-- Geographical & Demographic Charts -->
+            <div class="row g-3 mb-4">
+                <div class="col-lg-6">
+                    <div class="card shadow-sm border-0 rounded-4">
+                        <div class="card-header border-0 bg-transparent pb-0">
+                            <h3 class="card-title fw-bold text-dark"><i class="ti ti-chart-bar me-2"></i> Application Funnel</h3>
+                        </div>
+                        <div class="card-body">
+                            <div id="chart-funnel"></div>
+                        </div>
+                    </div>
+                </div>
+                <div class="col-lg-3">
+                    <div class="card shadow-sm border-0 rounded-4 h-100">
+                        <div class="card-header border-0 bg-transparent pb-0">
+                            <h3 class="card-title fw-bold text-dark">Gender Spread</h3>
+                        </div>
+                        <div class="card-body">
+                            <div id="chart-gender"></div>
+                        </div>
+                    </div>
+                </div>
+                <div class="col-lg-3">
+                    <div class="card shadow-sm border-0 rounded-4 h-100">
+                        <div class="card-header border-0 bg-transparent pb-0">
+                            <h3 class="card-title fw-bold text-dark">Age Groups</h3>
+                        </div>
+                        <div class="card-body">
+                            <div id="chart-age"></div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="row g-3 mb-4">
+                <div class="col-lg-6">
+                    <div class="card shadow-sm border-0 rounded-4 h-100">
+                        <div class="card-header border-0 bg-transparent pb-0">
+                            <h3 class="card-title fw-bold text-dark">Test City Distribution</h3>
+                        </div>
+                        <div class="card-body">
+                            <div id="chart-geography"></div>
+                        </div>
+                    </div>
+                </div>
+                <div class="col-lg-6">
+                    <div class="card shadow-sm border-0 rounded-4 h-100">
+                        <div class="card-header border-0 bg-transparent pb-0">
+                            <h3 class="card-title fw-bold text-dark">Domicile Province Distribution</h3>
+                        </div>
+                        <div class="card-body">
+                            <div id="chart-domicile"></div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
             <!-- Deep Breakdown -->
             @foreach($groupedCandidates as $city => $paymentGroups)
                 <div class="card shadow-sm border-0 mb-4 rounded-4 overflow-hidden">
@@ -225,8 +282,83 @@ function ajaxMarkPaid(url, button) {
 }
 
 document.addEventListener('DOMContentLoaded', () => {
-    // Add Select All logic if needed for many city groups
-    // The current template handles individual city-status groups
+    @if($selectedJob && isset($analytics))
+    // Chart Color Palette
+    const colors = ['#008FFB', '#00E396', '#FEB019', '#FF4560', '#775DD0', '#546E7A', '#26a69a', '#D10CE8'];
+
+    // 1. Funnel Chart (Bar)
+    const funnelOptions = {
+        series: [{
+            name: 'Candidates',
+            data: [
+                {{ $analytics['total_applied'] }}, 
+                {{ $analytics['paid_eligible'] }}, 
+                {{ $analytics['allocated'] }}
+            ]
+        }],
+        chart: { type: 'bar', height: 350, toolbar: { show: false } },
+        plotOptions: { bar: { horizontal: true, distributed: true, dataLabels: { position: 'top' } } },
+        colors: ['#3b82f6', '#10b981', '#6366f1'],
+        dataLabels: { enabled: true, offsetX: -6, style: { fontSize: '12px', colors: ['#fff'] } },
+        xaxis: { categories: ['Applied', 'Paid/Verified', 'Allocated'] },
+        title: { text: 'Candidate Funnel Progression', align: 'center' }
+    };
+    new ApexCharts(document.querySelector("#chart-funnel"), funnelOptions).render();
+
+    // 2. Gender Chart (Donut)
+    const genderOptions = {
+        series: [{{ $analytics['gender']['Male'] }}, {{ $analytics['gender']['Female'] }}, {{ $analytics['gender']['Other'] }}],
+        chart: { type: 'donut', height: 300 },
+        labels: ['Male', 'Female', 'Other'],
+        colors: ['#206bc4', '#d63384', '#616876'],
+        legend: { position: 'bottom' },
+        plotOptions: { pie: { donut: { size: '65%' } } }
+    };
+    new ApexCharts(document.querySelector("#chart-gender"), genderOptions).render();
+
+    // 3. Age Groups (Pie)
+    const ageOptions = {
+        series: [
+            {{ $analytics['age_groups']['18-25'] }}, 
+            {{ $analytics['age_groups']['26-30'] }}, 
+            {{ $analytics['age_groups']['31-40'] }}, 
+            {{ $analytics['age_groups']['41+'] }}
+        ],
+        chart: { type: 'pie', height: 300 },
+        labels: ['18-25', '26-30', '31-40', '41+'],
+        colors: ['#10b981', '#3b82f6', '#f59e0b', '#ef4444'],
+        legend: { position: 'bottom' }
+    };
+    new ApexCharts(document.querySelector("#chart-age"), ageOptions).render();
+
+    // 4. Geography Chart (Bar)
+    const geoOptions = {
+        series: [{
+            name: 'Candidates',
+            data: {!! json_encode(array_values($analytics['geography'])) !!}
+        }],
+        chart: { type: 'bar', height: 350 },
+        plotOptions: { bar: { borderRadius: 4, horizontal: false } },
+        xaxis: { categories: {!! json_encode(array_keys($analytics['geography'])) !!} },
+        colors: ['#008FFB'],
+        title: { text: 'Requested Test Cities', align: 'left' }
+    };
+    new ApexCharts(document.querySelector("#chart-geography"), geoOptions).render();
+
+    // 5. Domicile Chart (Bar)
+    const domOptions = {
+        series: [{
+            name: 'Candidates',
+            data: {!! json_encode(array_values($analytics['domicile'])) !!}
+        }],
+        chart: { type: 'bar', height: 350 },
+        plotOptions: { bar: { borderRadius: 4, horizontal: true } },
+        xaxis: { categories: {!! json_encode(array_keys($analytics['domicile'])) !!} },
+        colors: ['#FEB019'],
+        title: { text: 'Candidates Domicile (Province)', align: 'left' }
+    };
+    new ApexCharts(document.querySelector("#chart-domicile"), domOptions).render();
+    @endif
 });
 </script>
 @endpush

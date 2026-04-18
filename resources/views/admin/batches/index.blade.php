@@ -211,22 +211,49 @@
 @push('scripts')
 <script>
 const stickerBaseUrl = "{{ route('admin.batches.stickers') }}";
+const stickerCheckUrl = "{{ route('admin.batches.stickers.check') }}";
 
-function openStickerPrint(el) {
+function openStickerPrint(el, batchId = null) {
     const from = document.getElementById('sticker-roll-from').value.trim();
     const to   = document.getElementById('sticker-roll-to').value.trim();
+    
     if (!from || !to) {
-        alert('Please enter both Roll No From and Roll No To.');
+        toastr.warning('Please enter both Roll No From and Roll No To.');
         return false;
     }
-    el.href = stickerBaseUrl + '?roll_from=' + encodeURIComponent(from) + '&roll_to=' + encodeURIComponent(to);
-    return true; // allow link to open in new tab
+
+    // Pre-flight check to see if roll numbers actually exist
+    let checkUrl = `${stickerCheckUrl}?roll_from=${encodeURIComponent(from)}&roll_to=${encodeURIComponent(to)}`;
+    if (batchId) checkUrl += `&batch_id=${batchId}`;
+
+    fetch(checkUrl)
+        .then(response => response.json())
+        .then(data => {
+            if (data.count > 0) {
+                let printUrl = `${stickerBaseUrl}?roll_from=${encodeURIComponent(from)}&roll_to=${encodeURIComponent(to)}`;
+                if (batchId) printUrl += `&batch_id=${batchId}`;
+                window.open(printUrl, '_blank');
+            } else {
+                toastr.error('No roll numbers found in this range. Please check your boundaries.');
+            }
+        })
+        .catch(err => toastr.error('Communication error with seat engine.'));
+
+    return false; // prevent default since we use window.open
+}
+
+function printBatchStickers(from, to, batchId) {
+    document.getElementById('sticker-roll-from').value = from;
+    document.getElementById('sticker-roll-to').value = to;
+    openStickerPrint(null, batchId);
 }
 
 document.addEventListener('DOMContentLoaded', function () {
     const projectSelector = document.getElementById('project-selector');
     const container = document.getElementById('center-list-container');
     const loader = document.getElementById('portal-loading');
+    const fromInput = document.getElementById('sticker-roll-from');
+    const toInput   = document.getElementById('sticker-roll-to');
 
     // Initialize TomSelect if available
     let tsInstance = null;
@@ -241,6 +268,8 @@ document.addEventListener('DOMContentLoaded', function () {
         const projectId = this.value;
         if (!projectId) {
             container.innerHTML = `<div class="text-center text-secondary py-5"><i class="ti ti-building-broadcast shadow-sm p-4 rounded-circle bg-white mb-3 text-primary border" style="font-size: 3rem;"></i><p class="mb-0">Select a project above to list centers and generate documents.</p></div>`;
+            fromInput.value = '';
+            toInput.value = '';
             return;
         }
 
@@ -252,20 +281,27 @@ document.addEventListener('DOMContentLoaded', function () {
         fetch(url)
             .then(response => response.json())
             .then(data => {
+                loader.classList.remove('d-none'); // Just to ensure it hides on next step
+                
+                // Auto-populate roll number bounds
+                fromInput.value = data.min_roll || '';
+                toInput.value = data.max_roll || '';
+
                 loader.classList.add('d-none');
-                if (data.length === 0) {
+                if (!data.centers || data.centers.length === 0) {
                     container.innerHTML = `<div class="alert alert-info border-0 shadow-sm rounded-3">
                         <i class="ti ti-info-circle me-2"></i> No active test sessions or centers found for this project.
                     </div>`;
                     return;
                 }
 
+                const centers = data.centers;
                 const exportUrlBase = "{{ route('admin.batches.export', ':id') }}";
                 let html = `
                     <div class="d-flex justify-content-between align-items-end mb-3 pb-2 border-bottom">
                         <div>
                             <h4 class="m-0 fw-bold text-dark">Centers & Sessions Map</h4>
-                            <small class="text-muted">Total active centers: ${data.length}</small>
+                            <small class="text-muted">Total active centers: ${centers.length}</small>
                         </div>
                         <a href="${exportUrlBase.replace(':id', projectId)}" class="btn btn-success fw-bold">
                             <i class="ti ti-file-spreadsheet me-2"></i> Export Master List (CSV)
@@ -273,7 +309,7 @@ document.addEventListener('DOMContentLoaded', function () {
                     </div>
                     <div class="row g-3">
                 `;
-                data.forEach(center => {
+                centers.forEach(center => {
                     html += `
                         <div class="col-12">
                             <div class="card card-sm border-0 shadow-sm hover-lift">
@@ -301,15 +337,18 @@ document.addEventListener('DOMContentLoaded', function () {
                                                     </div>
                                                 </div>
                                                 <div class="btn-group shadow-sm">
-                                                    <a href="${batch.slips_url}" target="_blank" class="btn btn-white btn-sm px-3" title="Generate Roll Number Slips">
+                                                    <a href="${batch.slips_url}" target="_blank" class="btn btn-white btn-sm px-2" title="Generate Roll Number Slips">
                                                         <i class="ti ti-id me-1"></i> Slips
                                                     </a>
-                                                    <a href="${batch.attendance_url}" target="_blank" class="btn btn-white btn-sm px-3" title="Generate Attendance List">
+                                                    <a href="${batch.attendance_url}" target="_blank" class="btn btn-white btn-sm px-2" title="Generate Attendance List">
                                                         <i class="ti ti-file-text me-1 text-info"></i> Sheet
                                                     </a>
-                                                    <a href="${batch.omr_url}" target="_blank" class="btn btn-white btn-sm px-3" title="Generate Answer Sheets">
+                                                    <a href="${batch.omr_url}" target="_blank" class="btn btn-white btn-sm px-2" title="Generate Answer Sheets">
                                                         <i class="ti ti-circle-check me-1 text-warning"></i> OMR
                                                     </a>
+                                                    <button type="button" class="btn btn-white btn-sm px-2" onclick="printBatchStickers('${batch.min_roll}', '${batch.max_roll}', '${batch.id}')" title="Generate Roll Number Stickers">
+                                                        <i class="ti ti-tag me-1 text-success"></i> Stickers
+                                                    </button>
                                                 </div>
                                             </div>
                                         `).join('')}

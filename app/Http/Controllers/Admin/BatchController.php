@@ -476,7 +476,7 @@ class BatchController extends Controller
         $roster = $query->get();
 
         if ($roster->isEmpty()) {
-            abort(404, 'No roll numbers found in the given range. Please check the starting and ending roll numbers.');
+            return redirect()->route('admin.batches.index')->with('error', 'No roll numbers found in the given range.');
         }
 
         // Use context from first record
@@ -492,6 +492,18 @@ class BatchController extends Controller
 
         $safeName = "Stickers_{$request->roll_from}-{$request->roll_to}";
         return $pdf->stream("{$safeName}.pdf");
+    }
+
+    /**
+     * AJAX endpoint to check if roll numbers exist in range
+     */
+    public function checkStickers(Request $request)
+    {
+        $count = ExamRollno::whereBetween('roll_no', [$request->roll_from, $request->roll_to])
+            ->when($request->batch_id, fn($q) => $q->where('batch_id', $request->batch_id))
+            ->count();
+
+        return response()->json(['count' => $count]);
     }
 
 
@@ -599,16 +611,28 @@ class BatchController extends Controller
         }])
         ->get();
 
+        $projectBounds = ExamRollno::whereHas('batch', function($q) use ($project) {
+                $q->where('project_id', $project->id);
+            })
+            ->selectRaw('MIN(roll_no) as min_roll, MAX(roll_no) as max_roll')
+            ->first();
+
         $data = $centers->map(function ($center) {
             return [
                 'id' => $center->id,
                 'name' => $center->name,
                 'city' => $center->city?->name ?? 'N/A',
                 'batches' => $center->batches->map(function ($batch) {
+                    $batchBounds = ExamRollno::where('batch_id', $batch->id)
+                        ->selectRaw('MIN(roll_no) as min_roll, MAX(roll_no) as max_roll')
+                        ->first();
+                        
                     return [
                         'id' => $batch->id,
                         'batch_number' => $batch->batch_number,
                         'booked_seats' => $batch->booked_seats,
+                        'min_roll' => $batchBounds->min_roll ?? '',
+                        'max_roll' => $batchBounds->max_roll ?? '',
                         'slips_url' => route('admin.batches.bulk-slips', $batch),
                         'attendance_url' => route('admin.batches.attendance-sheet', $batch),
                         'omr_url' => route('admin.batches.answer-sheets', $batch),
@@ -617,7 +641,11 @@ class BatchController extends Controller
             ];
         });
 
-        return response()->json($data);
+        return response()->json([
+            'centers' => $data,
+            'min_roll' => $projectBounds->min_roll ?? '',
+            'max_roll' => $projectBounds->max_roll ?? '',
+        ]);
     }
 
     /** Export Master Candidate CSV (Point 1 of Client Requests) */
