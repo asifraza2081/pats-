@@ -67,6 +67,26 @@
         /* Re-apply our specific logic with higher specificity or after reset */
         html[data-bs-theme='light'] .hide-theme-light { display: none !important; }
         html[data-bs-theme='dark'] .hide-theme-dark { display: none !important; }
+
+        /* ── Public Nav Active Indicator ─────────────────── */
+        .main-nav .nav .nav-link {
+            position: relative;
+            transition: color 0.2s ease;
+        }
+        .main-nav .nav .nav-link.active,
+        .main-nav .nav .nav-link:hover {
+            color: var(--pats-teal, #0ca678) !important;
+        }
+        .main-nav .nav .nav-link.active::after {
+            content: '';
+            position: absolute;
+            bottom: -2px;
+            left: 12px;
+            right: 12px;
+            height: 2px;
+            background: var(--pats-teal, #0ca678);
+            border-radius: 2px;
+        }
     </style>
 
     <!-- Theme Persistence Script (Instant Apply) -->

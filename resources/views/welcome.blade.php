@@ -113,7 +113,7 @@
 </section>
 
 <!-- Notice Board (Dynamic Ticker) -->
-<div class="notice-board mb-5 p-1 glass-panel border-0 shadow-sm rounded- pill overflow-hidden">
+<div class="notice-board mb-5 p-1 glass-panel border-0 shadow-sm rounded-pill overflow-hidden">
     <div class="container-xl py-2">
         <div class="row align-items-center g-0">
             <div class="col-auto me-3">
@@ -140,7 +140,7 @@
 </div>
 
 <!-- Live Stats Section -->
-<section class="mb-6 animate__animated animate__fadeInUp animate__delay-3s">
+<section class="mb-6">
     <div class="row g-4 text-center">
         <div class="col-6 col-md-3">
             <div class="card stat-card glass-panel border-0 hover-lift h-100">
@@ -179,7 +179,7 @@
 
 <div class="row mt-5">
     <!-- Projects Section -->
-    <div class="col-lg-8 animate__animated animate__fadeInLeft animate__delay-4s">
+    <div class="col-lg-8">
         <div class="d-flex justify-content-between align-items-center mb-5 pb-2 border-bottom border-teal-light border-opacity-20">
             <div>
                 <h2 class="display-6 fw-black text-dark mb-1">FEATURED PROJECTS</h2>
@@ -235,7 +235,7 @@
     </div>
 
     <!-- Sidebar / News & Results -->
-    <div class="col-lg-4 mt-5 mt-lg-0 animate__animated animate__fadeInRight animate__delay-4s">
+    <div class="col-lg-4 mt-5 mt-lg-0">
         <h2 class="display-6 fw-black text-dark mb-4 ps-2 border-start border-teal border-5" style="font-size: 1.5rem;">LATEST RESULTS</h2>
         <div class="card border-0 shadow-lg overflow-hidden rounded-5 mb-5 glass-panel">
             <div class="list-group list-group-flush list-group-hoverable">
@@ -643,7 +643,7 @@
     /* WhatsApp Floating Button */
     .whatsapp-float {
         position: fixed;
-        bottom: 10px;
+        bottom: 30px;
         right: 30px;
         width: 55px;
         height: 55px;

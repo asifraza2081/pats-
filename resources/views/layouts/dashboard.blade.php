@@ -74,16 +74,6 @@
             font-weight: 600;
             border-radius: 4px;
         }
-        .navbar-nav .nav-item.active > .nav-link::after {
-            content: '';
-            position: absolute;
-            bottom: 0;
-            left: 10%;
-            width: 80%;
-            height: 2px;
-            background: var(--tblr-primary);
-            border-radius: 2px;
-        }
         .nav-link-icon {
             transition: transform 0.2s ease;
         }
@@ -113,7 +103,7 @@
                 </button>
                 <h1 class="navbar-brand navbar-brand-autodark d-none-navbar-horizontal pe-0 pe-md-3">
                     <a href="{{ route('home') }}" class="text-decoration-none py-1">
-                        <img src="{{ asset('logo.png') }}" alt="PATS" height="65" class="navbar-brand-image">
+                        <img src="{{ asset('logo.png') }}" alt="PATS" height="48" class="navbar-brand-image">
                     </a>
                 </h1>
                 <div class="navbar-nav flex-row order-md-last">
@@ -137,7 +127,12 @@
                                     <h3 class="card-title">Recent Notifications</h3>
                                 </div>
                                 <div class="list-group list-group-flush list-group-hoverable" id="notif-list">
-                                    <div class="list-group-item text-center py-4 text-muted">No new alerts.</div>
+                                    <div class="list-group-item" id="notif-skeleton">
+                                        <div class="placeholder-glow">
+                                            <span class="placeholder col-8 mb-1 rounded"></span>
+                                            <span class="placeholder col-5 rounded"></span>
+                                        </div>
+                                    </div>
                                 </div>
                                 <div class="card-footer text-center">
                                     <form method="POST" action="{{ route('admin.notifications.mark-all-read') }}">
@@ -366,7 +361,7 @@
     <script src="{{ asset('assets/vendor/js/tabler.min.js') }}"></script>
     <script src="{{ asset('assets/vendor/js/tom-select.complete.min.js') }}"></script>
     <script src="{{ asset('assets/vendor/js/toastr.min.js') }}"></script>
-    <script src="{{ asset('assets/vendor/js/apexcharts.min.js') }}"></script>
+    {{-- ApexCharts is pushed by pages that need it via @push('scripts') --}}
     
     <!-- Initialize Toastr & Global Components -->
     <script>
@@ -378,7 +373,8 @@
         function pollNotifications() {
             $.get("{{ route('admin.notifications.unread') }}", function(data) {
                 const badge = $('#notif-badge');
-                const list = $('#notif-list');
+                const list  = $('#notif-list');
+                $('#notif-skeleton').remove(); // clear shimmer on first response
                 
                 if (data.length > 0) {
                     badge.removeClass('d-none').text(data.length);
@@ -437,11 +433,50 @@
         });
     </script>
     <script>
-        // Global Confirmation Helper for high-stakes actions
-        window.confirmAction = function(message, type = 'warning') {
-            const colors = { 'warning': '#f59e0b', 'danger': '#ef4444', 'primary': '#3b82f6' };
-            return confirm(message); // Using native confirm for now, styled ones can be added if requested
-        };
+        // Global Confirmation Helper — uses branded Bootstrap modal instead of native confirm()
+        (function() {
+            let _confirmResolve = null;
+            // Inject the modal once
+            const modalHtml = `
+            <div class="modal fade" id="pats-confirm-modal" tabindex="-1" aria-hidden="true">
+              <div class="modal-dialog modal-sm modal-dialog-centered">
+                <div class="modal-content rounded-4 border-0 shadow-lg">
+                  <div class="modal-header border-0 pb-0">
+                    <div class="modal-title d-flex align-items-center gap-2">
+                      <span class="avatar avatar-sm bg-warning-lt text-warning rounded-3" id="pats-confirm-icon"><i class="ti ti-alert-triangle"></i></span>
+                      <span id="pats-confirm-title" class="fw-bold">Confirm Action</span>
+                    </div>
+                  </div>
+                  <div class="modal-body pt-2 text-muted small" id="pats-confirm-body"></div>
+                  <div class="modal-footer border-0 pt-0 gap-2">
+                    <button class="btn btn-secondary btn-sm rounded-pill px-3" data-bs-dismiss="modal">Cancel</button>
+                    <button class="btn btn-sm rounded-pill px-3" id="pats-confirm-ok">Confirm</button>
+                  </div>
+                </div>
+              </div>
+            </div>`;
+            document.body.insertAdjacentHTML('beforeend', modalHtml);
+
+            const modalEl  = document.getElementById('pats-confirm-modal');
+            const bsModal  = new bootstrap.Modal(modalEl);
+            const okBtn    = document.getElementById('pats-confirm-ok');
+            const bodyEl   = document.getElementById('pats-confirm-body');
+            const iconEl   = document.getElementById('pats-confirm-icon');
+            const okColors = { warning: 'btn-warning', danger: 'btn-danger', primary: 'btn-primary' };
+
+            modalEl.addEventListener('hidden.bs.modal', () => { if (_confirmResolve) { _confirmResolve(false); _confirmResolve = null; } });
+            okBtn.addEventListener('click', () => { if (_confirmResolve) { _confirmResolve(true); _confirmResolve = null; } bsModal.hide(); });
+
+            window.confirmAction = function(message, type = 'warning') {
+                return new Promise(resolve => {
+                    _confirmResolve = resolve;
+                    bodyEl.textContent = message;
+                    okBtn.className = 'btn btn-sm rounded-pill px-3 ' + (okColors[type] || 'btn-warning');
+                    iconEl.className = 'avatar avatar-sm bg-' + type + '-lt text-' + type + ' rounded-3';
+                    bsModal.show();
+                });
+            };
+        })();
 
         // Auto-initialize tooltips
         document.addEventListener('DOMContentLoaded', function () {
