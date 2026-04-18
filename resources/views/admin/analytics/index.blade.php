@@ -405,10 +405,10 @@ document.addEventListener('DOMContentLoaded', () => {
 
     // 4. Geography — HORIZONTAL for readability
     new ApexCharts(document.querySelector('#chart-geography'), {
-        series: [{ name: 'Candidates', data: {!! json_encode(array_values($analytics['geography'])) !!} }],
+        series: [{ name: 'Candidates', data: @json(array_values($analytics['geography'])) }],
         chart: { type: 'bar', height: 280, toolbar: { show: false }, animations: { speed: 600 } },
         plotOptions: { bar: { horizontal: true, borderRadius: 4, dataLabels: { position: 'top' } } },
-        xaxis: { categories: {!! json_encode(array_keys($analytics['geography'])) !!} },
+        xaxis: { categories: @json(array_keys($analytics['geography'])) },
         colors: ['#008FFB'],
         grid: { xaxis: { lines: { show: true } }, yaxis: { lines: { show: false } } },
         dataLabels: { enabled: true, offsetX: 4, style: { fontSize: '11px', colors: ['#333'] } },
@@ -416,10 +416,10 @@ document.addEventListener('DOMContentLoaded', () => {
 
     // 5. Domicile (horizontal bar)
     new ApexCharts(document.querySelector('#chart-domicile'), {
-        series: [{ name: 'Candidates', data: {!! json_encode(array_values($analytics['domicile'])) !!} }],
+        series: [{ name: 'Candidates', data: @json(array_values($analytics['domicile'])) }],
         chart: { type: 'bar', height: 280, toolbar: { show: false } },
         plotOptions: { bar: { horizontal: true, borderRadius: 4 } },
-        xaxis: { categories: {!! json_encode(array_keys($analytics['domicile'])) !!} },
+        xaxis: { categories: @json(array_keys($analytics['domicile'])) },
         colors: ['#FEB019'],
         dataLabels: { enabled: true, offsetX: 4, style: { fontSize: '11px', colors: ['#333'] } },
     }).render().then(() => clearSkeleton('#chart-domicile'));
