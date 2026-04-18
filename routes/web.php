@@ -114,6 +114,7 @@ Route::middleware(['auth', 'role:admin|data_entry|super_admin', 'sanitize', \App
     Route::resource('batches', Admin\BatchController::class);
     Route::post('batches/bulk-publish', [Admin\BatchController::class, 'bulkPublish'])->name('batches.bulk-publish');
     Route::get('batches/bulk-print', [Admin\BatchController::class, 'bulkPrintGroup'])->name('batches.bulk-print');
+    Route::get('batches/stickers', [Admin\BatchController::class, 'printStickers'])->name('batches.stickers');
     Route::post('batches/{batch}/ready', [Admin\BatchController::class, 'markReady'])->name('batches.ready');
     Route::get('batches/group/{project}/{test_date}/{batch_number}', [Admin\BatchController::class, 'groupShow'])->name('batches.group-show');
     Route::get('batches/{batch}/summary', [Admin\BatchController::class, 'summary'])->name('batches.summary');

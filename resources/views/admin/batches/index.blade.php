@@ -143,22 +143,46 @@
                     </select>
                 </div>
                 
-                <!-- Logistics Guide: Clear Definitions for Admins -->
                 <div class="mt-4 p-3 bg-light rounded-3 border border-1 border-light shadow-sm">
                     <div class="row text-center g-2">
-                        <div class="col-4">
+                        <div class="col-3">
                             <div class="small fw-bold text-blue"><i class="ti ti-id me-1"></i> Slips</div>
                             <div class="text-secondary" style="font-size: 0.65rem;">Candidate Entry Passes</div>
                         </div>
-                        <div class="col-4 border-start border-end">
+                        <div class="col-3 border-start">
                             <div class="small fw-bold text-info"><i class="ti ti-file-text me-1"></i> Sheet</div>
                             <div class="text-secondary" style="font-size: 0.65rem;">Hall Attendance Signatures</div>
                         </div>
-                        <div class="col-4">
+                        <div class="col-3 border-start">
                             <div class="small fw-bold text-warning"><i class="ti ti-circle-check me-1"></i> OMR</div>
                             <div class="text-secondary" style="font-size: 0.65rem;">Optic-Scan Answer Sheets</div>
                         </div>
+                        <div class="col-3 border-start">
+                            <div class="small fw-bold text-success"><i class="ti ti-tag me-1"></i> Stickers</div>
+                            <div class="text-secondary" style="font-size: 0.65rem;">Seat / OMR Label Stickers</div>
+                        </div>
                     </div>
+                </div>
+
+                <!-- Sticker Printing: Range-based -->
+                <div class="mt-4 p-3 bg-white rounded-3 border shadow-sm">
+                    <div class="fw-bold mb-2 text-success small"><i class="ti ti-tag me-1"></i> 2. Print Stickers by Roll No Range</div>
+                    <div class="row g-2 align-items-end">
+                        <div class="col-md-4">
+                            <label class="form-label small mb-1">Roll No From</label>
+                            <input type="text" id="sticker-roll-from" class="form-control" placeholder="e.g. 30135221">
+                        </div>
+                        <div class="col-md-4">
+                            <label class="form-label small mb-1">Roll No To</label>
+                            <input type="text" id="sticker-roll-to" class="form-control" placeholder="e.g. 30135250">
+                        </div>
+                        <div class="col-md-4">
+                            <a id="sticker-print-btn" href="#" target="_blank" class="btn btn-success w-100" onclick="return openStickerPrint(this)">
+                                <i class="ti ti-tag me-1"></i> Print Stickers
+                            </a>
+                        </div>
+                    </div>
+                    <div class="form-text mt-1 text-muted">Centre & City are auto-detected from the roll number range.</div>
                 </div>
                 
                 <div id="portal-loading" class="text-center py-5 d-none">
@@ -186,6 +210,19 @@
 
 @push('scripts')
 <script>
+const stickerBaseUrl = "{{ route('admin.batches.stickers') }}";
+
+function openStickerPrint(el) {
+    const from = document.getElementById('sticker-roll-from').value.trim();
+    const to   = document.getElementById('sticker-roll-to').value.trim();
+    if (!from || !to) {
+        alert('Please enter both Roll No From and Roll No To.');
+        return false;
+    }
+    el.href = stickerBaseUrl + '?roll_from=' + encodeURIComponent(from) + '&roll_to=' + encodeURIComponent(to);
+    return true; // allow link to open in new tab
+}
+
 document.addEventListener('DOMContentLoaded', function () {
     const projectSelector = document.getElementById('project-selector');
     const container = document.getElementById('center-list-container');

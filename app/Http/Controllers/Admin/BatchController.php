@@ -449,6 +449,52 @@ class BatchController extends Controller
         }
     }
 
+    /**
+     * Print sticker labels for a roll number range.
+     * Accepts: roll_from, roll_to, batch_id (optional, for context)
+     * Each sticker shows Roll No + Post Name, 3 per row × 10 per page.
+     */
+    public function printStickers(Request $request)
+    {
+        $request->validate([
+            'roll_from' => 'required|string',
+            'roll_to'   => 'required|string',
+            'batch_id'  => 'nullable|exists:batches,id',
+        ]);
+
+        ini_set('memory_limit', '1G');
+        set_time_limit(300);
+
+        $query = ExamRollno::with(['job', 'batch.center.city', 'batch.project'])
+            ->whereBetween('roll_no', [$request->roll_from, $request->roll_to])
+            ->orderBy('roll_no');
+
+        if ($request->batch_id) {
+            $query->where('batch_id', $request->batch_id);
+        }
+
+        $roster = $query->get();
+
+        if ($roster->isEmpty()) {
+            return back()->with('error', 'No roll numbers found in the given range.');
+        }
+
+        // Use context from first record
+        $firstBatch   = $roster->first()->batch;
+        $centerName   = $firstBatch->center->name ?? 'Unknown Center';
+        $centerCity   = $firstBatch->center->city->name ?? '';
+        $batchNumber  = $firstBatch->batch_number ?? '—';
+        $projectName  = $firstBatch->project->name ?? '';
+
+        $pdf = Pdf::loadView('pdf.stickers', compact(
+            'roster', 'centerName', 'centerCity', 'batchNumber', 'projectName'
+        ))->setPaper('a4', 'portrait');
+
+        $safeName = "Stickers_{$request->roll_from}-{$request->roll_to}";
+        return $pdf->stream("{$safeName}.pdf");
+    }
+
+
     /** Show attendance management (upload scans + mark appeared/absent) */
     public function attendance(Batch $batch)
     {
