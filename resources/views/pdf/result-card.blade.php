@@ -50,6 +50,11 @@
   $photoPath = storage_path('app/public/' . $candidate->photo_path);
   $hasPhoto = $candidate->photo_path && file_exists($photoPath);
 
+  // QR Verification Code Generation
+  $examRollno = $app->examRollno;
+  $verifyUrl = route('public.verify', ['token' => $examRollno?->verify_token ?? 'invalid']);
+  $qrCode = base64_encode(\SimpleSoftwareIO\QrCode\Facades\QrCode::format('png')->size(100)->margin(0)->generate($verifyUrl));
+
   // Document Fingerprint for verification
   $fingerprint = hash('sha256', $result->id . $app->id . $result->published_at);
 @endphp
@@ -132,9 +137,9 @@
 <div class="clearfix"></div>
 
 <div class="qr-and-stamp" style="margin-top: 30px;">
-    <div class="qr-container">
-        <!-- Result Verification QR Code (Mock) -->
-        <div style="width: 80px; height: 80px; background: #eee; border: 1px solid #ccc; text-align: center; line-height: 80px; font-size: 8px;">VERIFICATION<br>QR CODE</div>
+    <div class="qr-container" style="background: #fff; padding: 5px; border: 1px solid #0a3d62; border-radius: 5px; width: 80px; text-align: center;">
+        <img src="data:image/png;base64, {{ $qrCode }}" style="width: 80px; height: 80px;">
+        <div style="font-size: 7px; font-weight: bold; margin-top: 3px; color: #0a3d62;">VALIDATE DOC</div>
     </div>
     
     <div class="stamp-container">

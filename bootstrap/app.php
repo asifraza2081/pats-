@@ -24,13 +24,5 @@ return Application::configure(basePath: dirname(__DIR__))
         ]);
     })
     ->withExceptions(function (Exceptions $exceptions): void {
-        $exceptions->respond(function ($response, $e) {
-            if ($e instanceof \Symfony\Component\HttpKernel\Exception\AccessDeniedHttpException) {
-                return back()->with('error', 'You do not have permission to access this resource.');
-            }
-            if ($e instanceof \Illuminate\Database\Eloquent\ModelNotFoundException || $e instanceof \Symfony\Component\HttpKernel\Exception\NotFoundHttpException) {
-                return redirect()->route('home')->with('error', 'The requested resource was not found.');
-            }
-            return $response;
-        });
+        // We let Laravel render our custom branded views (errors/404, errors/403, etc.)
     })->create();

@@ -83,4 +83,75 @@ class EligibilityService
             'warnings' => $warnings,
         ];
     }
+
+    /**
+     * Get the completion status for each step of the candidate profile.
+     *
+     * @return array{
+     *   step1: array{success: bool, label: string, errors: string[]},
+     *   step2: array{success: bool, label: string, errors: string[]},
+     *   step3: array{success: bool, label: string, errors: string[]},
+     *   step4: array{success: bool, label: string, errors: string[]},
+     *   total_percent: int,
+     *   next_step: int
+     * }
+     */
+    public function getProfileStatus(Candidate $candidate): array
+    {
+        $status = [
+            'step1' => ['success' => true, 'label' => 'Personal Information', 'errors' => []],
+            'step2' => ['success' => true, 'label' => 'Academic Records', 'errors' => []],
+            'step3' => ['success' => true, 'label' => 'Work Experience', 'errors' => []],
+            'step4' => ['success' => true, 'label' => 'Verification Documents', 'errors' => []],
+        ];
+
+        // 1. Bio Step
+        $requiredBio = ['father_name', 'dob', 'gender', 'marital_status', 'religion', 'domicile_city_id', 'permanent_address'];
+        foreach ($requiredBio as $field) {
+            if (empty($candidate->$field)) {
+                $status['step1']['success'] = false;
+                $status['step1']['errors'][] = "Missing " . ucwords(str_replace('_', ' ', $field));
+            }
+        }
+
+        // 2. Academic Step
+        if (!$candidate->education()->exists()) {
+            $status['step2']['success'] = false;
+            $status['step2']['errors'][] = "Add at least one degree/certificate.";
+        }
+
+        // 3. Experience Step (Optional by default, but tracked)
+        // For now, we mark it as success if the user has reached it. Or logic for specific jobs.
+        // We'll leave it as success: true unless there's a specific requirement.
+
+        // 4. Documents Step
+        if (empty($candidate->photo_path)) {
+            $status['step4']['success'] = false;
+            $status['step4']['errors'][] = "Profile photo required.";
+        }
+        if (empty($candidate->cnic_front_path)) {
+            $status['step4']['success'] = false;
+            $status['step4']['errors'][] = "CNIC Front copy required.";
+        }
+
+        // Calculate Percent & Next Step
+        $completedSteps = 0;
+        $nextStep = 1;
+        foreach (['step1', 'step2', 'step3', 'step4'] as $idx => $key) {
+            if ($status[$key]['success']) {
+                $completedSteps++;
+            } else {
+                $nextStep = $idx + 1;
+                break;
+            }
+        }
+
+        // Handle case where all are success
+        if ($completedSteps === 4) $nextStep = 4;
+
+        return array_merge($status, [
+            'total_percent' => (int) round(($completedSteps / 4) * 100),
+            'next_step'     => $nextStep
+        ]);
+    }
 }

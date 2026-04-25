@@ -109,9 +109,11 @@ class DatabaseSeeder extends Seeder
         $provinces = [
             'Punjab' => ['Lahore', 'Faisalabad', 'Multan', 'Rawalpindi'],
             'Sindh' => ['Karachi', 'Hyderabad', 'Sukkur'],
-            'KPK' => ['Peshawar', 'Abbottabad'],
+            'Khyber Pakhtunkhwa' => ['Peshawar', 'Abbottabad'],
             'Balochistan' => ['Quetta'],
-            'Federal' => ['Islamabad']
+            'Islamabad Capital Territory' => ['Islamabad'],
+            'Azad Jammu & Kashmir' => ['Muzaffarabad', 'Mirpur'],
+            'Gilgit-Baltistan' => ['Gilgit', 'Skardu'],
         ];
 
         $cities = [];
@@ -235,23 +237,29 @@ class DatabaseSeeder extends Seeder
         // 2. Bulk Generation (50 Candidates)
         $this->command->info("Seeding 50 Bulk Candidates...");
         for ($i = 0; $i < 50; $i++) {
-            $user = User::create([
-                'first_name' => 'Candidate', 'last_name' => '#' . ($i + 1),
-                'email' => "candidate." . ($i + 1) . "@example.com",
-                'cnic' => '55555' . str_pad($i, 8, '0', STR_PAD_LEFT),
-                'phone' => '0300' . str_pad($i, 7, '0', STR_PAD_LEFT),
-                'password' => Hash::make(env('USER_DEFAULT_PASSWORD', 'password')), 'nationality' => 'Pakistani',
-                'phone_verified_at' => now(), 'email_verified_at' => now(),
-            ]);
+            $userEmail = "candidate." . ($i + 1) . "@example.com";
+            $user = User::updateOrCreate(
+                ['email' => $userEmail],
+                [
+                    'first_name' => 'Candidate', 'last_name' => '#' . ($i + 1),
+                    'cnic' => '55555' . str_pad($i, 8, '0', STR_PAD_LEFT),
+                    'phone' => '0300' . str_pad($i, 7, '0', STR_PAD_LEFT),
+                    'password' => Hash::make(env('USER_DEFAULT_PASSWORD', 'password')), 'nationality' => 'Pakistani',
+                    'phone_verified_at' => now(), 'email_verified_at' => now(),
+                ]
+            );
             $user->assignRole('candidate');
 
-            $cand = Candidate::create([
-                'user_id' => $user->id, 'father_name' => "Father Name", 'gender' => rand(0, 1) ? 'Male' : 'Female',
-                'dob' => Carbon::now()->subYears(rand(22, 35))->format('Y-m-d'),
-                'domicile_city_id' => $cities[array_rand($cities)]->id, 
-                'address_city_id' => $cities[array_rand($cities)]->id,
-                'profile_locked' => true,
-            ]);
+            $cand = Candidate::updateOrCreate(
+                ['user_id' => $user->id],
+                [
+                    'father_name' => "Father Name", 'gender' => rand(0, 1) ? 'Male' : 'Female',
+                    'dob' => Carbon::now()->subYears(rand(22, 35))->format('Y-m-d'),
+                    'domicile_city_id' => $cities[array_rand($cities)]->id, 
+                    'address_city_id' => $cities[array_rand($cities)]->id,
+                    'profile_locked' => true,
+                ]
+            );
 
             EducationHistory::create([
                 'candidate_id' => $cand->id, 'degree_level' => 3, 'degree_name' => 'Bachelor Degree',
@@ -260,17 +268,26 @@ class DatabaseSeeder extends Seeder
             ]);
 
             // Apply to one job
-            $job = $projectData['jobs'][array_rand($projectData['jobs'])];
-            $app = Application::create([
-                'candidate_id' => $cand->id, 'project_id' => $job->project_id, 'job_id' => $job->id,
-                'desired_test_city_id' => $cand->domicile_city_id, 'status' => 'fee_paid', 'applied_at' => now(),
-            ]);
+            $job = $projectData['jobs'][array_rand($projectData['jobs'])] ?? null;
+            if ($job) {
+                $app = Application::updateOrCreate(
+                    ['candidate_id' => $cand->id, 'project_id' => $job->project_id, 'job_id' => $job->id],
+                    [
+                        'desired_test_city_id' => $cand->domicile_city_id,
+                        'status' => 'fee_paid',
+                        'applied_at' => now(),
+                    ]
+                );
 
-            Payment::create([
-                'application_id' => $app->id, 'challan_ref' => 'PAY-' . str_pad($app->id, 8, '0', STR_PAD_LEFT),
-                'amount' => $job->fee, 'status' => 'paid', 'deposit_date' => now(),
-                'verified_by' => $admin->id, 'verified_at' => now(),
-            ]);
+                Payment::updateOrCreate(
+                    ['application_id' => $app->id],
+                    [
+                        'challan_ref' => 'PAY-' . str_pad($app->id, 8, '0', STR_PAD_LEFT),
+                        'amount' => $job->fee, 'status' => 'paid', 'deposit_date' => now(),
+                        'verified_by' => $admin->id, 'verified_at' => now(),
+                    ]
+                );
+            }
         }
     }
 }

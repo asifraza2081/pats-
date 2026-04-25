@@ -21,6 +21,7 @@ class ExamRollno extends Model
         'barcode',
         'batch_no',
         'roll_sequence',
+        'verify_token',
         'slip_ready',
     ];
 

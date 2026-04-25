@@ -1,5 +1,5 @@
 @extends('layouts.dashboard')
-@section('page-title', "FBR Annex-A — FY {$fy}")
+@section('page-title', "FBR Annex-A â€” FY {$fy}")
 @section('page-actions')
     <a href="{{ route('admin.tax-reports.annex-a.print', ['fy' => $fy]) }}" target="_blank" class="btn btn-primary btn-sm">
         <i class="ti ti-printer me-1"></i> Print PDF
@@ -18,13 +18,13 @@
     <div class="card-body p-4 text-white">
         <div class="row align-items-center">
             <div class="col">
-                <h2 class="fw-black mb-1">ANNEX-A — WITHHOLDING TAX REGISTER</h2>
-                <div class="opacity-75">Under Section 153 — Income Tax Ordinance, 2001</div>
+                <h2 class="fw-black mb-1">ANNEX-A â€” WITHHOLDING TAX REGISTER</h2>
+                <div class="opacity-75">Under Section 153 â€” Income Tax Ordinance, 2001</div>
             </div>
             <div class="col-auto text-end">
                 <div class="fw-bold">{{ $org['name'] }}</div>
-                <div class="small opacity-75">NTN: {{ $org['ntn'] ?: '—' }}</div>
-                <div class="badge bg-white text-primary mt-1">FY {{ $fy }} ({{ $fyDates['start'] }} — {{ $fyDates['end'] }})</div>
+                <div class="small opacity-75">NTN: {{ $org['ntn'] ?: 'â€”' }}</div>
+                <div class="badge bg-white text-primary mt-1">FY {{ $fy }} ({{ $fyDates['start'] }} â€” {{ $fyDates['end'] }})</div>
             </div>
         </div>
     </div>
@@ -76,7 +76,7 @@
                 <tr>
                     <td class="text-muted small">{{ $i + 1 }}</td>
                     <td class="small">{{ $expense->expense_date->format('d-M-Y') }}</td>
-                    <td class="fw-semibold">{{ $expense->recipient_name ?? '—' }}</td>
+                    <td class="fw-semibold">{{ $expense->recipient_name ?? 'â€”' }}</td>
                     <td>
                         @if($expense->recipient_ntn)
                             <span class="badge bg-primary-lt text-primary">{{ $expense->recipient_ntn }}</span>
@@ -87,8 +87,8 @@
                         @endif
                     </td>
                     <td class="small text-truncate" style="max-width: 200px;">{{ $expense->description }}</td>
-                    <td class="small">{{ $expense->category?->name ?? '—' }}</td>
-                    <td class="small text-muted">{{ $expense->voucher_no ?? '—' }}</td>
+                    <td class="small">{{ $expense->category?->name ?? 'â€”' }}</td>
+                    <td class="small text-muted">{{ $expense->voucher_no ?? 'â€”' }}</td>
                     <td class="text-end small">{{ number_format($expense->gross_amount, 2) }}</td>
                     <td class="text-end small">{{ $expense->tax_rate }}%</td>
                     <td class="text-end fw-bold text-warning">{{ number_format($expense->tax_amount, 2) }}</td>
@@ -103,7 +103,7 @@
                 <tr>
                     <td colspan="7" class="text-end">TOTALS:</td>
                     <td class="text-end">{{ number_format($expenses->sum('gross_amount'), 2) }}</td>
-                    <td class="text-end">—</td>
+                    <td class="text-end">â€”</td>
                     <td class="text-end text-warning">{{ number_format($totalTax, 2) }}</td>
                     <td class="text-end">{{ number_format($expenses->sum('net_amount'), 2) }}</td>
                 </tr>
@@ -117,3 +117,5 @@
     </div>
 </div>
 @endsection
+
+

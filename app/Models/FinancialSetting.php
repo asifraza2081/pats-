@@ -7,7 +7,7 @@ use Illuminate\Support\Facades\Cache;
 
 class FinancialSetting extends Model
 {
-    protected $fillable = ['key', 'value', 'description'];
+    protected $fillable = ['key', 'value', 'type', 'description'];
 
     protected static string $cachePrefix = 'fin_setting_';
 

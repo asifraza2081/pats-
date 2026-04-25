@@ -2,7 +2,8 @@
 
 namespace App\Http\Controllers\Candidate;
 
-use App\Http\Requests\UpdateProfileRequest;
+use App\Http\Requests\Candidate\StepBioRequest;
+use App\Http\Requests\Candidate\StepDocsRequest;
 use App\Http\Requests\EducationRequest;
 use App\Http\Requests\ExperienceRequest;
 use App\Http\Controllers\Controller;
@@ -21,13 +22,28 @@ class ProfileController extends Controller
         return Auth::user()->candidate ?? abort(404);
     }
 
-    public function show()
+    public function show(Request $request)
     {
         $candidate = $this->candidate();
+        $step = (int) $request->get('step', $candidate->wizard_step ?? 1);
+        
+        // Sequential Blocking: Ensure they can't jump ahead
+        if (!$candidate->isStepAccessible($step)) {
+            $status = app(\App\Services\EligibilityService::class)->getProfileStatus($candidate);
+            return redirect()->route('candidate.profile.show', ['step' => $status['next_step']])
+                ->with('error', 'Please complete previous steps first.');
+        }
+
+        // Update the candidate's current step if it's a forward movement
+        if ($step > $candidate->wizard_step) {
+            $candidate->update(['wizard_step' => $step]);
+        }
+
         $education = $candidate->education()->orderBy('degree_level', 'desc')->get();
         $experience = $candidate->experience()->orderBy('from_date', 'desc')->get();
         $cities = City::orderBy('name')->get();
-        return view('candidate.profile', compact('candidate', 'education', 'experience', 'cities'));
+        
+        return view('candidate.profile', compact('candidate', 'education', 'experience', 'cities', 'step'));
     }
 
     public function viewProfile()
@@ -36,7 +52,7 @@ class ProfileController extends Controller
         return view('candidate.profile-bio', compact('candidate'));
     }
 
-    public function update(UpdateProfileRequest $request)
+    public function updateBio(StepBioRequest $request)
     {
         $candidate = $this->candidate();
         $this->authorize('update', $candidate);
@@ -48,28 +64,18 @@ class ProfileController extends Controller
             $data['postal_address'] = $data['permanent_address'];
         }
 
-        // Photo upload handling
-        if ($request->hasFile('photo')) {
-            if ($candidate->photo_path) Storage::delete($candidate->photo_path);
-            $data['photo_path'] = $request->file('photo')->store('photos', 'public');
-        }
-
-        // CNIC Front upload handling
-        if ($request->hasFile('cnic_copy')) {
-            if ($candidate->cnic_front_path) Storage::delete($candidate->cnic_front_path);
-            $data['cnic_front_path'] = $request->file('cnic_copy')->store('cnics', 'public');
-        }
-
-        // Capture CNIC before unsetting it from the $data array
+        // Capture CNIC before unsetting it
         $cnicFromForm = $data['cnic'] ?? null;
-        unset($data['photo'], $data['cnic_copy'], $data['cnic_front_path'], $data['cnic']);
+        unset($data['cnic']);
 
-        // Prevent modification of critical identity/eligibility data if profile is locked
-        if ($candidate->profile_locked) {
+        // Prevent modification of critical identity/eligibility data if profile is locked AND already finished
+        $status = app(\App\Services\EligibilityService::class)->getProfileStatus($candidate);
+        if ($candidate->profile_locked && $status['total_percent'] === 100) {
             unset(
                 $data['dob'], 
                 $data['father_name'], 
                 $data['gender'], 
+                $data['religion'],
                 $data['domicile_city_id'], 
                 $data['province_of_domicile'], 
                 $data['district_of_domicile']
@@ -79,14 +85,38 @@ class ProfileController extends Controller
         $candidate->update($data);
 
         // Update core user fields if not locked
-        if (!$candidate->profile_locked) {
+        if (!$candidate->profile_locked && $cnicFromForm) {
             $user = auth()->user();
-            $user->update([
-                'cnic' => $cnicFromForm ?? $user->cnic,
-            ]);
+            $user->update(['cnic' => $cnicFromForm]);
         }
 
-        return back()->with('success', 'Profile updated successfully.');
+        return redirect()->route('candidate.profile.show', ['step' => 2])
+            ->with('success', 'Biographical information saved. Proceed to Step 2.');
+    }
+
+    public function updateDocs(StepDocsRequest $request)
+    {
+        $candidate = $this->candidate();
+        $this->authorize('update', $candidate);
+
+        $data = $request->validated();
+
+        // Photo upload handling
+        if ($request->hasFile('photo')) {
+            if ($candidate->photo_path) Storage::delete($candidate->photo_path);
+            $candidate->photo_path = $request->file('photo')->store('photos', 'public');
+        }
+
+        // CNIC Front upload handling
+        if ($request->hasFile('cnic_copy')) {
+            if ($candidate->cnic_front_path) Storage::delete($candidate->cnic_front_path);
+            $candidate->cnic_front_path = $request->file('cnic_copy')->store('cnics', 'public');
+        }
+
+        $candidate->save();
+
+        return redirect()->route('candidate.profile.show', ['step' => 4])
+            ->with('success', 'Documents uploaded successfully.');
     }
 
     // ── Education ─────────────────────────────────────────────

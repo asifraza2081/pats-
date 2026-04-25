@@ -78,3 +78,5 @@ class HomeController extends Controller
         return view('public.job', compact('project', 'job'));
     }
 }
+
+

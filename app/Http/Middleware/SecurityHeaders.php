@@ -20,8 +20,8 @@ class SecurityHeaders
         // Content Security Policy
         // Note: Allowing 'unsafe-inline' and 'unsafe-eval' for Tabler/AlpineJS/TomSelect compatibility
         $csp = "default-src 'self'; ";
-        $csp .= "script-src 'self' 'unsafe-inline' 'unsafe-eval'; ";
-        $csp .= "style-src 'self' 'unsafe-inline'; ";
+        $csp .= "script-src 'self' 'unsafe-inline' 'unsafe-eval' https://cdn.jsdelivr.net; ";
+        $csp .= "style-src 'self' 'unsafe-inline' https://cdn.jsdelivr.net; ";
         $csp .= "font-src 'self' data:; ";
         $csp .= "img-src 'self' data: https://* http://*; ";
         $csp .= "frame-ancestors 'none'; ";

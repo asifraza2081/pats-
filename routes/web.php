@@ -30,6 +30,7 @@ Route::get('/projects/{project}/jobs/{job}', [HomeController::class, 'job'])->na
 Route::get('/results', [ResultController::class, 'search'])->name('results.search');
 Route::post('/results', [ResultController::class, 'search'])->name('results.search.post');
 Route::get('/results/verify/{roll}', [ResultController::class, 'verify'])->name('results.verify');
+Route::get('/verify/v/{token}', [\App\Http\Controllers\Public\VerifyController::class, 'show'])->name('public.verify');
 Route::get('/safe-download', [App\Http\Controllers\Public\PublicDownloadController::class, 'download'])
     ->name('public.download.signed')
     ->middleware('signed');
@@ -39,7 +40,7 @@ Route::get('/safe-download', [App\Http\Controllers\Public\PublicDownloadControll
 // ═══════════════════════════════════════════════════
 Route::middleware('guest')->group(function () {
     Route::get('/register',           [AuthController::class, 'showRegister'])->name('auth.register');
-    Route::post('/register',          [AuthController::class, 'register'])->middleware('throttle:login');
+    Route::post('/register',          [AuthController::class, 'register'])->middleware('throttle:registration');
     Route::get('/login',              [AuthController::class, 'showLogin'])->name('login');
     Route::post('/login',             [AuthController::class, 'login'])->middleware('throttle:login')->name('auth.login.post');
     Route::get('/forgot-password',    [AuthController::class, 'showForgotPassword'])->name('auth.forgot-password');
@@ -75,9 +76,10 @@ Route::middleware(['auth', 'role:candidate', 'sanitize', \App\Http\Middleware\In
     Route::get('/dashboard', [DashboardController::class, 'index'])->name('dashboard');
 
     // Profile
-    Route::get('/profile',      [ProfileController::class, 'show'])->name('profile.show');
-    Route::get('/profile/bio',  [ProfileController::class, 'viewProfile'])->name('profile.bio');
-    Route::put('/profile',      [ProfileController::class, 'update'])->name('profile.update');
+    Route::get('/profile',              [ProfileController::class, 'show'])->name('profile.show');
+    Route::get('/profile/bio',          [ProfileController::class, 'viewProfile'])->name('profile.bio');
+    Route::put('/profile/bio',          [ProfileController::class, 'updateBio'])->name('profile.update.bio');
+    Route::put('/profile/docs',         [ProfileController::class, 'updateDocs'])->name('profile.update.docs');
 
     // Education History
     Route::post('/education',           [ProfileController::class, 'addEducation'])->name('education.store');

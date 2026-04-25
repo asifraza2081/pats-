@@ -8,6 +8,7 @@ use App\Models\ExamRollno;
 use App\Enums\ApplicationStatus;
 use Carbon\Carbon;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Str;
 use Picqer\Barcode\BarcodeGeneratorPNG;
 
 class RollNumberService
@@ -79,17 +80,19 @@ class RollNumberService
                 $jobId = $app->job_id;
                 $serial = ++$jobSerials[$jobId];
 
-                // Hardening: Removed modulo 100 to prevent collisions (§2.3)
-                // New Format: [ProjID(3chars)][JobCode(2chars)][CityID(3chars)][CenterID(2chars)][Serial(5chars)]
-                // Example: 001 02 005 01 00001
+                // Ultra-Compact Roll Number: [Project][Job(2)][YY(2)][MM(2)][Sequence(4)]
+                // Total 11-13 digits. Scalable and elegant.
                 $rollNo = sprintf(
-                    '%03d%02d%03d%02d%05d',
+                    '%d%02d%s%s%04d',
                     $app->project_id,
-                    ((int) preg_replace('/[^0-9]/', '', $app->job->job_code)) % 100, // Job code 2 digits is standard
-                    $app->desired_test_city_id,
-                    ((int) preg_replace('/[^0-9]/', '', $batch->center->tcid) % 100), // Center ID within city
+                    ((int) preg_replace('/[^0-9]/', '', $app->job->job_code)) % 100,
+                    $batch->test_date->format('y'),
+                    $batch->test_date->format('m'),
                     $serial
                 );
+
+                // Generate secure verification token for QR validation
+                $vToken = Str::random(24);
 
                 // Generate real PNG barcode (Base64) for the slip
                 $generator = new BarcodeGeneratorPNG();
@@ -104,6 +107,7 @@ class RollNumberService
                     'batch_id'       => $batch->id,
                     'roll_no'        => $rollNo,
                     'roll_sequence'  => $serial,
+                    'verify_token'   => $vToken,
                     'barcode'        => $barcodeBase64, 
                     'batch_no'       => (string)$batch->batch_number,
                     'slip_ready'     => 0,

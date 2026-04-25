@@ -51,10 +51,12 @@
 @foreach($copies as $copy)
 <div class="copy-wrapper">
     <div class="header">
-        <div class="logo-area"><strong style="font-size: 24px;">PATS</strong></div>
+        <div class="logo-area">
+            <img src="{{ public_path('logo.png') }}" style="width: 70px;">
+        </div>
         <div class="title-area">
-            <h1 class="org-name">PRIME ASSESSMENT & TESTING SERVICES</h1>
-            <p class="project-name">{{ $project->name }}</p>
+            <h1 class="org-name" style="font-size: 18px;">PRIME ASSESSMENT & TESTING SERVICES</h1>
+            <p class="project-name" style="font-weight: bold; letter-spacing: 0.5px;">{{ strtoupper($project->name) }}</p>
         </div>
         <div class="copy-type">{{ $copy }}</div>
     </div>

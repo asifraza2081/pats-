@@ -4,35 +4,35 @@
 <meta charset="UTF-8">
 <style>
   @page { margin: 25px; }
-  body { font-family: Helvetica, Arial, sans-serif; font-size: 11px; color: #000; line-height: 1.4; margin: 0; padding: 0; }
-  .header-table { width: 100%; border-bottom: 2px solid #000; padding-bottom: 10px; margin-bottom: 20px; }
+  body { font-family: 'Helvetica', 'Arial', sans-serif; font-size: 11px; color: #000; line-height: 1.4; margin: 0; padding: 0; }
+  .header-table { width: 100%; border-bottom: 3px solid #0a3d62; padding-bottom: 15px; margin-bottom: 25px; }
   .logo { width: 100px; }
   .header-text { text-align: center; }
-  .header-text h1 { font-size: 20px; margin: 0; font-weight: bold; }
-  .header-text p { font-size: 10px; margin: 2px 0; color: #333; }
+  .header-text h1 { font-size: 24px; margin: 0; font-weight: 800; color: #0a3d62; letter-spacing: -1px; }
+  .header-text p { font-size: 11px; margin: 4px 0; color: #555; font-weight: bold; text-transform: uppercase; letter-spacing: 1px; }
   
   .title-section { text-align: center; margin-bottom: 20px; }
-  .title-section h2 { font-size: 14px; text-decoration: underline; margin: 5px 0; }
-  .title-section h3 { font-size: 16px; margin: 5px 0; }
+  .title-section h2 { font-size: 15px; background: #0a3d62; color: #fff; padding: 8px; margin: 5px 0; border-radius: 4px; }
+  .title-section h3 { font-size: 18px; margin: 10px 0; font-weight: 800; border-bottom: 1px solid #eee; padding-bottom: 5px; }
 
   .content-table { width: 100%; border-collapse: collapse; margin-bottom: 15px; }
-  .content-table td { padding: 4px 0; vertical-align: top; }
-  .label { font-weight: bold; width: 140px; text-align: right; padding-right: 15px !important; }
-  .value { text-align: left; }
+  .content-table td { padding: 8px 0; vertical-align: top; border-bottom: 1px solid #f9f9f9; }
+  .label { font-weight: bold; width: 140px; text-align: right; padding-right: 20px !important; color: #555; text-transform: uppercase; font-size: 10px; }
+  .value { text-align: left; font-size: 12px; font-weight: 600; }
   
-  .photo-box { width: 150px; height: 180px; border: 1px solid #000; text-align: center; float: right; margin-left: 20px; }
+  .photo-box { width: 140px; height: 160px; border: 2px solid #eee; text-align: center; float: right; margin-left: 20px; background: #fafafa; border-radius: 8px; overflow: hidden; }
   .photo-box img { width: 100%; height: 100%; object-fit: cover; }
   
-  .note-section { margin-top: 25px; border-top: 1px solid #999; padding-top: 10px; }
-  .note-bold { font-weight: bold; margin-bottom: 5px; }
+  .note-section { margin-top: 30px; border-top: 2px solid #0a3d62; padding-top: 15px; }
+  .note-bold { font-weight: 800; margin-bottom: 8px; color: #0a3d62; font-size: 12px; }
   .warning-list { margin: 10px 0; padding-left: 20px; }
-  .warning-list li { margin-bottom: 5px; text-align: justify; font-size: 10px; }
+  .warning-list li { margin-bottom: 6px; text-align: justify; font-size: 10.5px; color: #333; }
   
-  .urdu-text { direction: rtl; text-align: right; font-size: 11px; margin-top: 20px; font-weight: bold; border-top: 1px solid #ccc; padding-top: 15px; color: #d63031; }
-  .footer { margin-top: 20px; text-align: center; font-size: 8px; border-top: 1px solid #000; padding-top: 5px; color: #666; }
-  .watermark { position: fixed; top: 40%; left: 15%; width: 70%; opacity: 0.03; z-index: -1000; transform: rotate(-35deg); font-size: 120px; font-weight: bold; color: #0a3d62; }
-  .barcode-container { margin-top: 10px; text-align: right; }
-  .fingerprint { font-family: monospace; font-size: 7px; color: #999; margin-top: 5px; }
+  .urdu-text { direction: rtl; text-align: right; font-size: 13px; margin-top: 25px; font-weight: bold; border-top: 1px dashed #ccc; padding-top: 15px; color: #d63031; line-height: 1.8; }
+  .footer { margin-top: 25px; text-align: center; font-size: 9px; border-top: 1px solid #eee; padding-top: 10px; color: #888; }
+  .watermark { position: fixed; top: 35%; left: 10%; width: 80%; opacity: 0.04; z-index: -1000; transform: rotate(-30deg); font-size: 100px; font-weight: 900; color: #0a3d62; }
+  .barcode-container { margin-top: 15px; text-align: right; }
+  .fingerprint { font-family: monospace; font-size: 7px; color: #aaa; margin-top: 8px; }
   .clearfix { clear: both; }
 </style>
 </head>
@@ -51,6 +51,10 @@
   // Secure Barcode Generation
   $generator = new \Picqer\Barcode\BarcodeGeneratorPNG();
   $barcode = base64_encode($generator->getBarcode($examRollno->roll_no, $generator::TYPE_CODE_128, 1.5, 40));
+  
+  // QR Verification Code Generation
+  $verifyUrl = route('public.verify', ['token' => $examRollno->verify_token]);
+  $qrCode = base64_encode(\SimpleSoftwareIO\QrCode\Facades\QrCode::format('png')->size(100)->margin(0)->generate($verifyUrl));
   
   // Document Fingerprint
   $fingerprint = hash('sha256', $examRollno->roll_no . $user->id . $batch->id . now()->toDateTimeString());
@@ -144,6 +148,11 @@
         <li>Talking, borrowing items or any kind of unfair means during the test will result in immediate disqualification.</li>
         <li>No candidate will be allowed to enter the examination hall after the test has started.</li>
     </ul>
+</div>
+
+<div style="float: right; text-align: center; margin-top: -150px; background: #fff; padding: 10px; border: 1px solid #eee; border-radius: 8px;">
+    <img src="data:image/png;base64, {{ $qrCode }}" style="width: 100px; height: 100px;">
+    <div style="font-size: 8px; font-weight: bold; margin-top: 5px; color: #0a3d62;">SCAN TO VERIFY</div>
 </div>
 
 <div class="urdu-text">

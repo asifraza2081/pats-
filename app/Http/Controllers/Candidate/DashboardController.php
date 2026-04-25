@@ -12,13 +12,15 @@ class DashboardController extends Controller
     {
         $user      = Auth::user();
         $candidate = $user->candidate;
-        $completion = $candidate ? $candidate->completionPercent() : 0;
+        
+        $status = app(\App\Services\EligibilityService::class)->getProfileStatus($candidate);
+        $completion = $status['total_percent'];
 
         $applications = Application::where('candidate_id', $candidate?->id)
             ->with(['job.project', 'desiredTestCity', 'examRollno.center', 'payment', 'result'])
             ->latest('applied_at')
             ->get();
 
-        return view('candidate.dashboard', compact('user', 'candidate', 'completion', 'applications'));
+        return view('candidate.dashboard', compact('user', 'candidate', 'completion', 'applications', 'status'));
     }
 }

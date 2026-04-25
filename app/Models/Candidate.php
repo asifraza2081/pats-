@@ -16,6 +16,7 @@ class Candidate extends Model
         'address_city_id', 'permanent_address',
         'postal_address', 'same_postal_address', 'alternate_phone',
         'photo_path', 'cnic_front_path', 'profile_locked',
+        'wizard_step',
     ];
 
     protected function casts(): array
@@ -25,6 +26,7 @@ class Candidate extends Model
             'disability'          => 'boolean',
             'same_postal_address' => 'boolean',
             'profile_locked'      => 'boolean',
+            'wizard_step'         => 'integer',
         ];
     }
 
@@ -131,23 +133,22 @@ class Candidate extends Model
      */
     public function completionPercent(): int
     {
-        $fields = [
-            'father_name', 'dob', 'gender', 'marital_status', 'religion',
-            'permanent_address', 'postal_address',
-            'photo_path', 
-        ];
-        $filled = 0;
-        $total  = count($fields) + 1; // +1 for education
-        foreach ($fields as $f) {
-            if ($f === 'postal_address' && $this->same_postal_address) {
-                if (!empty($this->permanent_address)) {
-                    $filled++;
-                }
-                continue;
-            }
-            if (!empty($this->$f)) $filled++;
-        }
-        if ($this->education()->exists())  $filled++;
-        return (int) round(($filled / $total) * 100);
+        $status = app(\App\Services\EligibilityService::class)->getProfileStatus($this);
+        return $status['total_percent'];
+    }
+
+    /**
+     * Check if a specific wizard step is accessible.
+     */
+    public function isStepAccessible(int $step): bool
+    {
+        if ($step <= 1) return true;
+        if ($step > 4) return false;
+        
+        $status = app(\App\Services\EligibilityService::class)->getProfileStatus($this);
+        
+        // Strict blocking: Step N is accessible only if Step N-1 is complete
+        $prevStepKey = 'step' . ($step - 1);
+        return $status[$prevStepKey]['success'] ?? false;
     }
 }

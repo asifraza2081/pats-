@@ -13,8 +13,8 @@
                         <span class="avatar avatar-xl rounded-circle shadow-sm border border-2 border-white border-opacity-25" style="background-image: url('{{ $candidate?->photo_path ? asset('storage/'.$candidate->photo_path) : 'https://ui-avatars.com/api/?name='.urlencode($user->first_name).'&background=random' }}'); width: 80px; height: 80px;"></span>
                     </div>
                     <div class="col">
-                        <h2 class="display-6 fw-black mb-1">Welcome back, {{ $user->first_name }}! 👋</h2>
-                        <div class="opacity-75 fs-3 mb-3">CNIC: <strong class="text-white">{{ $user->cnic }}</strong> <span class="mx-2">•</span> Active Applications: <strong class="text-white">{{ $applications->count() }}</strong></div>
+                        <h2 class="display-6 fw-black mb-1">Welcome back, {{ $user->first_name }}! ðŸ‘‹</h2>
+                        <div class="opacity-75 fs-3 mb-3">CNIC: <strong class="text-white">{{ $user->cnic }}</strong> <span class="mx-2">â€¢</span> Active Applications: <strong class="text-white">{{ $applications->count() }}</strong></div>
                         <div class="d-flex gap-3">
                             <a href="{{ route('candidate.profile.bio') }}" class="btn btn-dark rounded-pill border-0 shadow-sm px-4">
                                 <i class="ti ti-user-circle me-2"></i> View Professional Bio
@@ -26,24 +26,28 @@
                     </div>
                     
                     <!-- Profile Completion inline widget -->
-                    <div class="col-md-4 mt-4 mt-md-0 border-start border-white border-opacity-25 ps-md-5">
+                    <div class="col-md-5 mt-4 mt-md-0 border-start border-white border-opacity-25 ps-md-5">
                         <div class="d-flex align-items-center justify-content-between mb-2">
-                            <div class="text-uppercase tracking-widest small fw-bold opacity-75">Profile Completion</div>
+                            <div class="text-uppercase tracking-widest small fw-bold opacity-75">Wizard Progress</div>
                             <div class="fs-2 fw-black {{ $completion === 100 ? 'text-green' : 'text-yellow' }}">{{ $completion }}%</div>
                         </div>
                         <div class="progress progress-sm mb-3 bg-white bg-opacity-20 rounded-pill">
                             <div class="progress-bar {{ $completion === 100 ? 'bg-green' : 'bg-yellow' }} rounded-pill" style="width: {{ $completion }}%" role="progressbar"></div>
                         </div>
                         
-                        @if($completion === 100)
-                            <div class="d-flex align-items-center text-green small fw-bold bg-green-lt bg-opacity-10 py-2 px-3 rounded-pill mt-2">
-                                <i class="ti ti-discount-check-filled fs-3 me-2"></i> Verified & Ready to Apply
-                            </div>
-                        @else
-                            <a href="{{ route('candidate.profile.show') }}" class="btn btn-warning btn-sm w-100 rounded-pill fw-bold shadow-sm">
-                               <i class="ti ti-alert-triangle-filled me-1"></i> Complete Profile Now
-                            </a>
-                        @endif
+                        <div class="row g-2">
+                            @foreach(['1', '2', '3', '4'] as $s)
+                                @php
+                                    $isStepComplete = $status['step'.$s]['success'] && ($s < $status['next_step'] || $completion === 100);
+                                    $isStepActive = $status['next_step'] == $s && $completion < 100;
+                                @endphp
+                                <div class="col-3">
+                                    <div class="p-2 rounded-2 text-center {{ $isStepComplete ? 'bg-green text-white' : ($isStepActive ? 'bg-yellow text-dark' : 'bg-white bg-opacity-10 text-white opacity-50') }}" style="font-size: 10px; font-weight: 800;">
+                                        STEP {{ $s }}
+                                    </div>
+                                </div>
+                            @endforeach
+                        </div>
                     </div>
                 </div>
             </div>
@@ -51,74 +55,66 @@
             <!-- Dynamic Next Step Indicator -->
             <div class="card-footer bg-dark bg-opacity-25 py-3 px-5 border-0">
                 <div class="d-flex align-items-center">
-                    <div class="spinner-grow spinner-grow-sm text-yellow me-3 opacity-75" role="status"></div>
-                    <span class="text-white small">
-                        <strong>NEXT ASSIGNMENT:</strong> 
-                        @if($completion < 100)
-                            Your profile is incomplete. Click "Complete Profile Now" to finish and become eligible for jobs.
-                        @elseif($applications->isEmpty())
-                            Profile complete! Start browsing open projects to find your next opportunity.
-                        @elseif($applications->where('status', 'submitted')->isNotEmpty())
-                            You have pending applications. Please download and pay your Challan(s).
-                        @else
-                            All set! We will notify you via SMS when your Roll Number Slip is ready.
-                        @endif
-                    </span>
+                    @if($completion < 100)
+                        <div class="spinner-grow spinner-grow-sm text-yellow me-3 opacity-75" role="status"></div>
+                        <span class="text-white small">
+                            <strong>ACTION REQUIRED:</strong> 
+                            You are currently on <strong>Step {{ $status['next_step'] }}: {{ $status['step'.$status['next_step']]['label'] }}</strong>. 
+                            Complete this stage to unlock the next part of your profile.
+                        </span>
+                    @else
+                        <div class="ti ti-discount-check-filled text-green me-3 fs-2"></div>
+                        <span class="text-white small">
+                            <strong>PROFILE VERIFIED:</strong> 
+                            Congratulations! Your profile is 100% complete. You are now eligible to apply for all active jobs.
+                        </span>
+                    @endif
                 </div>
             </div>
         </div>
     </div>
 </div>
 
-    <!-- Missing Information Checklist -->
-        @php
-        $missingFields = [];
-        if (!$candidate) {
-            $missingFields[] = 'Initial Profile Setup';
-        } else {
-            $fields = [
-                'father_name' => 'Father\'s Name', 
-                'dob' => 'Date of Birth', 
-                'gender' => 'Gender', 
-                'marital_status' => 'Marital Status', 
-                'religion' => 'Religion',
-                'domicile_city_id' => 'Domicile City', 
-                'address_city_id' => 'Postal City',
-                'permanent_address' => 'Permanent Address', 
-                'postal_address' => 'Postal Address',
-            ];
-            foreach ($fields as $col => $label) {
-                if (empty($candidate->$col)) $missingFields[] = $label;
-            }
-            if (!$candidate->education()->exists()) $missingFields[] = 'Add Minimum 1 Degree/Qualification';
-        }
-    @endphp
-
-    @if(count($missingFields) > 0)
-    <div class="col-12 mb-4">
-        <div class="card border-0 bg-yellow-lt shadow-sm rounded-5 overflow-hidden">
+    <!-- Wizard Requirements Checklist -->
+    @if($completion < 100)
+    <div class="col-12 mb-5">
+        <div class="card border-0 shadow-lg rounded-5 overflow-hidden">
+            <div class="card-header bg-yellow-lt border-0 py-3 px-4">
+                <h3 class="card-title fw-black text-yellow-emphasis m-0"><i class="ti ti-list-check me-2"></i> Wizard Requirements Checklist</h3>
+            </div>
             <div class="card-body p-4 p-md-5">
-                <div class="d-flex flex-column flex-md-row gap-4 align-items-md-center">
-                    <div class="bg-yellow text-white rounded-circle d-flex align-items-center justify-content-center flex-shrink-0 shadow-sm" style="width: 60px; height: 60px;">
-                        <i class="ti ti-alert-triangle-filled fs-1"></i>
-                    </div>
-                    <div class="flex-grow-1">
-                        <h3 class="fs-2 fw-black text-dark mb-1">Action Required: Complete Your Profile</h3>
-                        <p class="text-muted mb-3 fs-3">You cannot apply for any jobs until your profile is 100% complete. Please provide the missing information below:</p>
-                        
-                        <div class="d-flex flex-wrap gap-2">
-                            @foreach($missingFields as $mf)
-                                <span class="badge bg-white text-dark border border-yellow border-opacity-25 px-3 py-2 rounded-pill shadow-sm fs-4">
-                                    <i class="ti ti-x text-danger me-1 fw-bold"></i> {{ $mf }}
-                                </span>
-                            @endforeach
+                <div class="row g-4">
+                    @foreach(['1', '2', '3', '4'] as $s)
+                        @php $sdata = $status['step'.$s]; @endphp
+                        <div class="col-md-6 col-lg-3">
+                            <div class="p-4 rounded-4 border-2 {{ $sdata['success'] ? 'border-success bg-success-lt' : ($status['next_step'] == $s ? 'border-yellow bg-yellow-lt' : 'border-light bg-light opacity-50') }} h-100">
+                                <div class="d-flex align-items-center mb-3">
+                                    <span class="avatar avatar-sm rounded-circle me-3 {{ $sdata['success'] ? 'bg-success text-white' : ($status['next_step'] == $s ? 'bg-yellow text-dark' : 'bg-secondary text-white') }}">
+                                        @if($sdata['success']) <i class="ti ti-check"></i> @else {{ $s }} @endif
+                                    </span>
+                                    <h4 class="m-0 fw-black {{ $sdata['success'] ? 'text-success' : ($status['next_step'] == $s ? 'text-yellow-emphasis' : 'text-muted') }}">{{ $sdata['label'] }}</h4>
+                                </div>
+                                <div class="small">
+                                    @if($sdata['success'] && $s <= $status['next_step'])
+                                        <span class="text-success fw-bold">Verified Complete</span>
+                                    @elseif($status['next_step'] == $s)
+                                        <ul class="list-unstyled mb-0 text-yellow-emphasis fw-bold">
+                                            @foreach($sdata['errors'] as $err)
+                                                <li>â€¢ {{ $err }}</li>
+                                            @endforeach
+                                        </ul>
+                                    @else
+                                        <span class="text-muted">Sequence Locked</span>
+                                    @endif
+                                </div>
+                            </div>
                         </div>
-                    </div>
-                    <div class="ms-md-auto mt-4 mt-md-0 flex-shrink-0">
-                        <a href="{{ route('candidate.profile.show') }}" class="btn btn-yellow btn-lg rounded-pill shadow-sm fw-bold px-4">
-                            Fix Missing Details <i class="ti ti-arrow-right ms-2"></i>
-                        </a>
-                    </div>
+                    @endforeach
+                </div>
+                <div class="text-center mt-5">
+                    <a href="{{ route('candidate.profile.show', ['step' => $status['next_step']]) }}" class="btn btn-yellow btn-lg rounded-pill shadow-lg fw-black px-5 py-3 fs-3">
+                        CONTINUE WIZARD AT STEP {{ $status['next_step'] }} <i class="ti ti-arrow-right-bar ms-2"></i>
+                    </a>
                 </div>
             </div>
         </div>
@@ -259,3 +255,5 @@
     </div>
 </div>
 @endsection
+
+

@@ -458,7 +458,7 @@
         });
     </script>
     <script>
-        // Global Confirmation Helper — powered by SweetAlert2
+        // Global Confirmation Helper â€” powered by SweetAlert2
         (function() {
             window.confirmAction = function(message, type = 'warning') {
                 const colors = { warning: 'btn-warning', danger: 'btn-danger', primary: 'btn-primary' };
@@ -520,3 +520,5 @@
     @stack('scripts')
 </body>
 </html>
+
+

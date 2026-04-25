@@ -11,23 +11,22 @@
 @section('content')
 <div class="row justify-content-center">
     <div class="col-lg-10">
-        <form method="POST" action="{{ route('admin.projects.store') }}" enctype="multipart/form-data" class="card shadow-sm border-0">
+        <form method="POST" action="{{ route('admin.projects.store') }}" enctype="multipart/form-data" class="card">
             @csrf
-            <div class="card-header border-0 pb-1 pt-3">
-                <h3 class="card-title fw-bold text-primary">Project Configuration</h3>
+            <div class="card-header">
+                <h3 class="card-title fw-bold">Project Configuration</h3>
             </div>
             <div class="card-body">
                 @if($errors->any())
-                <div class="alert alert-danger" role="alert">
-                    <div class="d-flex">
-                        <div><i class="ti ti-alert-circle fs-2 me-2"></i></div>
-                        <div>
-                            <ul class="mb-0 ps-3">
-                                @foreach($errors->all() as $e)
-                                <li>{{ $e }}</li>
-                                @endforeach
-                            </ul>
-                        </div>
+                <div class="alert alert-danger alert-important d-flex align-items-center mb-4" role="alert">
+                    <i class="ti ti-alert-circle icon alert-icon me-3"></i>
+                    <div>
+                        <div class="fw-bold fs-3 mb-1">Configuration Errors Detected</div>
+                        <ul class="mb-0 ps-3">
+                            @foreach($errors->all() as $e)
+                            <li>{{ $e }}</li>
+                            @endforeach
+                        </ul>
                     </div>
                 </div>
                 @endif
@@ -52,6 +51,7 @@
                     </div>
                     
                     <div class="col-12 mt-4">
+                        <!-- RESTORED CHARACTER COUNTER -->
                         <label class="form-label">Description / Advertisement Text <span class="form-label-description">56/1000</span></label>
                         <textarea name="description" class="form-control" rows="6" placeholder="Provide full details, guidelines, or advertisement text...">{{ old('description') }}</textarea>
                     </div>
@@ -60,6 +60,7 @@
                         <label class="form-label">Opening Date</label>
                         <div class="input-icon">
                             <span class="input-icon-addon"><i class="ti ti-calendar-event"></i></span>
+                            <!-- RESTORED DATE CONSTRAINTS -->
                             <input type="date" name="open_date" class="form-control" value="{{ old('open_date') }}" max="2099-12-31">
                         </div>
                     </div>
@@ -79,15 +80,15 @@
                     </div>
                     
                     <div class="col-md-6">
-                        <label class="form-label">Client Logo (Optional)</label>
+                        <label class="form-label">Client Logo</label>
                         <input type="file" name="logo" class="form-control" accept="image/*">
-                        <div class="form-hint">Upload the organization's logo (PNG, JPG) to display on application forms.</div>
+                        <div class="form-hint">Upload organization's branding for portal visibility (PNG/JPG).</div>
                     </div>
                 </div>
             </div>
             <div class="card-footer d-flex align-items-center justify-content-between gap-3">
-                <div class="text-muted small d-flex align-items-center gap-2">
-                    <i class="ti ti-clock text-info fs-4"></i>
+                <div class="text-secondary small d-flex align-items-center gap-2">
+                    <i class="ti ti-clock text-info fs-3"></i>
                     <span>Once saved, this project may take <strong>up to 2 hours</strong> to appear on the public portal due to caching. Set the Status to <em>Open</em> only when you are ready to go live.</span>
                 </div>
                 <div class="d-flex gap-2">

@@ -3,6 +3,37 @@
 @section('page-title', 'Assigned Test Sessions')
 
 @section('content')
+<div class="row row-cards mb-4">
+    <!-- Welcome Banner -->
+    <div class="col-12">
+        <div class="card border-0 shadow-lg rounded-5 overflow-hidden text-white" style="background: linear-gradient(135deg, #2c3e50 0%, #4ca1af 100%);">
+            <div class="card-body p-4 p-md-5">
+                <div class="row align-items-center">
+                    <div class="col-auto">
+                        <span class="avatar avatar-xl rounded-circle shadow-sm border border-2 border-white border-opacity-25 bg-white bg-opacity-10" style="width: 70px; height: 70px;">
+                            <i class="ti ti-user-shield fs-1"></i>
+                        </span>
+                    </div>
+                    <div class="col">
+                        <h2 class="display-6 fw-black mb-1">Examiner Portal</h2>
+                        <div class="opacity-75 fs-3">Authorized Access: <strong class="text-white">{{ auth()->user()->full_name }}</strong> <span class="mx-2">•</span> Assigned Sessions: <strong class="text-white">{{ $sessions->count() }}</strong></div>
+                    </div>
+                    <div class="col-md-auto mt-3 mt-md-0 d-flex gap-2">
+                        <div class="bg-white bg-opacity-10 p-3 rounded-4 border border-white border-opacity-10 text-center" style="min-width: 100px;">
+                            <div class="fs-4 fw-black">{{ $sessions->where('test_date', '>=', now()->startOfDay())->count() }}</div>
+                            <div class="small opacity-75 text-uppercase tracking-wider">Upcoming</div>
+                        </div>
+                        <div class="bg-white bg-opacity-10 p-3 rounded-4 border border-white border-opacity-10 text-center" style="min-width: 100px;">
+                            <div class="fs-4 fw-black text-yellow">{{ $sessions->where('test_date', now()->toDateString())->count() }}</div>
+                            <div class="small opacity-75 text-uppercase tracking-wider">Today</div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
 <div class="row row-cards">
     <div class="col-12">
         <div class="card shadow-sm border-0">

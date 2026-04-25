@@ -27,7 +27,7 @@
     <div>
         <strong>Simple Mode Active.</strong>
         <a href="{{ route('admin.financials.settings') }}" class="alert-link ms-1">Enable FBR Mode</a>
-        to unlock Pakistan tax compliance features — Annex-A, NTN tracking, and IRIS-compatible exports.
+        to unlock Pakistan tax compliance features â€” Annex-A, NTN tracking, and IRIS-compatible exports.
     </div>
     <button type="button" class="btn-close ms-auto" data-bs-dismiss="alert"></button>
 </div>
@@ -54,7 +54,7 @@
     </div>
 </div>
 
-{{-- ── KPI Cards ─────────────────────────────────────────────────────────── --}}
+{{-- â”€â”€ KPI Cards â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€ --}}
 <div class="row g-3 mb-4">
     <div class="col-6 col-lg-3">
         <div class="card border-0 shadow-sm" style="border-left: 4px solid #2fb344 !important;">
@@ -92,7 +92,7 @@
                 <div class="h2 fw-black mb-0 {{ $kpis['net_surplus'] >= 0 ? 'text-azure' : 'text-warning' }}">
                     {{ pkr($kpis['net_surplus']) }}
                 </div>
-                <div class="text-muted small mt-1">Revenue − Expenses</div>
+                <div class="text-muted small mt-1">Revenue âˆ’ Expenses</div>
             </div>
         </div>
     </div>
@@ -110,13 +110,13 @@
     </div>
 </div>
 
-{{-- ── Charts Row ────────────────────────────────────────────────────────── --}}
+{{-- â”€â”€ Charts Row â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€ --}}
 <div class="row g-3 mb-4">
     {{-- Monthly Trend Bar Chart --}}
     <div class="col-lg-8">
         <div class="card border-0 shadow-sm h-100">
             <div class="card-header border-0">
-                <h3 class="card-title fw-bold"><i class="ti ti-chart-bar me-2 text-primary"></i>Monthly Revenue vs Expenses — FY {{ $fy }}</h3>
+                <h3 class="card-title fw-bold"><i class="ti ti-chart-bar me-2 text-primary"></i>Monthly Revenue vs Expenses â€” FY {{ $fy }}</h3>
             </div>
             <div class="card-body">
                 <div id="chart-trend" style="min-height: 280px;"></div>
@@ -141,7 +141,7 @@
     </div>
 </div>
 
-{{-- ── Project-wise Breakdown Table ────────────────────────────────────── --}}
+{{-- â”€â”€ Project-wise Breakdown Table â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€ --}}
 <div class="row g-3 mb-4">
     <div class="col-12">
         <div class="card border-0 shadow-sm">
@@ -182,7 +182,7 @@
     </div>
 </div>
 
-{{-- ── Recent Ledger Entries ─────────────────────────────────────────────── --}}
+{{-- â”€â”€ Recent Ledger Entries â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€ --}}
 <div class="card border-0 shadow-sm">
     <div class="card-header border-0 d-flex justify-content-between align-items-center">
         <h3 class="card-title fw-bold m-0"><i class="ti ti-list me-2 text-teal"></i>Recent Ledger Entries</h3>
@@ -211,7 +211,7 @@
                     </td>
                     <td class="small">{{ $entry->category }}</td>
                     <td class="text-truncate small" style="max-width: 250px;">{{ $entry->description }}</td>
-                    <td class="small text-muted">{{ $entry->project?->name ?? '—' }}</td>
+                    <td class="small text-muted">{{ $entry->project?->name ?? 'â€”' }}</td>
                     <td class="text-end fw-semibold {{ $entry->type === 'revenue' ? 'text-success' : 'text-danger' }}">
                         {{ $entry->amount_formatted }}
                     </td>
@@ -228,7 +228,7 @@
 @push('scripts')
 <script src="{{ asset('assets/vendor/js/apexcharts.min.js') }}"></script>
 <script>
-// ── Monthly Trend Chart ──────────────────────────────────────────────────────
+// â”€â”€ Monthly Trend Chart â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
 var trendOptions = {
     series: [
         { name: 'Revenue', data: @json($trend['revenue']), color: '#2fb344' },
@@ -246,7 +246,7 @@ var trendOptions = {
 new ApexCharts(document.getElementById('chart-trend'), trendOptions).render();
 
 @if($donut->isNotEmpty())
-// ── Expense Category Donut ───────────────────────────────────────────────────
+// â”€â”€ Expense Category Donut â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
 var donutOptions = {
     series: @json($donut->pluck('total')->map(fn($v) => round($v, 2))->values()),
     labels: @json($donut->pluck('category')->values()),
@@ -261,3 +261,5 @@ new ApexCharts(document.getElementById('chart-donut'), donutOptions).render();
 @endif
 </script>
 @endpush
+
+

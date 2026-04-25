@@ -5,7 +5,7 @@
 @section('content')
 <div class="row mb-4">
     <div class="col-12">
-        <div class="card card-md shadow-sm border-0 bg-primary text-primary-fg">
+        <div class="card card-md shadow-sm border-0 bg-primary text-primary-fg" style="background: linear-gradient(135deg, #206bc4 0%, #1e5bb0 100%) !important; border: 0;">
             <div class="card-body">
                 <div class="row align-items-center">
                     <div class="col">
@@ -13,9 +13,6 @@
                         <div class="opacity-75 fs-3">
                             Here is a snapshot of your system's current performance and recent operational activities.
                         </div>
-                    </div>
-                    <div class="col-auto">
-                        <i class="ti ti-dashboard text-white opacity-50 pe-3" style="font-size: 4rem;"></i>
                     </div>
                 </div>
             </div>
@@ -58,37 +55,111 @@
         ['label'=>'Active Projects',   'value'=>$stats['projects'],    'icon'=>'briefcase',       'color'=>'primary'],
         ['label'=>'Total Job Posts',   'value'=>$stats['jobs'],        'icon'=>'list-check',      'color'=>'info'],
         ['label'=>'Total Applications','value'=>$stats['applications'], 'icon'=>'file-text',       'color'=>'dark'],
-        ['label'=>'Pending Payments',  'value'=>$stats['pending_pay'], 'icon'=>'clock-hourglass', 'color'=>'warning'],
+        ['label'=>'Pending Payments',  'value'=>$stats['pending_pay'], 'icon'=>'clock-hour-4',    'color'=>'warning'],
         ['label'=>'Verified Payments', 'value'=>$stats['verified_pay'], 'icon'=>'cash',            'color'=>'success'],
         ['label'=>'Appeared in Test',  'value'=>$stats['appeared'],    'icon'=>'user-check',      'color'=>'secondary'],
     ];
     @endphp
     @foreach($cards as $c)
-    <div class="col-sm-6 col-lg-4">
+    <div class="col-sm-6 col-lg-4 col-xl-2">
         <div class="card card-sm shadow-sm border-0 h-100">
             <div class="card-body">
                 <div class="row align-items-center">
                     <div class="col-auto">
-                        <span class="bg-{{ $c['color'] }} text-white avatar avatar-md shadow-sm">
-                            <i class="ti ti-{{ $c['icon'] }} fs-2"></i>
+                        <span class="bg-{{ $c['color'] }} text-white avatar avatar-sm shadow-sm">
+                            <i class="ti ti-{{ $c['icon'] }}"></i>
                         </span>
                     </div>
                     <div class="col">
-                        <div class="fw-bold fs-4 text-dark mb-1">
+                        <div class="fw-bold mb-0">
+                            {{ number_format($c['value'] ?? 0) }}
+                        </div>
+                        <div class="text-secondary small text-truncate" title="{{ $c['label'] }}">
                             {{ $c['label'] }}
                         </div>
-                        <div class="text-secondary small">
-                            Recorded {{ strtolower(explode(' ', $c['label'])[1] ?? 'items') }} in system
-                        </div>
-                    </div>
-                    <div class="col-auto text-end">
-                        <div class="fw-bolder fs-1 text-primary">{{ number_format($c['value']) }}</div>
                     </div>
                 </div>
             </div>
         </div>
     </div>
     @endforeach
+</div>
+
+<!-- 🗺️ Tactical Analytics Restoration (Heatmap & ROI) -->
+<div class="row row-cards mb-4">
+    <!-- Geographic Intelligence -->
+    <div class="col-lg-7">
+        <div class="card shadow-sm border-0 h-100">
+            <div class="card-header border-0 bg-transparent pb-0">
+                <div class="d-flex justify-content-between align-items-center w-100">
+                    <h3 class="card-title fw-bold text-dark m-0">
+                        <i class="ti ti-map-pin-2 text-primary me-2 fs-2"></i> Applicant Geographic Heatmap
+                    </h3>
+                    <div class="btn-group">
+                        <input type="radio" class="btn-check" name="heatmap-view" id="view-total" value="total" checked>
+                        <label class="btn btn-outline-secondary btn-sm" for="view-total">Total</label>
+                        <input type="radio" class="btn-check" name="heatmap-view" id="view-paid" value="verified">
+                        <label class="btn btn-outline-secondary btn-sm" for="view-paid">Paid</label>
+                    </div>
+                </div>
+            </div>
+            <div class="card-body">
+                <div class="row align-items-center">
+                    <div class="col-md-7">
+                        <div id="pakistan-map" style="height: 350px;"></div>
+                    </div>
+                    <div class="col-md-5 border-start">
+                        <div class="mb-3">
+                            <h4 class="small fw-bold text-secondary mb-3">TOP RECRUITMENT HUBS</h4>
+                            @foreach($cityDistribution->take(5) as $city)
+                                @php $pct = $stats['applications'] > 0 ? round(($city['count'] / $stats['applications']) * 100) : 0; @endphp
+                                <div class="mb-3">
+                                    <div class="d-flex justify-content-between mb-1">
+                                        <span class="fw-semibold text-dark">{{ $city['city'] }}</span>
+                                        <span class="text-secondary small">{{ number_format($city['count']) }}</span>
+                                    </div>
+                                    <div class="progress progress-sm rounded-pill">
+                                        <div class="progress-bar bg-primary" style="width: {{ $pct }}%"></div>
+                                    </div>
+                                </div>
+                            @endforeach
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Project Financial ROI -->
+    <div class="col-lg-5">
+        <div class="card shadow-sm border-0 h-100">
+            <div class="card-header border-0 bg-transparent pb-0">
+                <h3 class="card-title fw-bold text-dark">
+                    <i class="ti ti-cash-banknote text-success me-2 fs-2"></i> Project Financial Performance
+                </h3>
+            </div>
+            <div class="card-body">
+                <div id="chart-roi" style="min-height: 280px;"></div>
+                <div class="mt-3 p-3 bg-light rounded-3">
+                    @php
+                        $totalRev = $projectRoi->sum('revenue');
+                        $totalExp = $projectRoi->sum('expense');
+                        $margin = $totalRev > 0 ? (($totalRev - $totalExp) / $totalRev) * 100 : 0;
+                    @endphp
+                    <div class="row text-center">
+                        <div class="col-6 border-end">
+                            <div class="text-secondary tiny text-uppercase fw-bold" style="font-size: 0.6rem;">Avg. Margin</div>
+                            <div class="fs-3 fw-bold text-success">{{ round($margin, 1) }}%</div>
+                        </div>
+                        <div class="col-6">
+                            <div class="text-secondary tiny text-uppercase fw-bold" style="font-size: 0.6rem;">Net Surplus</div>
+                            <div class="fs-3 fw-bold text-primary">PKR {{ number_format($totalRev - $totalExp) }}</div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
 </div>
 
 <div class="row row-cards">
@@ -98,7 +169,7 @@
             <div class="card-header border-0 pb-1 pt-3">
                 <h3 class="card-title fw-bold"><i class="ti ti-history text-primary me-2 fs-2 align-text-bottom"></i> Recent Applications</h3>
                 <div class="card-actions">
-                    <a href="{{ route('admin.applications.index') }}" class="btn btn-primary d-none d-sm-inline-block">View All</a>
+                    <a href="{{ route('admin.applications.index') }}" class="btn btn-primary btn-sm rounded-pill px-3 shadow-sm">View All</a>
                 </div>
             </div>
             <div class="table-responsive">
@@ -117,15 +188,15 @@
                         <tr>
                             <td>
                                 <div class="d-flex py-1 align-items-center">
-                                    <span class="avatar me-2" style="background-image: url('{{ $app->candidate->photo_path ? Storage::url($app->candidate->photo_path) : 'https://ui-avatars.com/api/?name='.urlencode($app->candidate->user->first_name) }}')"></span>
+                                    <span class="avatar me-2 rounded" style="background-image: url('{{ $app->candidate->photo_path ? Storage::url($app->candidate->photo_path) : 'https://ui-avatars.com/api/?name='.urlencode($app->candidate->user->first_name) }}')"></span>
                                     <div class="flex-fill">
-                                        <div class="font-weight-medium">{{ $app->candidate->user->full_name }}</div>
+                                        <div class="font-weight-medium text-dark">{{ $app->candidate->user->full_name }}</div>
                                         <div class="text-secondary small">{{ $app->candidate->user->cnic }}</div>
                                     </div>
                                 </div>
                             </td>
                             <td>
-                                <div class="text-body">{{ Str::limit($app->job->title, 30) }}</div>
+                                <div class="text-body fw-semibold">{{ Str::limit($app->job->title, 30) }}</div>
                                 <div class="text-secondary small">{{ Str::limit($app->job->project->name, 25) }}</div>
                             </td>
                             <td>
@@ -144,7 +215,9 @@
                             </td>
                             <td class="text-secondary">{{ $app->applied_at->format('d M Y') }}</td>
                             <td>
-                                <a href="{{ route('admin.applications.show', $app) }}" class="btn btn-outline-secondary btn-sm">Inspect</a>
+                                <a href="{{ route('admin.applications.show', $app) }}" class="btn btn-ghost-primary btn-icon btn-sm" title="Inspect">
+                                    <i class="ti ti-eye"></i>
+                                </a>
                             </td>
                         </tr>
                         @empty
@@ -161,16 +234,13 @@
         <div class="card shadow-sm border-0 h-100">
             <div class="card-header border-0 pb-1 pt-3">
                 <h3 class="card-title fw-bold"><i class="ti ti-folder-check text-success me-2 fs-2 align-text-bottom"></i> Active Projects</h3>
-                <div class="card-actions">
-                    <a href="{{ route('admin.projects.index') }}" class="btn btn-success d-none d-sm-inline-block">Directory</a>
-                </div>
             </div>
             <div class="list-group list-group-flush list-group-hoverable">
                 @forelse($openProjects as $project)
-                <div class="list-group-item">
+                <div class="list-group-item px-3 py-3">
                     <div class="row align-items-center">
                         <div class="col-auto">
-                            <span class="badge bg-success"></span>
+                            <span class="status-dot status-dot-animated bg-success"></span>
                         </div>
                         <div class="col text-truncate">
                             <a href="{{ route('admin.projects.show', $project) }}" class="text-body d-block fw-semibold text-truncate">{{ $project->name }}</a>
@@ -190,7 +260,91 @@
                 <div class="list-group-item text-center text-secondary py-4">There are currently no active projects.</div>
                 @endforelse
             </div>
+            <div class="card-footer bg-transparent border-0 text-center">
+                <a href="{{ route('admin.projects.index') }}" class="btn btn-ghost-primary btn-sm w-100">View Project Directory</a>
+            </div>
         </div>
     </div>
 </div>
 @endsection
+
+@push('styles')
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/jsvectormap/dist/css/jsvectormap.min.css">
+<style>
+    .jvm-container { background: transparent !important; }
+</style>
+@endpush
+
+@push('scripts')
+<script src="https://cdn.jsdelivr.net/npm/jsvectormap"></script>
+<script src="{{ asset('assets/maps/pakistan_official.js') }}"></script>
+<script src="{{ asset('assets/vendor/js/apexcharts.min.js') }}"></script>
+<script>
+    document.addEventListener('DOMContentLoaded', function () {
+        // Regional data arrives from the controller already keyed by ISO codes (PK-PB, PK-SD, etc.)
+        const regionalData = @json($regionalStats);
+
+        // Build stats directly from controller data — no name→code mapping needed
+        const buildStats = (dataObj) => {
+            if (!dataObj) return {};
+            const result = {};
+            Object.entries(dataObj).forEach(([code, val]) => {
+                const count = parseInt(val) || 0;
+                result[code] = count;
+            });
+            // Ensure disputed/special territories have a fallback
+            ['PK-JK', 'PK-GB', 'PK-II'].forEach(k => { if (!(k in result)) result[k] = 0; });
+            return result;
+        };
+        const stats = { total: buildStats(regionalData.total), verified: buildStats(regionalData.verified_paid) };
+
+        const mapContainer = document.querySelector("#pakistan-map");
+        if (mapContainer) {
+            const map = new jsVectorMap({
+                selector: "#pakistan-map",
+                map: "pakistan_official",
+                showTooltip: true,
+                zoomOnScroll: false,
+                zoomButtons: false,
+                regionStyle: {
+                    initial: { fill: '#f1f5f9', stroke: '#cbd5e1', strokeWidth: 0.5 },
+                    hover: { fill: '#3b82f6', fillOpacity: 0.8 }
+                },
+                series: {
+                    regions: [{ attribute: 'fill', scale: ['#dbeafe', '#206bc4'], values: stats.total, min: 0 }]
+                },
+                onRegionTooltipShow(event, tooltip, code) {
+                    if (!code.startsWith('PK')) {
+                        event.preventDefault();
+                        return;
+                    }
+                    tooltip.text(
+                        `<div class="p-2" style="min-width: 180px;"><div class="fw-bold fs-3 border-bottom pb-1 mb-2 text-dark">${tooltip.text()}</div><div class="d-flex justify-content-between mb-1"><span class="text-secondary small">Applications:</span><span class="text-dark fw-bold">${(stats.total[code] || 0).toLocaleString()}</span></div><div class="d-flex justify-content-between"><span class="text-secondary small">Verified:</span><span class="text-success fw-bold">${(stats.verified[code] || 0).toLocaleString()}</span></div></div>`, true
+                    );
+                }
+            });
+
+            document.querySelectorAll('input[name="heatmap-view"]').forEach(radio => {
+                radio.addEventListener('change', function() {
+                    const colorScale = this.value === 'total' ? ['#dbeafe', '#206bc4'] : ['#dcfce7', '#2fb344'];
+                    map.updateSeries({ regions: [{ scale: colorScale, values: stats[this.value === 'total' ? 'total' : 'verified'] }] });
+                });
+            });
+        }
+
+        // Financial ROI Chart (ApexCharts)
+        const roiEl = document.querySelector("#chart-roi");
+        if (roiEl && typeof ApexCharts !== 'undefined') {
+            new ApexCharts(roiEl, {
+                series: [{ name: 'Revenue', data: @json($projectRoi->pluck('revenue')) }, { name: 'Expense', data: @json($projectRoi->pluck('expense')) }],
+                chart: { type: 'bar', height: 280, toolbar: { show: false }, fontFamily: 'inherit' },
+                plotOptions: { bar: { horizontal: false, columnWidth: '55%', borderRadius: 4 } },
+                colors: ['#206bc4', '#d63939'],
+                xaxis: { categories: @json($projectRoi->pluck('name')->map(fn($n) => Str::limit($n, 12))) },
+                yaxis: { labels: { formatter: (val) => "PKR " + (val/1000).toFixed(0) + "k" } },
+                tooltip: { y: { formatter: (val) => "PKR " + val.toLocaleString() } }
+            }).render();
+        }
+    });
+</script>
+@endpush

@@ -77,7 +77,7 @@ class BatchController extends Controller
 
         $unallocatedTarget = (int) $data['count_to_allocate'];
 
-        // Preload centers to eliminate N+1 query overhead (§4.1)
+        // Preload centers to eliminate N+1 query overhead (Â§4.1)
         $centers = TestCenter::whereIn('id', $centerIds)->get()->keyBy('id');
 
         DB::beginTransaction();
@@ -452,7 +452,7 @@ class BatchController extends Controller
     /**
      * Print sticker labels for a roll number range.
      * Accepts: roll_from, roll_to, batch_id (optional, for context)
-     * Each sticker shows Roll No + Post Name, 3 per row × 10 per page.
+     * Each sticker shows Roll No + Post Name, 3 per row Ã— 10 per page.
      */
     public function printStickers(Request $request)
     {
@@ -483,7 +483,7 @@ class BatchController extends Controller
         $firstBatch   = $roster->first()->batch;
         $centerName   = $firstBatch->center->name ?? 'Unknown Center';
         $centerCity   = $firstBatch->center->city->name ?? '';
-        $batchNumber  = $firstBatch->batch_number ?? '—';
+        $batchNumber  = $firstBatch->batch_number ?? 'â€”';
         $projectName  = $firstBatch->project->name ?? '';
 
         $pdf = Pdf::loadView('pdf.stickers', compact(
@@ -574,7 +574,7 @@ class BatchController extends Controller
             }
         }
 
-        // Use bulk updates — scope via examRollno since applications has no batch_id column
+        // Use bulk updates â€” scope via examRollno since applications has no batch_id column
         if (!empty($appearedIds)) {
             Application::whereIn('id', $appearedIds)
                 ->whereHas('examRollno', fn($q) => $q->where('batch_id', $batch->id))
@@ -727,3 +727,5 @@ class BatchController extends Controller
         return response()->stream($callback, 200, $headers);
     }
 }
+
+

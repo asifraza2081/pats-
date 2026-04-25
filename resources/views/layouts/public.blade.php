@@ -178,7 +178,37 @@
                                     default => 'Admin Panel'
                                 };
                             @endphp
-                            <a href="{{ $dashboardRoute }}" class="btn btn-teal text-white fw-bold shadow-sm px-4">
+                            
+                            <!-- Notification Center -->
+                            <div class="nav-item dropdown d-flex me-3">
+                                <a href="#" class="nav-link px-0 text-white opacity-75 hover-opacity-100 position-relative" data-bs-toggle="dropdown" tabindex="-1" aria-label="Show notifications">
+                                    <i class="ti ti-bell fs-2"></i>
+                                    <span class="badge bg-red d-none" id="notif-badge" style="position: absolute; top: 0; right: -5px; padding: 0.25em 0.4em; font-size: 0.6rem;"></span>
+                                </a>
+                                <div class="dropdown-menu dropdown-menu-arrow dropdown-menu-end dropdown-menu-card" style="min-width: 320px;">
+                                    <div class="card border-0 shadow-lg">
+                                        <div class="card-header bg-light border-0 py-3">
+                                            <h3 class="card-title fw-black small text-uppercase tracking-wider">Recent Alerts</h3>
+                                        </div>
+                                        <div class="list-group list-group-flush list-group-hoverable" id="notif-list" style="max-height: 350px; overflow-y: auto;">
+                                            <div class="list-group-item" id="notif-skeleton">
+                                                <div class="placeholder-glow">
+                                                    <span class="placeholder col-8 mb-1 rounded"></span>
+                                                    <span class="placeholder col-5 rounded"></span>
+                                                </div>
+                                            </div>
+                                        </div>
+                                        <div class="card-footer text-center bg-white border-top">
+                                            <form method="POST" action="{{ route('global.notifications.mark-all-read') }}">
+                                                @csrf
+                                                <button type="submit" class="btn btn-link link-secondary btn-sm fw-bold">Mark All as Read</button>
+                                            </form>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <a href="{{ $dashboardRoute }}" class="btn btn-teal text-white fw-bold shadow-sm px-4 rounded-pill">
                                 <i class="ti ti-layout-dashboard me-2"></i> {{ $portalName }}
                             </a>
                         @else
@@ -294,7 +324,12 @@
         </footer>
     </div>
     <!-- Localized Core Script -->
+    <!-- Global Script Stack -->
+    <script src="{{ asset('assets/vendor/js/jquery.min.js') }}"></script>
     <script src="{{ asset('assets/vendor/js/tabler.min.js') }}"></script>
+    <script src="{{ asset('assets/vendor/js/toastr.min.js') }}"></script>
+    <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+    
     <script>
         const navbar = document.getElementById('navbar');
         window.onscroll = () => {
@@ -305,26 +340,94 @@
             }
         };
 
+        // Initialize Toastr
+        toastr.options = { "positionClass": "toast-bottom-right", "progressBar": true };
+
+        // Global Confirmation Helper — powered by SweetAlert2
+        window.confirmAction = function(message, type = 'warning') {
+            const colors = { warning: 'btn-warning', danger: 'btn-danger', primary: 'btn-primary' };
+            const btnClass = colors[type] || 'btn-primary';
+            return Swal.fire({
+                title: 'Confirm Action',
+                text: message,
+                icon: type === 'danger' ? 'error' : type,
+                showCancelButton: true,
+                confirmButtonText: 'Yes, proceed',
+                cancelButtonText: 'Cancel',
+                customClass: {
+                    confirmButton: `btn ${btnClass} rounded-pill px-4 shadow-sm me-2`,
+                    cancelButton: 'btn btn-secondary rounded-pill px-4 shadow-sm'
+                },
+                buttonsStyling: false
+            }).then((result) => result.isConfirmed);
+        };
+
+        @auth
+            // Real-time Notification Poller
+            function pollNotifications() {
+                $.get("{{ route('global.notifications.unread') }}", function(data) {
+                    const badge = $('#notif-badge');
+                    const list  = $('#notif-list');
+                    $('#notif-skeleton').remove();
+                    
+                    if (data.length > 0) {
+                        badge.removeClass('d-none').text(data.length);
+                        list.empty();
+                        data.forEach(n => {
+                            list.append(`
+                                <div class="list-group-item border-0 border-bottom">
+                                    <div class="row align-items-center">
+                                        <div class="col-auto"><span class="status-dot status-dot-animated bg-${n.data.type || 'info'} d-block"></span></div>
+                                        <div class="col text-truncate">
+                                            <a href="${n.data.link || '#'}" class="text-body d-block small fw-bold">${n.data.message}</a>
+                                            <div class="d-block text-secondary text-truncate mt-n1" style="font-size: 0.7rem;">${new Date(n.created_at).toLocaleString()}</div>
+                                        </div>
+                                    </div>
+                                </div>
+                            `);
+                            
+                            // Trigger Toastr if new notification
+                            const createdAt = new Date(n.created_at);
+                            const now = new Date();
+                            if ((now - createdAt) < 35000) {
+                                if (!window.shownNotifs) window.shownNotifs = new Set();
+                                if (!window.shownNotifs.has(n.id)) {
+                                    toastr[n.data.type || 'info'](n.data.message);
+                                    window.shownNotifs.add(n.id);
+                                }
+                            }
+                        });
+                    } else {
+                        badge.addClass('d-none');
+                        list.html('<div class="list-group-item text-center py-4 text-muted small">No new notifications.</div>');
+                    }
+                });
+            }
+
+            setInterval(pollNotifications, 30000); // 30s
+            pollNotifications(); // Initial
+        @endauth
+
         document.addEventListener('DOMContentLoaded', function () {
             const maskCnic = (e) => {
                 let v = e.target.value;
-                // If it contains letters or @, it's likely an email, don't mask
                 if (/[a-zA-Z@]/.test(v)) return;
-                
                 let nums = v.replace(/\D/g, '');
                 if (nums.length > 13) nums = nums.substring(0, 13);
-                
                 let out = '';
                 if (nums.length > 0) out += nums.substring(0, 5);
                 if (nums.length > 5) out += '-' + nums.substring(5, 12);
                 if (nums.length > 12) out += '-' + nums.substring(12, 13);
-                
-                // Only update if changed to avoid cursor jumps on emails
-                if (out !== v && nums.length > 0) {
-                    e.target.value = out;
-                }
+                if (out !== v && nums.length > 0) e.target.value = out;
             };
             document.querySelectorAll('input[name="cnic"], .cnic-mask').forEach(i => i.addEventListener('input', maskCnic));
+
+            // Flush Session Alerts
+            @if(session('success'))
+                Swal.fire({ title: 'Success!', text: @json(session('success')), icon: 'success', customClass: { confirmButton: 'btn btn-primary rounded-pill px-4' }, buttonsStyling: false });
+            @elseif(session('error'))
+                Swal.fire({ title: 'Alert', text: @json(session('error')), icon: 'error', customClass: { confirmButton: 'btn btn-danger rounded-pill px-4' }, buttonsStyling: false });
+            @endif
         });
     </script>
     @include('partials._global_spinner')

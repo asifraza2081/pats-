@@ -1,5 +1,5 @@
 @extends('layouts.dashboard')
-@section('page-title', 'Tax Reports — FBR Pakistan')
+@section('page-title', 'Tax Reports â€” FBR Pakistan')
 @section('page-actions')
     <a href="{{ route('admin.financials.index') }}" class="btn btn-outline-secondary btn-sm">
         <i class="ti ti-arrow-left me-1"></i> Financial Dashboard
@@ -32,8 +32,8 @@
     <i class="ti ti-shield-check fs-2 text-green"></i>
     <div>
         <strong>FBR Mode Active</strong>
-        — Organisation: <strong>{{ $org['name'] }}</strong> | NTN: <strong>{{ $org['ntn'] ?: 'Not set' }}</strong> | STRN: <strong>{{ $org['strn'] ?: 'Not set' }}</strong>
-        <a href="{{ route('admin.financials.settings') }}" class="ms-2 text-muted small">Edit →</a>
+        â€” Organisation: <strong>{{ $org['name'] }}</strong> | NTN: <strong>{{ $org['ntn'] ?: 'Not set' }}</strong> | STRN: <strong>{{ $org['strn'] ?: 'Not set' }}</strong>
+        <a href="{{ route('admin.financials.settings') }}" class="ms-2 text-muted small">Edit â†’</a>
     </div>
 </div>
 
@@ -57,7 +57,7 @@
                     <span class="avatar avatar-lg bg-primary-lt rounded"><i class="ti ti-file-spreadsheet text-primary fs-2"></i></span>
                     <div>
                         <h3 class="fw-black mb-1">Annex-A (Section 153)</h3>
-                        <p class="text-muted small mb-0">Withholding Tax Register — listing of all payments from which tax was deducted at source.</p>
+                        <p class="text-muted small mb-0">Withholding Tax Register â€” listing of all payments from which tax was deducted at source.</p>
                     </div>
                 </div>
                 <ul class="list-unstyled small text-muted mb-4">
@@ -88,7 +88,7 @@
                     <span class="avatar avatar-lg bg-teal-lt rounded"><i class="ti ti-report text-teal fs-2"></i></span>
                     <div>
                         <h3 class="fw-black mb-1">Income & Expenditure Statement</h3>
-                        <p class="text-muted small mb-0">Annual I&E summary — required for FBR NPO/Trust or corporate income tax return filing.</p>
+                        <p class="text-muted small mb-0">Annual I&E summary â€” required for FBR NPO/Trust or corporate income tax return filing.</p>
                     </div>
                 </div>
                 <ul class="list-unstyled small text-muted mb-4">
@@ -110,3 +110,5 @@
 </div>
 @endif
 @endsection
+
+
