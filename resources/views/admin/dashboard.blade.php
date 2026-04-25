@@ -269,126 +269,106 @@
 @endsection
 
 @push('styles')
-<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/leaflet@1.9.4/dist/leaflet.css">
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/jsvectormap/dist/css/jsvectormap.min.css">
 <style>
-    .leaflet-container { background: transparent !important; z-index: 1; font-family: inherit; }
-    .leaflet-tooltip { border: none !important; padding: 0.5rem !important; }
+    .jvm-container { background: transparent !important; font-family: inherit; }
+    .jvm-tooltip { 
+        background: #ffffff !important; 
+        border: none !important; 
+        border-radius: 8px !important; 
+        box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.1), 0 4px 6px -2px rgba(0, 0, 0, 0.05) !important;
+        color: #1e293b !important;
+        padding: 0 !important;
+        font-family: inherit;
+    }
+    .jvm-zoom-btn { display: none !important; }
 </style>
 @endpush
 
 @push('scripts')
-<script src="https://cdn.jsdelivr.net/npm/leaflet@1.9.4/dist/leaflet.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/jsvectormap"></script>
+<script src="{{ asset('assets/maps/pakistan_official.js') }}"></script>
 <script src="{{ asset('assets/vendor/js/apexcharts.min.js') }}"></script>
 <script>
     document.addEventListener('DOMContentLoaded', function () {
-        // Regional data arrives from the controller already keyed by ISO codes (PK-PB, PK-SD, etc.)
-        // Ensure lowercase matching for Highcharts GeoJSON
         const regionalData = @json($regionalStats);
 
         const buildStats = (dataObj) => {
             if (!dataObj) return {};
             const result = {};
             Object.entries(dataObj).forEach(([code, val]) => {
-                result[code.toLowerCase()] = parseInt(val) || 0;
+                // Keep the exact case for jsVectorMap matching (PK-PB, PK-SD, etc)
+                result[code] = parseInt(val) || 0;
             });
-            ['pk-jk', 'pk-gb', 'pk-ta'].forEach(k => { if (!(k in result)) result[k] = 0; });
+            ['PK-JK', 'PK-GB', 'PK-II'].forEach(k => { if (!(k in result)) result[k] = 0; });
             return result;
         };
         const stats = { total: buildStats(regionalData.total), verified: buildStats(regionalData.verified_paid) };
 
         const mapContainer = document.querySelector("#pakistan-map");
         if (mapContainer) {
-            const map = L.map('pakistan-map', {
-                zoomControl: true,
-                scrollWheelZoom: false
-            }).setView([30.3753, 69.3451], 5);
-
-            // Add CartoDB Positron Basemap (Muted, elegant)
-            L.tileLayer('https://{s}.basemaps.cartocdn.com/light_nolabels/{z}/{x}/{y}{r}.png', {
-                attribution: '&copy; OpenStreetMap &copy; CARTO'
-            }).addTo(map);
-
-            let geojsonLayer;
-            let currentMetric = 'total';
-
-            function getColor(val) {
-                if (currentMetric === 'total') {
-                    return val > 5000 ? '#1e5bb0' :
-                           val > 1000 ? '#206bc4' :
-                           val > 500  ? '#4299e1' :
-                           val > 100  ? '#63b3ed' :
-                           val > 0    ? '#90cdf4' :
-                                        '#f1f5f9';
-                } else {
-                    return val > 5000 ? '#2fb344' :
-                           val > 1000 ? '#38d152' :
-                           val > 500  ? '#68e37d' :
-                           val > 100  ? '#86efac' :
-                           val > 0    ? '#bbf7d0' :
-                                        '#f1f5f9';
+            const map = new jsVectorMap({
+                selector: "#pakistan-map",
+                map: "pakistan_official",
+                showTooltip: true,
+                zoomOnScroll: false,
+                zoomButtons: false,
+                regionStyle: {
+                    initial: { 
+                        fill: '#f1f5f9', 
+                        stroke: '#ffffff', 
+                        strokeWidth: 1.5,
+                        fillOpacity: 1
+                    },
+                    hover: { 
+                        fillOpacity: 0.85,
+                        stroke: '#3b82f6',
+                        strokeWidth: 2
+                    }
+                },
+                series: {
+                    regions: [{ 
+                        attribute: 'fill', 
+                        scale: ['#dbeafe', '#1e5bb0'], 
+                        values: stats.total, 
+                        min: 0 
+                    }]
+                },
+                onRegionTooltipShow(event, tooltip, code) {
+                    if (!code.startsWith('PK')) {
+                        event.preventDefault();
+                        return;
+                    }
+                    
+                    const name = tooltip.text();
+                    const totalApps = (stats.total[code] || 0).toLocaleString();
+                    const verifiedApps = (stats.verified[code] || 0).toLocaleString();
+                    
+                    tooltip.text(
+                        `<div class="p-3" style="min-width: 180px;">
+                            <div class="fw-bold fs-3 border-bottom pb-2 mb-2 text-dark">${name}</div>
+                            <div class="d-flex justify-content-between mb-1">
+                                <span class="text-secondary small">Total Applied:</span>
+                                <span class="text-dark fw-bold">${totalApps}</span>
+                            </div>
+                            <div class="d-flex justify-content-between">
+                                <span class="text-secondary small">Verified Paid:</span>
+                                <span class="text-success fw-bold">${verifiedApps}</span>
+                            </div>
+                        </div>`, true
+                    );
                 }
-            }
-
-            function style(feature) {
-                const code = feature.properties['hc-key']; // e.g., pk-pb
-                const val = stats[currentMetric][code] || 0;
-                return {
-                    fillColor: getColor(val),
-                    weight: 1.5,
-                    opacity: 1,
-                    color: '#ffffff',
-                    fillOpacity: 0.85
-                };
-            }
-
-            fetch("{{ asset('assets/maps/pakistan.geojson') }}")
-                .then(res => res.json())
-                .then(data => {
-                    geojsonLayer = L.geoJson(data, {
-                        style: style,
-                        onEachFeature: function(feature, layer) {
-                            const code = feature.properties['hc-key'];
-                            const name = feature.properties.name;
-                            const totalApps = (stats.total[code] || 0).toLocaleString();
-                            const verifiedApps = (stats.verified[code] || 0).toLocaleString();
-                            
-                            const tooltipContent = `
-                                <div class="p-1" style="min-width: 150px;">
-                                    <div class="fw-bold fs-4 border-bottom pb-1 mb-2 text-dark">${name}</div>
-                                    <div class="d-flex justify-content-between mb-1">
-                                        <span class="text-secondary small">Total Applied:</span>
-                                        <span class="text-dark fw-bold">${totalApps}</span>
-                                    </div>
-                                    <div class="d-flex justify-content-between">
-                                        <span class="text-secondary small">Verified Paid:</span>
-                                        <span class="text-success fw-bold">${verifiedApps}</span>
-                                    </div>
-                                </div>
-                            `;
-                            layer.bindTooltip(tooltipContent, {
-                                sticky: true,
-                                className: 'shadow-lg border-0 rounded-3',
-                                direction: 'auto'
-                            });
-
-                            layer.on({
-                                mouseover: function(e) {
-                                    const l = e.target;
-                                    l.setStyle({ weight: 2, color: '#3b82f6', fillOpacity: 1 });
-                                    if (!L.Browser.ie && !L.Browser.opera && !L.Browser.edge) l.bringToFront();
-                                },
-                                mouseout: function(e) { geojsonLayer.resetStyle(e.target); }
-                            });
-                        }
-                    }).addTo(map);
-
-                    map.fitBounds(geojsonLayer.getBounds(), { padding: [10, 10] });
-                });
+            });
 
             document.querySelectorAll('input[name="heatmap-view"]').forEach(radio => {
                 radio.addEventListener('change', function() {
-                    currentMetric = this.value === 'total' ? 'total' : 'verified';
-                    if (geojsonLayer) geojsonLayer.setStyle(style);
+                    const colorScale = this.value === 'total' ? ['#dbeafe', '#1e5bb0'] : ['#dcfce7', '#2fb344'];
+                    map.updateSeries({ 
+                        regions: [{ 
+                            scale: colorScale, 
+                            values: stats[this.value === 'total' ? 'total' : 'verified'] 
+                        }] 
+                    });
                 });
             });
         }

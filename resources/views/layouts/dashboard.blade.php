@@ -90,6 +90,7 @@
         [data-bs-theme='dark'] .hide-theme-dark { display: none !important; }
         [data-bs-theme='light'] .hide-theme-light { display: none !important; }
     </style>
+    @stack('styles')
 </head>
 <body class="layout-fluid">
     {{-- Theme script can be localized if needed, but it's small and often inlined or local already in some tabler setups --}}
