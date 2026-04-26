@@ -35,7 +35,7 @@ class ProfileController extends Controller
         }
 
         // Update the candidate's current step if it's a forward movement
-        if ($step > $candidate->wizard_step) {
+        if ($step > ($candidate->wizard_step ?? 1)) {
             $candidate->update(['wizard_step' => $step]);
         }
 
