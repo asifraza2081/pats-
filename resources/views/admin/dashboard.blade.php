@@ -105,8 +105,22 @@
             </div>
             <div class="card-body">
                 <div class="row align-items-center">
-                    <div class="col-md-7">
-                        <div id="pakistan-map" style="height: 350px;"></div>
+                    <div class="col-md-7 position-relative">
+                        <div id="pakistan-map" style="height: 380px;">
+                            <svg id="pk-svg-map" viewBox="0 0 800 900" preserveAspectRatio="xMidYMid meet" 
+                                 style="width:100%;height:100%;" xmlns="http://www.w3.org/2000/svg">
+                                <defs>
+                                    <filter id="shadow" x="-5%" y="-5%" width="110%" height="110%">
+                                        <feDropShadow dx="0" dy="1" stdDeviation="2" flood-opacity="0.15"/>
+                                    </filter>
+                                </defs>
+                                <g id="pk-provinces" filter="url(#shadow)"></g>
+                            </svg>
+                        </div>
+                        <!-- Floating tooltip -->
+                        <div id="pk-map-tooltip" class="position-absolute shadow-lg rounded-3" 
+                             style="display:none; background:#fff; z-index:10; pointer-events:none; min-width:170px; border:1px solid #e2e8f0;">
+                        </div>
                     </div>
                     <div class="col-md-5 border-start">
                         <div class="mb-3">
@@ -269,111 +283,129 @@
 @endsection
 
 @push('styles')
-<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/jsvectormap/dist/css/jsvectormap.min.css">
 <style>
-    .jvm-container { background: transparent !important; font-family: inherit; }
-    .jvm-tooltip { 
-        background: #ffffff !important; 
-        border: none !important; 
-        border-radius: 8px !important; 
-        box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.1), 0 4px 6px -2px rgba(0, 0, 0, 0.05) !important;
-        color: #1e293b !important;
-        padding: 0 !important;
-        font-family: inherit;
+    #pk-provinces path {
+        stroke: #ffffff;
+        stroke-width: 1.5;
+        stroke-linejoin: round;
+        cursor: pointer;
+        transition: fill 0.3s ease, stroke 0.2s ease, stroke-width 0.2s ease;
     }
-    .jvm-zoom-btn { display: none !important; }
+    #pk-provinces path:hover {
+        stroke: #3b82f6;
+        stroke-width: 2.5;
+        filter: brightness(1.08);
+    }
 </style>
 @endpush
 
 @push('scripts')
-<script src="https://cdn.jsdelivr.net/npm/jsvectormap"></script>
-<script src="{{ asset('assets/maps/pakistan_official.js') }}"></script>
 <script src="{{ asset('assets/vendor/js/apexcharts.min.js') }}"></script>
 <script>
     document.addEventListener('DOMContentLoaded', function () {
-        const regionalData = @json($regionalStats);
+        // ── Province SVG Data (generated from Highcharts GeoJSON) ──
+        const provinceData = @json(json_decode(file_get_contents(public_path('assets/maps/pakistan_svg_data.json'))));
 
+        // ── Regional Stats from Controller ──
+        const regionalData = @json($regionalStats);
         const buildStats = (dataObj) => {
             if (!dataObj) return {};
             const result = {};
             Object.entries(dataObj).forEach(([code, val]) => {
-                // Keep the exact case for jsVectorMap matching (PK-PB, PK-SD, etc)
                 result[code] = parseInt(val) || 0;
             });
-            ['PK-JK', 'PK-GB', 'PK-II'].forEach(k => { if (!(k in result)) result[k] = 0; });
             return result;
         };
         const stats = { total: buildStats(regionalData.total), verified: buildStats(regionalData.verified_paid) };
 
-        const mapContainer = document.querySelector("#pakistan-map");
-        if (mapContainer) {
-            const map = new jsVectorMap({
-                selector: "#pakistan-map",
-                map: "pakistan_official",
-                showTooltip: true,
-                zoomOnScroll: false,
-                zoomButtons: false,
-                regionStyle: {
-                    initial: { 
-                        fill: '#f1f5f9', 
-                        stroke: '#ffffff', 
-                        strokeWidth: 1.5,
-                        fillOpacity: 1
-                    },
-                    hover: { 
-                        fillOpacity: 0.85,
-                        stroke: '#3b82f6',
-                        strokeWidth: 2
-                    }
-                },
-                series: {
-                    regions: [{ 
-                        attribute: 'fill', 
-                        scale: ['#dbeafe', '#1e5bb0'], 
-                        values: stats.total, 
-                        min: 0 
-                    }]
-                },
-                onRegionTooltipShow(event, tooltip, code) {
-                    if (!code.startsWith('PK')) {
-                        event.preventDefault();
-                        return;
-                    }
-                    
-                    const name = tooltip.text();
-                    const totalApps = (stats.total[code] || 0).toLocaleString();
-                    const verifiedApps = (stats.verified[code] || 0).toLocaleString();
-                    
-                    tooltip.text(
-                        `<div class="p-3" style="min-width: 180px;">
-                            <div class="fw-bold fs-3 border-bottom pb-2 mb-2 text-dark">${name}</div>
-                            <div class="d-flex justify-content-between mb-1">
-                                <span class="text-secondary small">Total Applied:</span>
-                                <span class="text-dark fw-bold">${totalApps}</span>
-                            </div>
-                            <div class="d-flex justify-content-between">
-                                <span class="text-secondary small">Verified Paid:</span>
-                                <span class="text-success fw-bold">${verifiedApps}</span>
-                            </div>
-                        </div>`, true
-                    );
-                }
-            });
+        // ── Color Interpolation ──
+        function interpolateColor(value, max, palette) {
+            if (max === 0) return palette[0];
+            const t = Math.min(value / max, 1);
+            // Parse hex colors
+            const c1 = palette[0].match(/\w\w/g).map(x => parseInt(x, 16));
+            const c2 = palette[1].match(/\w\w/g).map(x => parseInt(x, 16));
+            const r = Math.round(c1[0] + (c2[0] - c1[0]) * t);
+            const g = Math.round(c1[1] + (c2[1] - c1[1]) * t);
+            const b = Math.round(c1[2] + (c2[2] - c1[2]) * t);
+            return `rgb(${r},${g},${b})`;
+        }
 
+        let currentMetric = 'total';
+        const palettes = {
+            total:    ['#dbeafe', '#1e40af'],
+            verified: ['#dcfce7', '#15803d']
+        };
+
+        // ── Render SVG Provinces ──
+        const group = document.getElementById('pk-provinces');
+        const tooltip = document.getElementById('pk-map-tooltip');
+        const mapContainer = document.getElementById('pakistan-map');
+
+        if (group && provinceData) {
+            const maxVal = (metric) => Math.max(1, ...Object.values(stats[metric]));
+
+            function renderMap() {
+                const max = maxVal(currentMetric);
+                const palette = palettes[currentMetric];
+                
+                group.innerHTML = '';
+                provinceData.forEach(prov => {
+                    const val = stats[currentMetric][prov.code] || 0;
+                    const fill = interpolateColor(val, max, palette);
+                    
+                    const path = document.createElementNS('http://www.w3.org/2000/svg', 'path');
+                    path.setAttribute('d', prov.path);
+                    path.setAttribute('fill', fill);
+                    path.setAttribute('data-code', prov.code);
+                    path.setAttribute('data-name', prov.name);
+                    
+                    // Tooltip events
+                    path.addEventListener('mouseenter', function(e) {
+                        const totalV = (stats.total[prov.code] || 0).toLocaleString();
+                        const paidV = (stats.verified[prov.code] || 0).toLocaleString();
+                        tooltip.innerHTML = `
+                            <div class="p-3">
+                                <div class="fw-bold border-bottom pb-2 mb-2 text-dark" style="font-size:0.95rem;">${prov.name}</div>
+                                <div class="d-flex justify-content-between mb-1">
+                                    <span class="text-secondary" style="font-size:0.8rem;">Total Applied:</span>
+                                    <span class="text-dark fw-bold" style="font-size:0.8rem;">${totalV}</span>
+                                </div>
+                                <div class="d-flex justify-content-between">
+                                    <span class="text-secondary" style="font-size:0.8rem;">Verified Paid:</span>
+                                    <span class="text-success fw-bold" style="font-size:0.8rem;">${paidV}</span>
+                                </div>
+                            </div>
+                        `;
+                        tooltip.style.display = 'block';
+                    });
+                    
+                    path.addEventListener('mousemove', function(e) {
+                        const rect = mapContainer.getBoundingClientRect();
+                        tooltip.style.left = (e.clientX - rect.left + 12) + 'px';
+                        tooltip.style.top = (e.clientY - rect.top - 10) + 'px';
+                    });
+                    
+                    path.addEventListener('mouseleave', function() {
+                        tooltip.style.display = 'none';
+                    });
+                    
+                    group.appendChild(path);
+                });
+            }
+
+            renderMap();
+
+            // Toggle Total / Paid
             document.querySelectorAll('input[name="heatmap-view"]').forEach(radio => {
                 radio.addEventListener('change', function() {
-                    const colorScale = this.value === 'total' ? ['#dbeafe', '#1e5bb0'] : ['#dcfce7', '#2fb344'];
-                    map.updateSeries({ 
-                        regions: [{ 
-                            scale: colorScale, 
-                            values: stats[this.value === 'total' ? 'total' : 'verified'] 
-                        }] 
-                    });
+                    currentMetric = this.value === 'total' ? 'total' : 'verified';
+                    renderMap();
                 });
             });
         }
 
-        // Financial ROI Chart (ApexCharts)
+        // ── Financial ROI Chart (ApexCharts) ──
         const roiEl = document.querySelector("#chart-roi");
         if (roiEl && typeof ApexCharts !== 'undefined') {
             new ApexCharts(roiEl, {
@@ -389,3 +421,4 @@
     });
 </script>
 @endpush
+
