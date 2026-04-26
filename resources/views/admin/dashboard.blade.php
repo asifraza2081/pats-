@@ -5,7 +5,7 @@
 @section('content')
 <div class="row mb-4">
     <div class="col-12">
-        <div class="card card-md shadow-sm border-0 bg-primary text-primary-fg" style="background: linear-gradient(135deg, #206bc4 0%, #1e5bb0 100%) !important; border: 0;">
+        <div class="card card-md shadow-sm border-0 bg-primary text-primary-fg">
             <div class="card-body">
                 <div class="row align-items-center">
                     <div class="col">
@@ -107,7 +107,7 @@
                 <div class="row align-items-center">
                     <div class="col-md-7 position-relative">
                         <div id="pakistan-map" style="height: 380px;">
-                            <svg id="pk-svg-map" viewBox="0 0 800 900" preserveAspectRatio="xMidYMid meet" 
+                            <svg id="pk-svg-map" viewBox="0 0 900 900" preserveAspectRatio="xMidYMid meet" 
                                  style="width:100%;height:100%;" xmlns="http://www.w3.org/2000/svg">
                                 <defs>
                                     <filter id="shadow" x="-5%" y="-5%" width="110%" height="110%">
@@ -118,8 +118,8 @@
                             </svg>
                         </div>
                         <!-- Floating tooltip -->
-                        <div id="pk-map-tooltip" class="position-absolute shadow-lg rounded-3" 
-                             style="display:none; background:#fff; z-index:10; pointer-events:none; min-width:170px; border:1px solid #e2e8f0;">
+                        <div id="pk-map-tooltip" class="position-absolute shadow-lg rounded-3 bg-white border" 
+                             style="display:none; z-index:10; pointer-events:none; min-width:170px;">
                         </div>
                     </div>
                     <div class="col-md-5 border-start">
@@ -162,11 +162,11 @@
                     @endphp
                     <div class="row text-center">
                         <div class="col-6 border-end">
-                            <div class="text-secondary tiny text-uppercase fw-bold" style="font-size: 0.6rem;">Avg. Margin</div>
+                            <div class="text-secondary small text-uppercase fw-bold">Avg. Margin</div>
                             <div class="fs-3 fw-bold text-success">{{ round($margin, 1) }}%</div>
                         </div>
                         <div class="col-6">
-                            <div class="text-secondary tiny text-uppercase fw-bold" style="font-size: 0.6rem;">Net Surplus</div>
+                            <div class="text-secondary small text-uppercase fw-bold">Net Surplus</div>
                             <div class="fs-3 fw-bold text-primary">PKR {{ number_format($totalRev - $totalExp) }}</div>
                         </div>
                     </div>
@@ -296,6 +296,16 @@
         stroke-width: 2.5;
         filter: brightness(1.08);
     }
+    #pk-provinces path.disputed {
+        stroke: #94a3b8;
+        stroke-width: 1.2;
+        stroke-dasharray: 6 3;
+        fill-opacity: 0.5;
+    }
+    #pk-provinces path.disputed:hover {
+        stroke: #ef4444;
+        stroke-width: 2;
+    }
 </style>
 @endpush
 
@@ -351,22 +361,26 @@
                 
                 group.innerHTML = '';
                 provinceData.forEach(prov => {
+                    const isDisputed = prov.disputed || false;
                     const val = stats[currentMetric][prov.code] || 0;
-                    const fill = interpolateColor(val, max, palette);
+                    const fill = isDisputed ? '#f1f5f9' : interpolateColor(val, max, palette);
                     
                     const path = document.createElementNS('http://www.w3.org/2000/svg', 'path');
                     path.setAttribute('d', prov.path);
                     path.setAttribute('fill', fill);
                     path.setAttribute('data-code', prov.code);
                     path.setAttribute('data-name', prov.name);
+                    if (isDisputed) path.classList.add('disputed');
                     
                     // Tooltip events
                     path.addEventListener('mouseenter', function(e) {
                         const totalV = (stats.total[prov.code] || 0).toLocaleString();
                         const paidV = (stats.verified[prov.code] || 0).toLocaleString();
+                        const disputedBadge = isDisputed ? '<span class="badge bg-danger-lt text-danger mb-2" style="font-size:0.65rem;">Illegally Indian Occupied</span>' : '';
                         tooltip.innerHTML = `
                             <div class="p-3">
                                 <div class="fw-bold border-bottom pb-2 mb-2 text-dark" style="font-size:0.95rem;">${prov.name}</div>
+                                ${disputedBadge}
                                 <div class="d-flex justify-content-between mb-1">
                                     <span class="text-secondary" style="font-size:0.8rem;">Total Applied:</span>
                                     <span class="text-dark fw-bold" style="font-size:0.8rem;">${totalV}</span>

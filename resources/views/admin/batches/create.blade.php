@@ -12,7 +12,7 @@
 @section('content')
 <div class="row justify-content-center animate__animated animate__fadeIn">
     <div class="col-lg-12">
-        <form method="POST" action="{{ route('admin.batches.store') }}" class="card glass-panel border-0 shadow-lg rounded-4" id="batchForm">
+        <form method="POST" action="{{ route('admin.batches.store') }}" class="card border-0 shadow-lg rounded-4" id="batchForm">
             @csrf
             
             <div class="card-header bg-navy text-white border-0 py-4 px-5 rounded-top-4 d-flex justify-content-between align-items-center">
@@ -236,7 +236,7 @@
                                             </div>
                                             <div class="d-flex justify-content-between align-items-center">
                                                 <h3 class="m-0 fw-black text-navy fs-2">REMAINING POOL</h3>
-                                                <span class="badge bg-teal fs-1 text-white px-3 py-2 rounded-pill shadow-teal-30 animate__animated" id="remainingPoolBadge">0</span>
+                                                <span class="badge bg-teal fs-1 text-white px-3 py-2 rounded-pill shadow-lg animate__animated" id="remainingPoolBadge">0</span>
                                             </div>
                                         </div>
                                     </div>

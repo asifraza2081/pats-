@@ -92,7 +92,7 @@
                     <div class="text-muted small fw-semibold">Applied Total</div>
                 </div>
                 <div class="fw-black fs-2 text-dark">{{ number_format($totalApplied) }}</div>
-                <div class="progress mt-2" style="height:4px;">
+                <div class="progress progress-sm mt-2">
                     <div class="progress-bar bg-primary" style="width:100%"></div>
                 </div>
                 <div class="text-muted small mt-1">Total pipeline</div>
@@ -109,7 +109,7 @@
                     <div class="text-muted small fw-semibold">Paid & Verified</div>
                 </div>
                 <div class="fw-black fs-2 text-success">{{ number_format($paidEligible) }} <small class="fs-5 fw-normal text-muted">Ready</small></div>
-                <div class="progress mt-2" style="height:4px;">
+                <div class="progress progress-sm mt-2">
                     <div class="progress-bar bg-success" style="width:{{ $paidPct }}%"></div>
                 </div>
                 <div class="text-muted small mt-1">{{ $paidPct }}% of applicants</div>
@@ -126,7 +126,7 @@
                     <div class="text-muted small fw-semibold">Pending Payments</div>
                 </div>
                 <div class="fw-black fs-2 text-warning">{{ number_format($unpaid) }} <small class="fs-5 fw-normal text-muted">Waiting</small></div>
-                <div class="progress mt-2" style="height:4px;">
+                <div class="progress progress-sm mt-2">
                     <div class="progress-bar bg-warning" style="width:{{ $totalApplied > 0 ? round(($unpaid/$totalApplied)*100) : 0 }}%"></div>
                 </div>
                 <div class="text-muted small mt-1">Awaiting payment verification</div>
@@ -143,7 +143,7 @@
                     <div class="text-muted small fw-semibold">Allocated / Seated</div>
                 </div>
                 <div class="fw-black fs-2 text-purple">{{ number_format($allocated) }} <small class="fs-5 fw-normal text-muted">Seated</small></div>
-                <div class="progress mt-2" style="height:4px;">
+                <div class="progress progress-sm mt-2">
                     <div class="progress-bar bg-purple" style="width:{{ $allocPct }}%"></div>
                 </div>
                 <div class="text-muted small mt-1">{{ $allocPct }}% of verified pool</div>

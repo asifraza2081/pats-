@@ -128,7 +128,7 @@
 <div class="modal modal-blur fade" id="modal-print-portal" tabindex="-1" role="dialog" aria-hidden="true">
     <div class="modal-dialog modal-lg modal-dialog-centered" role="document">
         <div class="modal-content shadow-lg border-0 rounded-4 overflow-hidden">
-            <div class="modal-header bg-grad-pats text-white border-0 py-3">
+            <div class="modal-header bg-primary text-white border-0 py-3">
                 <h5 class="modal-title font-weight-bold"><i class="ti ti-printer me-1"></i> Examination Print Portal</h5>
                 <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Close"></button>
             </div>
