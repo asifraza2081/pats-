@@ -23,7 +23,7 @@ class SecurityHeaders
         $csp .= "script-src 'self' 'unsafe-inline' 'unsafe-eval' https://cdn.jsdelivr.net; ";
         $csp .= "style-src 'self' 'unsafe-inline' https://cdn.jsdelivr.net; ";
         $csp .= "font-src 'self' data:; ";
-        $csp .= "img-src 'self' data: https://* http://*; ";
+        $csp .= "img-src 'self' data: blob: https://* http://*; ";
         $csp .= "frame-ancestors 'none'; ";
         $csp .= "form-action 'self'; ";
         $csp .= "base-uri 'self'; ";

@@ -425,7 +425,7 @@
                 <div class="w-100 d-flex justify-content-between align-items-center">
                     <div class="btn-group">
                         <button type="button" class="btn btn-outline-dark btn-icon" onclick="cropper.rotate(-90)" title="Rotate Left"><i class="ti ti-rotate-2"></i></button>
-                        <button type="button" class="btn btn-outline-dark btn-icon" onclick="cropper.rotate(90)" title="Rotate Right"><i class="ti ti-rotate(90)"></i></button>
+                        <button type="button" class="btn btn-outline-dark btn-icon" onclick="cropper.rotate(90)" title="Rotate Right"><i class="ti ti-rotate-clockwise"></i></button>
                     </div>
                     <div>
                         <button type="button" class="btn btn-link text-muted fw-bold text-decoration-none" data-bs-dismiss="modal">CANCEL</button>
@@ -673,6 +673,7 @@ document.addEventListener('DOMContentLoaded', function() {
     };
 
     document.getElementById('cropButton').addEventListener('click', function() {
+        this.blur(); // Prevent aria-hidden focus error
         const canvas = cropper.getCroppedCanvas({
             width: 400,
             height: 400,
