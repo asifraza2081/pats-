@@ -152,7 +152,7 @@
                 <div class="card-header border-0 py-4 px-5 text-white bg-pats-primary">
                     <h3 class="card-title text-white m-0 fw-black fs-2"><i class="ti ti-user-check me-2 fs-1 text-primary"></i> Step 1: Personal Information</h3>
                 </div>
-                <form method="POST" action="{{ route('candidate.profile.update.bio') }}" id="step1Form">
+                <form method="POST" action="{{ route('candidate.profile.update.bio') }}" id="step1Form" class="no-spinner">
                     @csrf @method('PUT')
                     <div class="card-body p-4 p-md-5">
                         <div class="row g-4">
@@ -217,6 +217,7 @@
                                 <label class="form-label required">Permanent Address</label>
                                 <textarea name="permanent_address" class="form-control" rows="2" placeholder="Street, Village/Area, House No." required>{{ old('permanent_address', $candidate->permanent_address) }}</textarea>
                             </div>
+                            <input type="hidden" name="same_postal_address" value="1">
                         </div>
                     </div>
                     <div class="card-footer bg-light p-4 d-flex justify-content-between align-items-center">
@@ -256,6 +257,7 @@
                                     <div class="col-md-4"><label class="form-label small fw-bold">Institution</label><input type="text" name="institution" class="form-control"></div>
                                     <div class="col-md-4"><label class="form-label small fw-bold">Major</label><input type="text" name="subject_major" class="form-control"></div>
                                     <div class="col-md-3"><label class="form-label small fw-bold">Year</label><input type="number" name="passing_year" class="form-control" min="1970" max="{{ date('Y') }}"></div>
+                                    <input type="hidden" name="marks_type" value="Marks">
                                     <div class="col-md-5 d-flex align-items-end">
                                         <button type="submit" class="btn btn-indigo w-100 py-2 rounded-pill fw-bold text-white">
                                             <span class="spinner-border spinner-border-sm me-2 d-none" id="eduSpinner"></span>
@@ -356,7 +358,7 @@
                 <div class="card-header border-0 py-4 px-5 text-white bg-pats-primary" style="background: linear-gradient(135deg, #be185d 0%, #831843 100%) !important;">
                     <h3 class="card-title text-white m-0 fw-black fs-2"><i class="ti ti-file-text me-2 fs-1"></i> Step 4: Verification Documents</h3>
                 </div>
-                <form method="POST" action="{{ route('candidate.profile.update.docs') }}" enctype="multipart/form-data">
+                <form method="POST" action="{{ route('candidate.profile.update.docs') }}" enctype="multipart/form-data" class="no-spinner">
                     @csrf @method('PUT')
                     <div class="card-body p-4 p-md-5">
                         <div class="row g-5">
@@ -478,6 +480,7 @@ document.addEventListener('DOMContentLoaded', function() {
 
         form.addEventListener('submit', function(e) {
             e.preventDefault();
+            if (window.showSpinners) window.showSpinners();
             const spinner = document.getElementById(spinnerId);
             const list = document.getElementById(targetListId);
             const empty = document.querySelector('.' + emptyId);
@@ -506,38 +509,67 @@ document.addEventListener('DOMContentLoaded', function() {
             })
             .catch(err => alert('An error occurred.'))
             .finally(() => {
-                spinner.classList.add('d-none');
+                if (spinner) spinner.classList.add('d-none');
+                if (window.stopSpinners) window.stopSpinners();
                 form.querySelectorAll('button').forEach(b => b.disabled = false);
             });
         });
     }
-});
-</script>
-@endpush
 
-@push('styles')
-<style>
-    .border-dashed { border: 2px dashed #cbd5e1 !important; }
-    .bg-pats-primary { background: linear-gradient(135deg, #0f172a, #1e293b); }
-    .list-group-item.active { border-radius: 12px; margin: 4px 8px; box-shadow: 0 4px 12px rgba(0,0,0,0.1); }
-    .btn-indigo { background: #4f46e5; color: #fff; }
-    .btn-teal { background: #0f766e; color: #fff; }
-    .btn-pink { background: #be185d; color: #fff; }
-    .cursor-not-allowed { cursor: not-allowed !important; }
-    .fw-black { font-weight: 850; }
-</style>
-@endpush
+    window.ajaxDelete = function(url, elementId, spinnerId) {
+        if (!confirm('Are you sure you want to delete this record?')) return;
+        
+        const spinner = document.getElementById(spinnerId);
+        if (spinner) spinner.classList.remove('d-none');
+        if (window.showSpinners) window.showSpinners();
+        
+        fetch(url, {
+            method: 'DELETE',
+            headers: { 
+                'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]').getAttribute('content'),
+                'Accept': 'application/json' 
+            }
+        })
+        .then(res => res.json())
+        .then(data => {
+            if (data.success) {
+                if (document.getElementById(elementId)) document.getElementById(elementId).remove();
+                location.reload();
+            } else { alert('Error: ' + data.message); }
+        })
+        .catch(err => {
+            console.error(err);
+            alert('An error occurred.');
+        })
+        .finally(() => {
+            if (spinner) spinner.classList.add('d-none');
+            if (window.stopSpinners) window.stopSpinners();
+        });
+    };
 
-@push('scripts')
-<script>
+    window.showSpinners = function() {
+        const s1 = document.getElementById('global-submit-spinner');
+        if (s1) s1.classList.remove('d-none');
+        const s2 = document.getElementById('wizard-loading');
+        if (s2) s2.style.display = 'flex';
+    };
+
+    window.stopSpinners = function() {
+        const s1 = document.getElementById('global-submit-spinner');
+        if (s1) s1.classList.add('d-none');
+        const s2 = document.getElementById('wizard-loading');
+        if (s2) s2.style.display = 'none';
+    };
+
     document.addEventListener('DOMContentLoaded', function() {
-        const loading = document.getElementById('wizard-loading');
+        // Stop spinners on load
+        window.stopSpinners();
         
         // Show loading on form submissions
         document.querySelectorAll('form').forEach(form => {
             if (!form.classList.contains('no-spinner')) {
                 form.addEventListener('submit', function() {
-                    loading.style.display = 'flex';
+                    window.showSpinners();
                 });
             }
         });

@@ -122,20 +122,27 @@ class ProfileController extends Controller
     // ── Education ─────────────────────────────────────────────
     public function addEducation(EducationRequest $request)
     {
-        $candidate = $this->candidate();
-        $this->authorize('update', $candidate);
-        $data = $request->validated();
-        $edu = $candidate->education()->create($data);
+        try {
+            $candidate = $this->candidate();
+            $this->authorize('update', $candidate);
+            $data = $request->validated();
+            $edu = $candidate->education()->create($data);
 
-        if ($request->ajax()) {
-            return response()->json([
-                'success' => true,
-                'message' => 'Education record added.',
-                'html' => view('candidate.partials._education_row', ['edu' => $edu, 'candidate' => $candidate])->render()
-            ]);
+            if ($request->ajax()) {
+                return response()->json([
+                    'success' => true,
+                    'message' => 'Education record added.',
+                    'html' => view('candidate.partials._education_row', ['edu' => $edu, 'candidate' => $candidate])->render()
+                ]);
+            }
+
+            return back()->with('success', 'Education record added.');
+        } catch (\Exception $e) {
+            if ($request->ajax()) {
+                return response()->json(['success' => false, 'message' => $e->getMessage()], 500);
+            }
+            throw $e;
         }
-
-        return back()->with('success', 'Education record added.');
     }
 
     public function updateEducation(EducationRequest $request, EducationHistory $edu)

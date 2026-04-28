@@ -19,7 +19,7 @@ class EducationRequest extends FormRequest
             'subject_major'  => 'nullable|string|max:100',
             'institution'    => 'nullable|string|max:150',
             'passing_year'   => 'nullable|integer|min:1970|max:' . date('Y'),
-            'marks_type'     => 'required|in:Marks,CGPA',
+            'marks_type'     => 'nullable|in:Marks,CGPA',
             'obtained_marks' => 'nullable|numeric|min:0',
             'total_marks'    => 'nullable|numeric|min:0',
         ];

@@ -1,4 +1,4 @@
-<div class="d-flex justify-content-between align-items-center py-2 animate__animated animate__fadeIn">
+<div class="d-flex justify-content-between align-items-center py-2 animate__animated animate__fadeIn" id="exp-{{ $exp->id }}">
     <div>
         <div class="fw-bold">{{ $exp->designation }} <span class="badge bg-secondary-lt ms-2">{{ $exp->job_type }}</span></div>
         <div class="text-muted small mt-1"><i class="ti ti-building me-1"></i> {{ $exp->organization_name }}</div>
@@ -8,9 +8,9 @@
         </div>
     </div>
     @if(!$candidate->profile_locked)
-    <form method="POST" action="{{ route('candidate.experience.destroy', $exp) }}" onsubmit="return confirm('Remove this record?')">
-        @csrf @method('DELETE')
-        <button class="btn btn-action text-danger" title="Remove"><i class="ti ti-trash"></i></button>
-    </form>
+    <button type="button" class="btn btn-action text-danger no-spinner" title="Remove" 
+            onclick="ajaxDelete('{{ route('candidate.experience.destroy', $exp) }}', 'exp-{{ $exp->id }}', 'expSpinner')">
+        <i class="ti ti-trash"></i>
+    </button>
     @endif
 </div>

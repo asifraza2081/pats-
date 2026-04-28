@@ -28,7 +28,7 @@ class UpdateProfileRequest extends FormRequest
             'district_of_domicile'  => 'nullable|string|max:120',
             'address_city_id'       => 'nullable|exists:cities,id',
             'permanent_address'     => 'required|string',
-            'postal_address'        => 'required_without:same_postal_address|nullable|string',
+            'postal_address'        => 'nullable|string',
             'same_postal_address'   => 'nullable|boolean',
             'alternate_phone'       => 'nullable|string|max:15',
             'cnic'                  => ['nullable', 'regex:/^\d{5}-\d{7}-\d{1}$/', 'unique:users,cnic,' . auth()->id()],
