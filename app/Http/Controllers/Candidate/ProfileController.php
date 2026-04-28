@@ -90,6 +90,14 @@ class ProfileController extends Controller
             $user->update(['cnic' => $cnicFromForm]);
         }
 
+        if ($request->ajax()) {
+            return response()->json([
+                'success' => true,
+                'message' => 'Biographical information saved.',
+                'next_step' => 2
+            ]);
+        }
+
         return redirect()->route('candidate.profile.show', ['step' => 2])
             ->with('success', 'Biographical information saved. Proceed to Step 2.');
     }
@@ -114,6 +122,13 @@ class ProfileController extends Controller
         }
 
         $candidate->save();
+
+        if ($request->ajax()) {
+            return response()->json([
+                'success' => true,
+                'message' => 'Documents uploaded successfully.'
+            ]);
+        }
 
         return redirect()->route('candidate.profile.show', ['step' => 4])
             ->with('success', 'Documents uploaded successfully.');

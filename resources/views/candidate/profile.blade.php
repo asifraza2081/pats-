@@ -3,6 +3,7 @@
 @section('page-title', 'Candidate Profile Wizard')
 
 @push('styles')
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/cropperjs@1.5.13/dist/cropper.min.css">
 <style>
     /* Wizard Container Padding */
     .wizard-container {
@@ -242,7 +243,7 @@
                 <div class="card-body p-4 p-md-5">
                     <div class="collapse mb-5" id="addEduForm">
                         <div class="card card-body bg-light border-dashed p-4 rounded-4">
-                            <form id="ajaxEduForm" action="{{ route('candidate.education.store') }}" class="no-spinner">
+                            <form id="ajaxEduForm" method="POST" action="{{ route('candidate.education.store') }}" class="no-spinner">
                                 @csrf
                                 <div class="row g-3">
                                     <div class="col-md-3">
@@ -305,7 +306,7 @@
                 <div class="card-body p-4 p-md-5">
                     <div class="collapse mb-5" id="addExpForm">
                         <div class="card card-body bg-light border-dashed p-4 rounded-4">
-                            <form id="ajaxExpForm" action="{{ route('candidate.experience.store') }}" class="no-spinner">
+                            <form id="ajaxExpForm" method="POST" action="{{ route('candidate.experience.store') }}" class="no-spinner">
                                 @csrf
                                 <div class="row g-3">
                                     <div class="col-md-3">
@@ -358,7 +359,7 @@
                 <div class="card-header border-0 py-4 px-5 text-white bg-pats-primary" style="background: linear-gradient(135deg, #be185d 0%, #831843 100%) !important;">
                     <h3 class="card-title text-white m-0 fw-black fs-2"><i class="ti ti-file-text me-2 fs-1"></i> Step 4: Verification Documents</h3>
                 </div>
-                <form method="POST" action="{{ route('candidate.profile.update.docs') }}" enctype="multipart/form-data" class="no-spinner">
+                <form method="POST" action="{{ route('candidate.profile.update.docs') }}" enctype="multipart/form-data" class="no-spinner" id="docsForm">
                     @csrf @method('PUT')
                     <div class="card-body p-4 p-md-5">
                         <div class="row g-5">
@@ -407,7 +408,37 @@
     </div>
 </div>
 
+<!-- Cropper Modal -->
+<div class="modal fade" id="cropperModal" tabindex="-1" aria-hidden="true" data-bs-backdrop="static">
+    <div class="modal-dialog modal-lg modal-dialog-centered">
+        <div class="modal-content rounded-4 overflow-hidden border-0 shadow-lg">
+            <div class="modal-header bg-dark text-white border-0 py-3">
+                <h5 class="modal-title fw-black"><i class="ti ti-crop me-2"></i> ADJUST PROFILE PHOTO</h5>
+                <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div class="modal-body p-0 bg-light">
+                <div class="img-container" style="max-height: 500px;">
+                    <img id="cropperImage" src="" style="max-width: 100%;">
+                </div>
+            </div>
+            <div class="modal-footer bg-white border-0 py-3">
+                <div class="w-100 d-flex justify-content-between align-items-center">
+                    <div class="btn-group">
+                        <button type="button" class="btn btn-outline-dark btn-icon" onclick="cropper.rotate(-90)" title="Rotate Left"><i class="ti ti-rotate-2"></i></button>
+                        <button type="button" class="btn btn-outline-dark btn-icon" onclick="cropper.rotate(90)" title="Rotate Right"><i class="ti ti-rotate(90)"></i></button>
+                    </div>
+                    <div>
+                        <button type="button" class="btn btn-link text-muted fw-bold text-decoration-none" data-bs-dismiss="modal">CANCEL</button>
+                        <button type="button" class="btn btn-primary px-4 rounded-pill fw-black" id="cropButton">SAVE CHANGES</button>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
 @push('scripts')
+<script src="https://cdn.jsdelivr.net/npm/cropperjs@1.5.13/dist/cropper.min.js"></script>
 <script>
 const dbCities = @json($cities);
 const districts = {};
@@ -417,17 +448,111 @@ dbCities.forEach(city => {
     districts[city.province].push({ id: city.id, name: city.name });
 });
 
-function previewFile(input, targetId) {
+window.previewFile = function(input, targetId) {
     if (input.files && input.files[0]) {
         const reader = new FileReader();
         reader.onload = function(e) {
             document.getElementById(targetId).src = e.target.result;
+            // If it's the photo preview, trigger cropper
+            if (targetId === 'photo_preview') {
+                if (window.initCropper) window.initCropper(e.target.result);
+            }
         }
         reader.readAsDataURL(input.files[0]);
     }
 }
 
+function handleStepAjax(formId) {
+    const form = document.getElementById(formId);
+    if (!form) return;
+
+    form.addEventListener('submit', function(e) {
+        e.preventDefault();
+        window.showSpinners();
+        form.querySelectorAll('button').forEach(b => b.disabled = true);
+
+        const formData = new FormData(this);
+        
+        // If we have a cropped photo, replace it in the formData
+        if (formId === 'docsForm' && window.croppedPhotoBlob) {
+            formData.delete('photo');
+            formData.append('photo', window.croppedPhotoBlob, 'profile_photo.jpg');
+        }
+
+        fetch(this.getAttribute('action'), {
+            method: 'POST',
+            headers: {
+                'X-Requested-With': 'XMLHttpRequest',
+                'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]').getAttribute('content')
+            },
+            body: formData
+        })
+        .then(res => res.json())
+        .then(data => {
+            if (data.success) {
+                toastr.success(data.message);
+                setTimeout(() => location.reload(), 1000);
+            } else { 
+                alert('Error: ' + (data.message || 'Validation failed. Please check your input.')); 
+            }
+        })
+        .catch(err => {
+            console.error(err);
+            alert('An error occurred. Please try again.');
+        })
+        .finally(() => {
+            window.stopSpinners();
+            form.querySelectorAll('button').forEach(b => b.disabled = false);
+        });
+    });
+}
+
+function handleAjaxForm(formId, targetListId, spinnerId, emptyId) {
+    const form = document.getElementById(formId);
+    if (!form) return;
+
+    form.addEventListener('submit', function(e) {
+        e.preventDefault();
+        if (window.showSpinners) window.showSpinners();
+        const spinner = document.getElementById(spinnerId);
+        const list = document.getElementById(targetListId);
+        const empty = document.querySelector('.' + emptyId);
+        
+        spinner.classList.remove('d-none');
+        form.querySelectorAll('button').forEach(b => b.disabled = true);
+
+        fetch(this.getAttribute('action'), {
+            method: 'POST',
+            headers: {
+                'X-Requested-With': 'XMLHttpRequest',
+                'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]').getAttribute('content')
+            },
+            body: new FormData(this)
+        })
+        .then(res => res.json())
+        .then(data => {
+            if (data.success) {
+                if (empty) empty.remove();
+                list.insertAdjacentHTML('afterbegin', data.html);
+                form.reset();
+                const coll = bootstrap.Collapse.getInstance(form.closest('.collapse'));
+                if (coll) coll.hide();
+                location.reload(); // Refresh to update progress sidebar
+            } else { alert('Error: ' + data.message); }
+        })
+        .catch(err => alert('An error occurred.'))
+        .finally(() => {
+            if (spinner) spinner.classList.add('d-none');
+            if (window.stopSpinners) window.stopSpinners();
+            form.querySelectorAll('button').forEach(b => b.disabled = false);
+        });
+    });
+}
+
 document.addEventListener('DOMContentLoaded', function() {
+    // Stop spinners on load
+    window.stopSpinners();
+    
     // Domicile Logic
     const provinceSelect = document.getElementById('domicile_province');
     const districtSelect = document.getElementById('domicile_district');
@@ -474,47 +599,19 @@ document.addEventListener('DOMContentLoaded', function() {
     handleAjaxForm('ajaxEduForm', 'education_list', 'eduSpinner', 'empty-edu');
     handleAjaxForm('ajaxExpForm', 'experience_list', 'expSpinner', 'empty-exp');
 
-    function handleAjaxForm(formId, targetListId, spinnerId, emptyId) {
-        const form = document.getElementById(formId);
-        if (!form) return;
-
-        form.addEventListener('submit', function(e) {
-            e.preventDefault();
-            if (window.showSpinners) window.showSpinners();
-            const spinner = document.getElementById(spinnerId);
-            const list = document.getElementById(targetListId);
-            const empty = document.querySelector('.' + emptyId);
-            
-            spinner.classList.remove('d-none');
-            form.querySelectorAll('button').forEach(b => b.disabled = true);
-
-            fetch(this.getAttribute('action'), {
-                method: 'POST',
-                headers: {
-                    'X-Requested-With': 'XMLHttpRequest',
-                    'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]').getAttribute('content')
-                },
-                body: new FormData(this)
-            })
-            .then(res => res.json())
-            .then(data => {
-                if (data.success) {
-                    if (empty) empty.remove();
-                    list.insertAdjacentHTML('afterbegin', data.html);
-                    form.reset();
-                    const coll = bootstrap.Collapse.getInstance(form.closest('.collapse'));
-                    if (coll) coll.hide();
-                    location.reload(); // Refresh to update progress sidebar
-                } else { alert('Error: ' + data.message); }
-            })
-            .catch(err => alert('An error occurred.'))
-            .finally(() => {
-                if (spinner) spinner.classList.add('d-none');
-                if (window.stopSpinners) window.stopSpinners();
-                form.querySelectorAll('button').forEach(b => b.disabled = false);
+    // AJAX Steps (Step 1 & 4)
+    handleStepAjax('step1Form');
+    handleStepAjax('docsForm');
+    
+    // Show loading on form submissions
+    document.querySelectorAll('form').forEach(form => {
+        if (!form.classList.contains('no-spinner')) {
+            form.addEventListener('submit', function() {
+                window.showSpinners();
             });
-        });
-    }
+        }
+    });
+});
 
     window.ajaxDelete = function(url, elementId, spinnerId) {
         if (!confirm('Are you sure you want to delete this record?')) return;
@@ -547,6 +644,51 @@ document.addEventListener('DOMContentLoaded', function() {
         });
     };
 
+    let cropper;
+    const cropperModal = new bootstrap.Modal(document.getElementById('cropperModal'));
+    const cropperImage = document.getElementById('cropperImage');
+
+    window.initCropper = function(src) {
+        cropperImage.src = src;
+        cropperModal.show();
+        
+        if (cropper) cropper.destroy();
+        
+        // Wait for modal to show before initializing cropper
+        document.getElementById('cropperModal').addEventListener('shown.bs.modal', function () {
+            cropper = new Cropper(cropperImage, {
+                aspectRatio: 1,
+                viewMode: 2,
+                dragMode: 'move',
+                autoCropArea: 1,
+                restore: false,
+                guides: true,
+                center: true,
+                highlight: false,
+                cropBoxMovable: true,
+                cropBoxResizable: true,
+                toggleDragModeOnDblclick: false,
+            });
+        }, { once: true });
+    };
+
+    document.getElementById('cropButton').addEventListener('click', function() {
+        const canvas = cropper.getCroppedCanvas({
+            width: 400,
+            height: 400,
+        });
+        
+        canvas.toBlob(function(blob) {
+            const url = URL.createObjectURL(blob);
+            document.getElementById('photo_preview').src = url;
+            
+            // We can't directly set files on input, so we'll store the blob and use it on form submit
+            window.croppedPhotoBlob = blob;
+            
+            cropperModal.hide();
+        }, 'image/jpeg');
+    });
+
     window.showSpinners = function() {
         const s1 = document.getElementById('global-submit-spinner');
         if (s1) s1.classList.remove('d-none');
@@ -560,20 +702,6 @@ document.addEventListener('DOMContentLoaded', function() {
         const s2 = document.getElementById('wizard-loading');
         if (s2) s2.style.display = 'none';
     };
-
-    document.addEventListener('DOMContentLoaded', function() {
-        // Stop spinners on load
-        window.stopSpinners();
-        
-        // Show loading on form submissions
-        document.querySelectorAll('form').forEach(form => {
-            if (!form.classList.contains('no-spinner')) {
-                form.addEventListener('submit', function() {
-                    window.showSpinners();
-                });
-            }
-        });
-    });
 </script>
 @endpush
 @endsection
