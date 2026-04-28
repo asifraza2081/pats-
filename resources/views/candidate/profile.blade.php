@@ -2,7 +2,7 @@
 
 @section('page-title', 'Candidate Profile Wizard')
 
-@section('extra-css')
+@push('styles')
 <style>
     /* Wizard Container Padding */
     .wizard-container {
@@ -56,7 +56,7 @@
         justify-content: center;
     }
 </style>
-@endsection
+@endpush
 
 @section('content')
 <div id="wizard-loading">
