@@ -9,7 +9,6 @@ use App\Enums\ApplicationStatus;
 use Carbon\Carbon;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Str;
-use Picqer\Barcode\BarcodeGeneratorPNG;
 
 class RollNumberService
 {
@@ -80,23 +79,19 @@ class RollNumberService
                 $jobId = $app->job_id;
                 $serial = ++$jobSerials[$jobId];
 
-                // Ultra-Compact Roll Number: [Project][Job(2)][YY(2)][MM(2)][Sequence(4)]
-                // Total 11-13 digits. Scalable and elegant.
+                // Compact 9-Digit Roll Number: [YY][MM][P][J][SSS]
+                // YY=year, MM=month (from test_date), P=project%10, J=job_code%10, SSS=sequence
                 $rollNo = sprintf(
-                    '%d%02d%s%s%04d',
-                    $app->project_id,
-                    ((int) preg_replace('/[^0-9]/', '', $app->job->job_code)) % 100,
+                    '%s%s%d%d%03d',
                     $batch->test_date->format('y'),
                     $batch->test_date->format('m'),
+                    $app->project_id % 10,
+                    ((int) $app->job->job_code) % 10,
                     $serial
                 );
 
                 // Generate secure verification token for QR validation
                 $vToken = Str::random(24);
-
-                // Generate real PNG barcode (Base64) for the slip
-                $generator = new BarcodeGeneratorPNG();
-                $barcodeBase64 = 'data:image/png;base64,' . base64_encode($generator->getBarcode($rollNo, $generator::TYPE_CODE_128));
 
                 $examRecords[] = [
                     'application_id' => $app->id,
@@ -108,7 +103,7 @@ class RollNumberService
                     'roll_no'        => $rollNo,
                     'roll_sequence'  => $serial,
                     'verify_token'   => $vToken,
-                    'barcode'        => $barcodeBase64, 
+                    'barcode'        => $rollNo,
                     'batch_no'       => (string)$batch->batch_number,
                     'slip_ready'     => 0,
                     'created_at'     => now(),

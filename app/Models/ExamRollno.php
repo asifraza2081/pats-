@@ -59,6 +59,21 @@ class ExamRollno extends Model
         return $this->belongsTo(Batch::class);
     }
 
+    // ── Accessors ─────────────────────────────────────────
+
+    /**
+     * Human-readable roll number: "2605-13-001" from raw "260513001"
+     * Format: YYMM-PJ-SSS
+     */
+    public function getFormattedRollNoAttribute(): string
+    {
+        $r = $this->roll_no;
+        if (strlen($r) === 9) {
+            return substr($r, 0, 4) . '-' . substr($r, 4, 2) . '-' . substr($r, 6);
+        }
+        return $r; // Fallback for legacy roll numbers
+    }
+
     // ── Query Scopes ────────────────────────────────────
     public function scopeReady($query) { return $query->where('slip_ready', true); }
 }
