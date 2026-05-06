@@ -24,10 +24,10 @@
         .sig-label { font-size: 9px; width: 110px; font-weight: bold; }
 
         .mid-section { width: 100%; margin-bottom: 15px; height: 160px; }
-        .color-box { width: 180px; border: 1px solid #000; padding: 5px; float: left; }
-        .barcode-box { width: 450px; border: 1px solid #000; margin: 0 10px; float: left; text-align: center; }
-        .photo-box { width: 120px; height: 150px; border: 1px solid #000; float: right; text-align: center; overflow: hidden; }
-        .photo-box img { width: 100%; height: 100%; object-fit: cover; }
+        .color-box { width: 150px; border: 1px solid #000; padding: 5px; float: left; }
+        .barcode-box { width: 420px; border: 1px solid #000; margin: 0 5px; float: left; text-align: center; }
+        .photo-box { width: 110px; height: 140px; border: 1px solid #000; float: right; text-align: center; overflow: hidden; }
+        .photo-box img { width: 100%; height: 100%; object-fit: contain; }
 
         .color-row { padding: 2px 0; font-size: 10px; }
         .bubble-circle { display: inline-block; width: 12px; height: 12px; border: 1px solid #000; border-radius: 50%; margin-right: 15px; vertical-align: middle; }
@@ -37,7 +37,7 @@
         .instruction-bar { width: 100%; background: #eee; border: 1px solid #000; padding: 3px; text-align: center; font-weight: bold; font-size: 10px; margin-bottom: 15px; clear: both; }
 
         .bubbles-container { width: 100%; clear: both; }
-        .bubble-column { width: 24%; float: left; margin-right: 1%; }
+        .bubble-column { width: 19%; float: left; margin-right: 1%; }
         .bubble-row { margin-bottom: 3px; }
         .q-num { display: inline-block; width: 18px; font-weight: bold; text-align: right; margin-right: 5px; font-size: 10px; }
         .ans-bubble { display: inline-block; width: 16px; height: 16px; border: 1px solid #000; border-radius: 50%; text-align: center; line-height: 16px; font-size: 9px; margin-right: 2px; }
@@ -130,11 +130,11 @@
     </div>
 
     <div class="instruction-bar">
-        Fill the appropriate circle completely LIKE THIS &bull; Improper filled circles will be marked incorrect by the machine
+        Fill the appropriate circle completely LIKE THIS <span style="display:inline-block; width:12px; height:12px; background:#000; border-radius:50%; vertical-align:middle; margin:0 5px;"></span> &bull; Improper filled circles will be marked incorrect by the machine
     </div>
 
     <div class="bubbles-container">
-        @for($col = 0; $col < 4; $col++)
+        @for($col = 0; $col < 5; $col++)
             <div class="bubble-column">
                 @for($q = 1; $q <= 25; $q++)
                     @php $qn = ($col * 25) + $q; @endphp
@@ -153,10 +153,6 @@
 
     <div class="clearfix"></div>
 
-    <div class="footer-sigs">
-        <div class="footer-sig-box">CANDIDATE SIGNATURE:</div>
-        <div class="footer-sig-box" style="float: right;">INVIGILATOR SIGNATURE:</div>
-    </div>
     <div class="clearfix"></div>
     <div class="fingerprint">OMR SECURE DOC: {{ substr($fingerprint, 0, 32) }} | &copy; {{ date('Y') }} PATS</div>
 

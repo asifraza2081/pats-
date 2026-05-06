@@ -74,14 +74,7 @@
      KPI CARDS — 4 columns, color-coded left borders
 ═══════════════════════════════════════════════════════ --}}
 <div class="row g-3 mb-4">
-    @php
-        $totalApplied  = $analytics['total_applied'];
-        $paidEligible  = $analytics['paid_eligible'];
-        $unpaid        = $analytics['unpaid_ineligible'];
-        $allocated     = $analytics['allocated'];
-        $paidPct       = $totalApplied > 0 ? round(($paidEligible / $totalApplied) * 100) : 0;
-        $allocPct      = $paidEligible  > 0 ? round(($allocated   / $paidEligible)  * 100) : 0;
-    @endphp
+
 
     {{-- Applied --}}
     <div class="col-sm-6 col-xl-3">
@@ -91,7 +84,7 @@
                     <span class="avatar avatar-sm bg-primary-lt text-primary me-3 rounded-3"><i class="ti ti-users"></i></span>
                     <div class="text-muted small fw-semibold">Applied Total</div>
                 </div>
-                <div class="fw-black fs-2 text-dark">{{ number_format($totalApplied) }}</div>
+                <div class="fw-black fs-2 text-dark">{{ number_format($analytics['total_applied']) }}</div>
                 <div class="progress progress-sm mt-2">
                     <div class="progress-bar bg-primary" style="width:100%"></div>
                 </div>
@@ -108,11 +101,11 @@
                     <span class="avatar avatar-sm bg-success-lt text-success me-3 rounded-3"><i class="ti ti-check"></i></span>
                     <div class="text-muted small fw-semibold">Paid & Verified</div>
                 </div>
-                <div class="fw-black fs-2 text-success">{{ number_format($paidEligible) }} <small class="fs-5 fw-normal text-muted">Ready</small></div>
+                <div class="fw-black fs-2 text-success">{{ number_format($analytics['paid_eligible']) }} <small class="fs-5 fw-normal text-muted">Ready</small></div>
                 <div class="progress progress-sm mt-2">
-                    <div class="progress-bar bg-success" style="width:{{ $paidPct }}%"></div>
+                    <div class="progress-bar bg-success" style="width:{{ $analytics['paidPct'] }}%"></div>
                 </div>
-                <div class="text-muted small mt-1">{{ $paidPct }}% of applicants</div>
+                <div class="text-muted small mt-1">{{ $analytics['paidPct'] }}% of applicants</div>
             </div>
         </div>
     </div>
@@ -125,9 +118,9 @@
                     <span class="avatar avatar-sm bg-warning-lt text-warning me-3 rounded-3"><i class="ti ti-clock"></i></span>
                     <div class="text-muted small fw-semibold">Pending Payments</div>
                 </div>
-                <div class="fw-black fs-2 text-warning">{{ number_format($unpaid) }} <small class="fs-5 fw-normal text-muted">Waiting</small></div>
+                <div class="fw-black fs-2 text-warning">{{ number_format($analytics['unpaid_ineligible']) }} <small class="fs-5 fw-normal text-muted">Waiting</small></div>
                 <div class="progress progress-sm mt-2">
-                    <div class="progress-bar bg-warning" style="width:{{ $totalApplied > 0 ? round(($unpaid/$totalApplied)*100) : 0 }}%"></div>
+                    <div class="progress-bar bg-warning" style="width:{{ $analytics['unpaidPct'] }}%"></div>
                 </div>
                 <div class="text-muted small mt-1">Awaiting payment verification</div>
             </div>
@@ -142,11 +135,11 @@
                     <span class="avatar avatar-sm bg-purple-lt text-purple me-3 rounded-3"><i class="ti ti-calendar-event"></i></span>
                     <div class="text-muted small fw-semibold">Allocated / Seated</div>
                 </div>
-                <div class="fw-black fs-2 text-purple">{{ number_format($allocated) }} <small class="fs-5 fw-normal text-muted">Seated</small></div>
+                <div class="fw-black fs-2 text-purple">{{ number_format($analytics['allocated']) }} <small class="fs-5 fw-normal text-muted">Seated</small></div>
                 <div class="progress progress-sm mt-2">
-                    <div class="progress-bar bg-purple" style="width:{{ $allocPct }}%"></div>
+                    <div class="progress-bar bg-purple" style="width:{{ $analytics['allocPct'] }}%"></div>
                 </div>
-                <div class="text-muted small mt-1">{{ $allocPct }}% of verified pool</div>
+                <div class="text-muted small mt-1">{{ $analytics['allocPct'] }}% of verified pool</div>
             </div>
         </div>
     </div>
@@ -220,28 +213,24 @@
 </div>
 
 @foreach($groupedCandidates as $city => $paymentGroups)
-@php
-    $cityPaid    = $paymentGroups['Paid & Eligible']->count();
-    $cityPending = $paymentGroups['Pending Payment']->count();
-    $cityTotal   = $cityPaid + $cityPending;
-@endphp
+
 <div class="card shadow-sm border-0 mb-3 rounded-4 overflow-hidden">
     <div class="card-header border-bottom bg-light bg-opacity-50 pb-2 pt-3 d-flex justify-content-between align-items-center">
         <h3 class="card-title fw-bold text-navy mb-0">
             <i class="ti ti-map-pin text-teal me-2"></i>{{ $city }}
         </h3>
         <div class="d-flex gap-2 align-items-center">
-            @if($cityPaid > 0)
+            @if($paymentGroups['Paid & Eligible']->count() > 0)
             <span class="badge bg-success-lt text-success px-2 py-1 fw-semibold">
-                <i class="ti ti-check me-1"></i>{{ $cityPaid }} Paid
+                <i class="ti ti-check me-1"></i>{{ $paymentGroups['Paid & Eligible']->count() }} Paid
             </span>
             @endif
-            @if($cityPending > 0)
+            @if($paymentGroups['Pending Payment']->count() > 0)
             <span class="badge bg-warning-lt text-warning px-2 py-1 fw-semibold">
-                <i class="ti ti-clock me-1"></i>{{ $cityPending }} Pending
+                <i class="ti ti-clock me-1"></i>{{ $paymentGroups['Pending Payment']->count() }} Pending
             </span>
             @endif
-            <span class="badge bg-indigo-lt px-3 py-1 fw-bold fs-6">{{ $cityTotal }} Total</span>
+            <span class="badge bg-indigo-lt px-3 py-1 fw-bold fs-6">{{ $paymentGroups['Paid & Eligible']->count() + $paymentGroups['Pending Payment']->count() }} Total</span>
         </div>
     </div>
 

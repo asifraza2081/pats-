@@ -159,12 +159,22 @@
                         <div class="row g-4">
                             <div class="col-md-6">
                                 <label class="form-label text-pats-primary fw-bold">CNIC Number</label>
-                                <input type="text" name="cnic" id="cnic_mask" class="form-control bg-light" value="{{ old('cnic', auth()->user()->cnic) }}" placeholder="XXXXX-XXXXXXX-X" {{ ($candidate->profile_locked && $status['total_percent'] == 100) ? 'readonly' : '' }}>
+                                <input type="text" name="cnic" id="cnic_mask" class="form-control bg-light" value="{{ old('cnic', auth()->user()->cnic) }}" placeholder="XXXXX-XXXXXXX-X" readonly tabindex="-1">
+                                <div class="form-hint small text-muted">CNIC cannot be changed after registration.</div>
                                 @error('cnic') <div class="text-danger small mt-1">{{ $message }}</div> @enderror
                             </div>
                             <div class="col-md-6">
                                 <label class="form-label required text-pats-primary fw-bold">Father's Name</label>
                                 <input type="text" name="father_name" class="form-control" value="{{ old('father_name', $candidate->father_name) }}" {{ ($candidate->profile_locked && $status['total_percent'] == 100) ? 'readonly' : '' }} required>
+                            </div>
+                            <div class="col-md-6">
+                                <label class="form-label required">Primary Mobile Number</label>
+                                <input type="text" class="form-control bg-light" value="{{ auth()->user()->phone }}" readonly tabindex="-1">
+                            </div>
+                            <div class="col-md-6">
+                                <label class="form-label">Alternative Mobile Number (Optional)</label>
+                                <input type="text" name="alternate_phone" class="form-control" value="{{ old('alternate_phone', $candidate->alternate_phone) }}" placeholder="e.g. 0300-1234567">
+                                @error('alternate_phone') <div class="text-danger small mt-1">{{ $message }}</div> @enderror
                             </div>
                             <div class="col-md-4">
                                 <label class="form-label required">Date of Birth</label>
@@ -218,7 +228,14 @@
                                 <label class="form-label required">Permanent Address</label>
                                 <textarea name="permanent_address" class="form-control" rows="2" placeholder="Street, Village/Area, House No." required>{{ old('permanent_address', $candidate->permanent_address) }}</textarea>
                             </div>
-                            <input type="hidden" name="same_postal_address" value="1">
+                            <div class="col-12">
+                                <label class="form-label required">Postal / Mailing Address</label>
+                                <div class="form-check mb-2">
+                                    <input class="form-check-input" type="checkbox" id="sync_address" name="same_postal_address" value="1" {{ old('same_postal_address', $candidate->same_postal_address) ? 'checked' : '' }}>
+                                    <label class="form-check-label small" for="sync_address">Same as permanent address</label>
+                                </div>
+                                <textarea name="postal_address" id="postal_address_field" class="form-control" rows="2" placeholder="Current address for roll number delivery" required>{{ old('postal_address', $candidate->postal_address) }}</textarea>
+                            </div>
                         </div>
                     </div>
                     <div class="card-footer bg-light p-4 d-flex justify-content-between align-items-center">
@@ -258,8 +275,20 @@
                                     <div class="col-md-4"><label class="form-label small fw-bold">Institution</label><input type="text" name="institution" class="form-control"></div>
                                     <div class="col-md-4"><label class="form-label small fw-bold">Major</label><input type="text" name="subject_major" class="form-control"></div>
                                     <div class="col-md-3"><label class="form-label small fw-bold">Year</label><input type="number" name="passing_year" class="form-control" min="1970" max="{{ date('Y') }}"></div>
-                                    <input type="hidden" name="marks_type" value="Marks">
-                                    <div class="col-md-5 d-flex align-items-end">
+                                    <div class="col-md-2">
+                                        <label class="form-label small fw-bold">Obtained *</label>
+                                        <input type="number" step="0.01" name="obtained_marks" id="obt_marks" class="form-control" placeholder="Marks/CGPA" required>
+                                    </div>
+                                    <div class="col-md-2">
+                                        <label class="form-label small fw-bold">Total *</label>
+                                        <input type="number" step="0.01" name="total_marks" id="total_marks" class="form-control" placeholder="1100 / 4.0" required>
+                                    </div>
+                                    <div class="col-md-2">
+                                        <label class="form-label small fw-bold">Avg / %</label>
+                                        <input type="text" id="calc_perc" class="form-control bg-light" readonly tabindex="-1" placeholder="Auto">
+                                    </div>
+                                    <input type="hidden" name="marks_type" id="marks_type_hidden" value="Marks">
+                                    <div class="col-md-3 d-flex align-items-end">
                                         <button type="submit" class="btn btn-indigo w-100 py-2 rounded-pill fw-bold text-white">
                                             <span class="spinner-border spinner-border-sm me-2 d-none" id="eduSpinner"></span>
                                             SAVE EDUCATION RECORD
@@ -603,6 +632,59 @@ document.addEventListener('DOMContentLoaded', function() {
     handleStepAjax('step1Form');
     handleStepAjax('docsForm');
     
+    // Sync Postal Address Logic
+    const syncCheckbox = document.getElementById('sync_address');
+    const permAddress = document.querySelector('textarea[name="permanent_address"]');
+    const postAddress = document.getElementById('postal_address_field');
+    
+    if (syncCheckbox && permAddress && postAddress) {
+        syncCheckbox.addEventListener('change', function() {
+            if (this.checked) {
+                postAddress.value = permAddress.value;
+                postAddress.readOnly = true;
+                postAddress.classList.add('bg-light');
+            } else {
+                postAddress.readOnly = false;
+                postAddress.classList.remove('bg-light');
+            }
+        });
+        
+        permAddress.addEventListener('input', function() {
+            if (syncCheckbox.checked) postAddress.value = this.value;
+        });
+
+        if (syncCheckbox.checked) {
+            postAddress.readOnly = true;
+            postAddress.classList.add('bg-light');
+        }
+    }
+
+    // Marks Calculation Logic
+    const obtInput = document.getElementById('obt_marks');
+    const totInput = document.getElementById('total_marks');
+    const percInput = document.getElementById('calc_perc');
+    const typeInput = document.getElementById('marks_type_hidden');
+
+    if (obtInput && totInput) {
+        function updatePerc() {
+            const obt = parseFloat(obtInput.value) || 0;
+            const tot = parseFloat(totInput.value) || 0;
+            if (tot > 0) {
+                if (tot <= 10) { // Assume CGPA
+                    percInput.value = obt.toFixed(2) + ' CGPA';
+                    typeInput.value = 'CGPA';
+                } else {
+                    percInput.value = ((obt / tot) * 100).toFixed(2) + '%';
+                    typeInput.value = 'Marks';
+                }
+            } else {
+                percInput.value = '';
+            }
+        }
+        obtInput.addEventListener('input', updatePerc);
+        totInput.addEventListener('input', updatePerc);
+    }
+
     // Show loading on form submissions
     document.querySelectorAll('form').forEach(form => {
         if (!form.classList.contains('no-spinner')) {

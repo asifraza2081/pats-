@@ -43,16 +43,16 @@
             <div class="col-lg-6 animate__animated animate__fadeInRight animate__delay-1s">
                 <div class="row g-4">
 
-                    <!-- Open Projects -->
+                    <!-- Open Projects / Apply Now -->
                     <div class="col-6">
                         <a href="{{ route('projects') }}" class="text-decoration-none d-block">
                             <div class="pats-card h-100">
                                 <div class="card-content text-center">
                                     <div class="icon-wrap">
-                                        <i class="ti ti-briefcase"></i>
+                                        <i class="ti ti-pencil-plus"></i>
                                     </div>
-                                    <h5>Open Projects</h5>
-                                    <p>Explore available testing projects</p>
+                                    <h5>Apply Now</h5>
+                                    <p>Explore & submit applications</p>
                                 </div>
                                 <div class="shine"></div>
                             </div>
@@ -75,7 +75,23 @@
                         </a>
                     </div>
 
-                    <!-- Results -->
+                    <!-- Check your Roll no -->
+                    <div class="col-6">
+                        <a href="{{ route('login') }}" class="text-decoration-none d-block">
+                            <div class="pats-card h-100">
+                                <div class="card-content text-center">
+                                    <div class="icon-wrap">
+                                        <i class="ti ti-id"></i>
+                                    </div>
+                                    <h5>Check your Roll no</h5>
+                                    <p>Download your test slips</p>
+                                </div>
+                                <div class="shine"></div>
+                            </div>
+                        </a>
+                    </div>
+
+                    <!-- Results and Answer Keys -->
                     <div class="col-6">
                         <a href="{{ route('results.search') }}" class="text-decoration-none d-block">
                             <div class="pats-card h-100">
@@ -83,24 +99,8 @@
                                     <div class="icon-wrap">
                                         <i class="ti ti-file-search"></i>
                                     </div>
-                                    <h5>Results</h5>
-                                    <p>Check your test results</p>
-                                </div>
-                                <div class="shine"></div>
-                            </div>
-                        </a>
-                    </div>
-
-                    <!-- Apply Now -->
-                    <div class="col-6">
-                        <a href="{{ route('projects') }}" class="text-decoration-none d-block">
-                            <div class="pats-card h-100">
-                                <div class="card-content text-center">
-                                    <div class="icon-wrap">
-                                        <i class="ti ti-pencil-plus"></i>
-                                    </div>
-                                    <h5>Apply Now</h5>
-                                    <p>Submit your application</p>
+                                    <h5>Results & Keys</h5>
+                                    <p>Check results & answer keys</p>
                                 </div>
                                 <div class="shine"></div>
                             </div>

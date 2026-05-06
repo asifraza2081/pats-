@@ -79,43 +79,40 @@
 
         @foreach($chunks as $chunkIndex => $chunk)
         <div class="page-wrapper {{ (!$loop->parent->last || !$loop->last) ? 'page-break' : '' }}">
-            <table class="header-table">
+            <table class="header-table" style="border-bottom: none; margin-bottom: 5px;">
                 <tr>
-                    <td class="logo">
-                        <img src="{{ public_path('logo.png') }}" style="width: 75px;">
+                    <td class="logo" style="width: 100px;">
+                        <img src="{{ public_path('logo.png') }}" style="width: 80px;">
                     </td>
                     <td class="company-name">
-                        <h1 style="color: #0a3d62;">PRIME ASSESSMENT & TESTING SERVICES</h1>
-                        <div style="font-weight: bold; font-size: 12px; letter-spacing: 2px;">Merit | Transparency | Excellence</div>
+                        <h1 style="color: #000; font-size: 28px; font-family: 'Arial Black', sans-serif;">NATIONAL TESTING SERVICE PAKISTAN</h1>
+                        <div style="font-weight: bold; font-size: 16px; border-top: 1px solid #000; display: inline-block; padding: 2px 20px;">Attendance Sheet Candidates</div>
                     </td>
-                    <td width="150" style="vertical-align: middle;">
-                        <div class="batch-barcode">
-                            <img src="data:image/png;base64,{{ $barcode }}">
-                            <div style="font-size: 8px; text-align: center; font-family: monospace;">* {{ $batchIdStr }} *</div>
-                        </div>
+                    <td width="120" style="text-align: right; font-size: 9px;">
+                        Page {{ $chunkIndex + 1 }} of {{ $chunks->count() }}<br>
+                        <strong>{{ strtoupper($batch->center->tcid) }}</strong>
                     </td>
                 </tr>
             </table>
 
-            <div class="title-section">
-                <h2>Attendance Sheet: {{ strtoupper($jobTitle) }}</h2>
-                <div style="font-size: 11px; margin-top: 2px;">(Sheet {{ $chunkIndex + 1 }} of {{ $chunks->count() }})</div>
-            </div>
-
-            <table class="meta-table">
+            <table class="meta-table" style="margin-bottom: 10px;">
                 <tr>
-                    <td width="50%">
-                        <strong>{{ $center->tcid }}-{{ strtoupper($city->name) }}</strong><br>
-                        <strong>{{ strtoupper($project->name) }}</strong>
+                    <td width="33%">
+                        <strong>{{ strtoupper($city->name) }}</strong><br>
+                        {{ strtoupper($project->name) }}
                     </td>
-                    <td width="50%" style="text-align: right;">
-                        <strong>BATCH-{{ $batch->batch_number }} ({{ \Carbon\Carbon::parse($batch->reporting_time)->format('h:i A') }})</strong><br>
-                        <strong>{{ $batch->test_date->format('l dS M, Y') }}</strong>
+                    <td width="33%" style="text-align: center;">
+                        <strong>{{ strtoupper($jobTitle) }}</strong><br>
+                        BATCH-{{ $batch->batch_number }} ({{ \Carbon\Carbon::parse($batch->reporting_time)->format('h:i A') }})
+                    </td>
+                    <td width="33%" style="text-align: right;">
+                        <strong>{{ $batch->test_date->format('l dS M, Y') }}</strong><br>
+                        <img src="data:image/png;base64,{{ $barcode }}" style="height: 25px;">
                     </td>
                 </tr>
             </table>
 
-            <div class="names-row">
+            <div class="names-row" style="border-top: 1px solid #000; border-bottom: 1px solid #000; padding: 5px 0;">
                 <span>Invigilator Name: __________________________</span>
                 <span>Supervisor Name: __________________________</span>
             </div>
@@ -125,8 +122,8 @@
                     <tr>
                         <th width="40">Sr.#</th>
                         <th width="100">Roll #</th>
-                        <th>Candidate Name</th>
-                        <th width="200">Candidate Signature</th>
+                        <th style="text-align: center;">Candidate Name</th>
+                        <th width="180">Candidate Signature</th>
                     </tr>
                 </thead>
                 <tbody>
@@ -135,8 +132,8 @@
                         <td class="center-text">{{ $sr++ }}</td>
                         <td class="center-text"><strong>{{ $roll->roll_no }}</strong></td>
                         <td>
-                            {{ strtoupper($roll->application->candidate->user->full_name) }}
-                            <div style="font-size: 9px; color: #555;">CNIC: {{ $roll->application->candidate->user->cnic }}</div>
+                            <div style="font-weight: bold; font-size: 12px;">{{ strtoupper($roll->application->candidate->user->full_name) }}</div>
+                            <div style="font-size: 9px;">{{ $roll->application->candidate->father_name }}</div>
                         </td>
                         <td class="signature-box"></td>
                     </tr>
@@ -144,7 +141,7 @@
                 </tbody>
             </table>
 
-            <div class="footer-stats">
+            <div class="footer-stats" style="margin-top: 0;">
                 <div class="total-box">
                     <div class="total-label">TOTAL PRESENT</div>
                     <div class="total-value"></div>
@@ -154,15 +151,15 @@
 
             <div class="clearfix"></div>
 
-            <div class="supervisor-section">
+            <div class="supervisor-section" style="margin-top: 10px;">
                 <div class="instruction-note">
-                    ONLY SUPERVISOR: Mark Absent with Red Pen Only
+                    <strong>ONLY SUPERVISOR:</strong> 1. Mark Absent with Red Pen Only
                 </div>
 
-                <div class="sig-row">
-                    <div class="sig-col">Invigilator Signature</div>
-                    <div class="sig-col" style="margin: 0 1%;">Supervisor Signature</div>
-                    <div class="sig-col">Chief Supervisor Signature</div>
+                <div class="sig-row" style="margin-top: 30px;">
+                    <div class="sig-col" style="width: 25%; border-top: 1px solid #000;">Invigilator Signature</div>
+                    <div class="sig-col" style="width: 25%; margin: 0 10%; border-top: 1px solid #000;">Supervisor Signature</div>
+                    <div class="sig-col" style="width: 25%; border-top: 1px solid #000;">Chief Supervisor Signature</div>
                 </div>
             </div>
         </div>

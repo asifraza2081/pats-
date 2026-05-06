@@ -49,18 +49,9 @@
     </div>
 </div>
 
+
 <div class="row row-cards mb-4">
-    @php
-    $cards = [
-        ['label'=>'Active Projects',   'value'=>$stats['projects'],    'icon'=>'briefcase',       'color'=>'primary'],
-        ['label'=>'Total Job Posts',   'value'=>$stats['jobs'],        'icon'=>'list-check',      'color'=>'info'],
-        ['label'=>'Total Applications','value'=>$stats['applications'], 'icon'=>'file-text',       'color'=>'dark'],
-        ['label'=>'Pending Payments',  'value'=>$stats['pending_pay'], 'icon'=>'clock-hour-4',    'color'=>'warning'],
-        ['label'=>'Verified Payments', 'value'=>$stats['verified_pay'], 'icon'=>'cash',            'color'=>'success'],
-        ['label'=>'Appeared in Test',  'value'=>$stats['appeared'],    'icon'=>'user-check',      'color'=>'secondary'],
-    ];
-    @endphp
-    @foreach($cards as $c)
+    @foreach($dashboardCards as $c)
     <div class="col-sm-6 col-lg-4 col-xl-2">
         <div class="card card-sm shadow-sm border-0 h-100">
             <div class="card-body">
@@ -126,14 +117,14 @@
                         <div class="mb-3">
                             <h4 class="small fw-bold text-secondary mb-3">TOP RECRUITMENT HUBS</h4>
                             @foreach($cityDistribution->take(5) as $city)
-                                @php $pct = $stats['applications'] > 0 ? round(($city['count'] / $stats['applications']) * 100) : 0; @endphp
+
                                 <div class="mb-3">
                                     <div class="d-flex justify-content-between mb-1">
                                         <span class="fw-semibold text-dark">{{ $city['city'] }}</span>
                                         <span class="text-secondary small">{{ number_format($city['count']) }}</span>
                                     </div>
                                     <div class="progress progress-sm rounded-pill">
-                                        <div class="progress-bar bg-primary" style="width: {{ $pct }}%"></div>
+                                        <div class="progress-bar bg-primary" style="width: {{ $city['pct'] }}%"></div>
                                     </div>
                                 </div>
                             @endforeach
@@ -155,11 +146,7 @@
             <div class="card-body">
                 <div id="chart-roi" style="min-height: 280px;"></div>
                 <div class="mt-3 p-3 bg-light rounded-3">
-                    @php
-                        $totalRev = $projectRoi->sum('revenue');
-                        $totalExp = $projectRoi->sum('expense');
-                        $margin = $totalRev > 0 ? (($totalRev - $totalExp) / $totalRev) * 100 : 0;
-                    @endphp
+
                     <div class="row text-center">
                         <div class="col-6 border-end">
                             <div class="text-secondary small text-uppercase fw-bold">Avg. Margin</div>
@@ -214,16 +201,7 @@
                                 <div class="text-secondary small">{{ Str::limit($app->job->project->name, 25) }}</div>
                             </td>
                             <td>
-                                @php 
-                                    $colors=[
-                                        'submitted'=>'secondary',
-                                        'fee_paid'=>'primary',
-                                        'appeared'=>'success',
-                                        'absent'=>'danger',
-                                        'result_declared'=>'info'
-                                    ]; 
-                                @endphp
-                                <span class="badge bg-{{ $colors[$app->status->value] ?? 'secondary' }} text-{{ $colors[$app->status->value] ?? 'secondary' }}-fg text-capitalize">
+                                <span class="badge bg-{{ $statusColors[$app->status->value] ?? 'secondary' }} text-white text-capitalize">
                                     {{ str_replace('_',' ',$app->status->value) }}
                                 </span>
                             </td>

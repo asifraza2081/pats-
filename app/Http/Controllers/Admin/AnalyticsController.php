@@ -100,6 +100,10 @@ class AnalyticsController extends Controller
             }
         }
 
+        $analytics['paidPct'] = $analytics['total_applied'] > 0 ? round(($analytics['paid_eligible'] / $analytics['total_applied']) * 100) : 0;
+        $analytics['unpaidPct'] = $analytics['total_applied'] > 0 ? round(($analytics['unpaid_ineligible'] / $analytics['total_applied']) * 100) : 0;
+        $analytics['allocPct'] = $analytics['paid_eligible'] > 0 ? round(($analytics['allocated'] / $analytics['paid_eligible']) * 100) : 0;
+
         return view('admin.analytics.index', compact('jobs', 'selectedJob', 'groupedCandidates', 'analytics'));
     }
 }

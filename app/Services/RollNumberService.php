@@ -79,15 +79,14 @@ class RollNumberService
                 $jobId = $app->job_id;
                 $serial = ++$jobSerials[$jobId];
 
-                // Compact 9-Digit Roll Number: [YY][MM][P][J][SSS]
-                // YY=year, MM=month (from test_date), P=project%10, J=job_code%10, SSS=sequence
+                // New Compact Roll Number: [TCID][Proj:2][Job:2][Serial:3]
+                // Example: LHR0105001
                 $rollNo = sprintf(
-                    '%s%s%d%d%03d',
-                    $batch->test_date->format('y'),
-                    $batch->test_date->format('m'),
-                    $app->project_id % 10,
-                    ((int) $app->job->job_code) % 10,
-                    $serial
+                    '%s%02d%02d%03d',
+                    strtoupper($batch->center->tcid),
+                    $app->project_id % 100,
+                    ((int) $app->job->job_code) % 100,
+                    $serial % 1000
                 );
 
                 // Generate secure verification token for QR validation

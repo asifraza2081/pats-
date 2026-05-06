@@ -26,7 +26,7 @@
             <span class="input-group-text bg-transparent border-0 pe-2">
                 <i class="ti ti-user text-pats-primary fs-3"></i>
             </span>
-            <input type="text" name="identifier" class="form-control border-0 bg-transparent shadow-none" placeholder="user@example.com or 1234567890123" required>
+            <input type="text" name="identifier" class="form-control border-0 bg-transparent shadow-none" placeholder="user@example.com or 1234567890123" maxlength="15" required>
         </div>
         <div class="form-hint px-3 mt-2">Enter your registered email address or 13-digit CNIC.</div>
     </div>

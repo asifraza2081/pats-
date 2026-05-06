@@ -34,8 +34,8 @@
                 
                 <div class="row g-4">
                     <div class="col-md-4">
-                        <label class="form-label required">TCID (3 Letters)</label>
-                        <input type="text" name="tcid" class="form-control text-uppercase" maxlength="3" value="{{ old('tcid') }}" placeholder="e.g. LHE" required>
+                        <label class="form-label required">TCID (Max 4 Letters)</label>
+                        <input type="text" name="tcid" class="form-control text-uppercase" maxlength="4" value="{{ old('tcid') }}" placeholder="e.g. LHR1" required>
                         <div class="form-hint">Unique identifier for roll numbers.</div>
                     </div>
                     <div class="col-md-8">

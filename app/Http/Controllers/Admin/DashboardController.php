@@ -30,6 +30,15 @@ class DashboardController extends Controller
             ];
         });
 
+        $dashboardCards = [
+            ['label'=>'Active Projects',   'value'=>$stats['projects'],    'icon'=>'briefcase',       'color'=>'primary'],
+            ['label'=>'Total Job Posts',   'value'=>$stats['jobs'],        'icon'=>'list-check',      'color'=>'info'],
+            ['label'=>'Total Applications','value'=>$stats['applications'], 'icon'=>'file-text',       'color'=>'dark'],
+            ['label'=>'Pending Payments',  'value'=>$stats['pending_pay'], 'icon'=>'clock-hour-4',    'color'=>'warning'],
+            ['label'=>'Verified Payments', 'value'=>$stats['verified_pay'], 'icon'=>'cash',            'color'=>'success'],
+            ['label'=>'Appeared in Test',  'value'=>$stats['appeared'],    'icon'=>'user-check',      'color'=>'secondary'],
+        ];
+
         $recentApps = Application::with(['candidate.user', 'job.project', 'payment'])
             ->latest('applied_at')->take(10)->get();
 
@@ -42,10 +51,13 @@ class DashboardController extends Controller
                 ->groupBy('desired_test_city_id')
                 ->with('desiredTestCity')
                 ->get()
-                ->map(fn($item) => [
-                    'city' => $item->desiredTestCity->name ?? 'Unknown',
-                    'count' => $item->count,
-                ])
+                ->map(function($item) use ($stats) {
+                    return [
+                        'city' => $item->desiredTestCity->name ?? 'Unknown',
+                        'count' => $item->count,
+                        'pct' => $stats['applications'] > 0 ? round(($item->count / $stats['applications']) * 100) : 0,
+                    ];
+                })
                 ->sortByDesc('count')
                 ->values();
         });
@@ -116,9 +128,21 @@ class DashboardController extends Controller
                 });
         });
 
+        $totalRev = $projectRoi->sum('revenue');
+        $totalExp = $projectRoi->sum('expense');
+        $margin = $totalRev > 0 ? (($totalRev - $totalExp) / $totalRev) * 100 : 0;
+
+        $statusColors = [
+            'submitted'=>'secondary',
+            'fee_paid'=>'primary',
+            'appeared'=>'success',
+            'absent'=>'danger',
+        ];
+
         return view('admin.dashboard', compact(
-            'stats', 'recentApps', 'openProjects', 
-            'cityDistribution', 'projectRoi', 'regionalStats'
+            'stats', 'dashboardCards', 'recentApps', 'openProjects', 
+            'cityDistribution', 'projectRoi', 'regionalStats',
+            'totalRev', 'totalExp', 'margin', 'statusColors'
         ));
     }
 }
