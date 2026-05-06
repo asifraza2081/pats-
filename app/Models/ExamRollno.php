@@ -68,10 +68,18 @@ class ExamRollno extends Model
     public function getFormattedRollNoAttribute(): string
     {
         $r = $this->roll_no;
-        if (strlen($r) === 9) {
+        // Format for new secure alphanumeric roll numbers (e.g., LHR0010050001 -> LHR-001-005-0001)
+        // We assume 3-4 chars for TCID, 3 for Proj, 3 for Job, 4 for Serial
+        if (preg_match('/^([A-Z0-9]{3,4})(\d{3})(\d{3})(\d{4})$/', $r, $m)) {
+            return "{$m[1]}-{$m[2]}-{$m[3]}-{$m[4]}";
+        }
+        
+        // Legacy 9-digit numeric format: YYMM-PJ-SSS
+        if (strlen($r) === 9 && is_numeric($r)) {
             return substr($r, 0, 4) . '-' . substr($r, 4, 2) . '-' . substr($r, 6);
         }
-        return $r; // Fallback for legacy roll numbers
+        
+        return $r; 
     }
 
     // ── Query Scopes ────────────────────────────────────

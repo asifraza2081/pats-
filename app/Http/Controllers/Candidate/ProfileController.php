@@ -68,9 +68,8 @@ class ProfileController extends Controller
         $cnicFromForm = $data['cnic'] ?? null;
         unset($data['cnic']);
 
-        // Prevent modification of critical identity/eligibility data if profile is locked AND already finished
-        $status = app(\App\Services\EligibilityService::class)->getProfileStatus($candidate);
-        if ($candidate->profile_locked && $status['total_percent'] === 100) {
+        // Prevent modification of critical identity/eligibility data if profile is locked
+        if ($candidate->profile_locked) {
             unset(
                 $data['dob'], 
                 $data['father_name'], 
