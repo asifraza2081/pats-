@@ -20,9 +20,9 @@ class DigitalRepositoryService
         $batch->loadMissing(['project', 'center.city']);
         
         $date = $batch->test_date instanceof Carbon ? $batch->test_date->toDateString() : (string) $batch->test_date;
-        $projectSlug = Str::slug($batch->project->name ?? 'Project', '-', 'en');
-        $citySlug = Str::slug($batch->center->city->name ?? 'City', '-', 'en');
-        $centerSlug = Str::slug($batch->center->name ?? 'Center', '-', 'en');
+        $projectSlug = strtolower(Str::slug($batch->project->name ?? 'Project', '-', 'en'));
+        $citySlug = strtolower(Str::slug($batch->center->city->name ?? 'City', '-', 'en'));
+        $centerSlug = strtolower(Str::slug($batch->center->name ?? 'Center', '-', 'en'));
         
         return "{$date}/{$projectSlug}/{$citySlug}/{$centerSlug}";
     }
@@ -39,13 +39,13 @@ class DigitalRepositoryService
         if (!$batch) {
             // Fallback if no batch is linked (e.g., tests without batches, though PATS uses batches)
             $date = date('Y-m-d');
-            $projectSlug = Str::slug($roll->application->project->name ?? 'Project', '-', 'en');
-            $citySlug = Str::slug($roll->city->name ?? 'City', '-', 'en');
-            $centerSlug = Str::slug($roll->center->name ?? 'Center', '-', 'en');
-            return "{$date}/{$projectSlug}/{$citySlug}/{$centerSlug}/{$roll->roll_no}";
+            $projectSlug = strtolower(Str::slug($roll->application->project->name ?? 'Project', '-', 'en'));
+            $citySlug = strtolower(Str::slug($roll->city->name ?? 'City', '-', 'en'));
+            $centerSlug = strtolower(Str::slug($roll->center->name ?? 'Center', '-', 'en'));
+            return "{$date}/{$projectSlug}/{$citySlug}/{$centerSlug}/" . strtolower($roll->roll_no);
         }
         
-        return $this->buildCenterPath($batch) . '/' . $roll->roll_no;
+        return $this->buildCenterPath($batch) . '/' . strtolower($roll->roll_no);
     }
 
     /**

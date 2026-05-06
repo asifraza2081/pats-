@@ -57,7 +57,7 @@ class BatchController extends Controller
         return view('admin.batches.create', compact('projects', 'centers'));
     }
 
-    public function store(\App\Http\Requests\StoreBatchRequest $request)
+    public function store(\App\Http\Requests\Admin\StoreBatchRequest $request)
     {
         $data = $request->validated();
 
@@ -77,7 +77,7 @@ class BatchController extends Controller
 
         $unallocatedTarget = (int) $data['count_to_allocate'];
 
-        // Preload centers to eliminate N+1 query overhead (Â§4.1)
+        // Preload centers and city stats to minimize DB hits in loop
         $centers = TestCenter::whereIn('id', $centerIds)->get()->keyBy('id');
 
         DB::beginTransaction();
@@ -91,35 +91,33 @@ class BatchController extends Controller
                 if (!$center) continue;
 
                 // 2. Conflict Detection (Same center, same date, overlapping time)
-                // New logic: Check if (start < current_end AND end > current_start)
                 $startTime = $data['start_time'];
-                $duration  = (int) ($data['duration_minutes'] ?? 240); 
+                $duration  = (int) ($data['duration_minutes'] ?? 180); 
                 $endTime   = Carbon::parse($startTime)->addMinutes($duration)->format('H:i:s');
 
                 $conflict = Batch::where('center_id', $centerId)
                     ->where('test_date', $testDateNormalized)
                     ->where(function($q) use ($startTime, $endTime) {
-                         // Improved overlap detection [M5]
-                         // Logic: (StartA < EndB) AND (EndA > StartB)
                          $q->where('start_time', '<', $endTime)
-                           // PostgreSQL/MySQL COALESCE to handle legacy rows where duration_minutes is NULL
-                           ->whereRaw('DATE_ADD(start_time, INTERVAL COALESCE(duration_minutes, 240) MINUTE) > ?', [$startTime]);
+                           ->whereRaw('DATE_ADD(start_time, INTERVAL COALESCE(duration_minutes, 180) MINUTE) > ?', [$startTime]);
                     })
+                    ->lockForUpdate()
                     ->exists();
 
                 if ($conflict) {
-                    throw new \Exception("A session is already scheduled at '{$center->name}' on this date and time.");
+                    throw new \Exception("Scheduling conflict: '{$center->name}' is already booked for the selected time slot.");
                 }
 
                 $batchData = array_diff_key($data, array_flip(['job_ids', 'count_to_allocate', 'center_ids']));
                 $batchData['center_id'] = $centerId;
                 $batchData['created_by'] = Auth::id();
                 $batchData['total_seats'] = $center->seating_capacity;
+                $batchData['duration_minutes'] = $duration;
                 
-                $cityId = $center->city_id;
+                // Get eligible candidates for this center's city
                 $eligibleCount = Application::where('project_id', $batchData['project_id'])
                     ->where('status', \App\Enums\ApplicationStatus::FEE_PAID)
-                    ->where('desired_test_city_id', $cityId)
+                    ->where('desired_test_city_id', $center->city_id)
                     ->whereDoesntHave('examRollno')
                     ->whereIn('job_id', $data['job_ids'])
                     ->count();
@@ -136,7 +134,7 @@ class BatchController extends Controller
                 $allocated = $this->rollNumbers->allocateBatch($batch, $allocCount, $data['job_ids']);
                 
                 $totalAllocated += $allocated;
-                $unallocatedTarget -= $allocated; // Deduct from the remaining pool
+                $unallocatedTarget -= $allocated;
 
                 \App\Models\ActivityLog::log('allocate_seats', $batch, [
                     'count' => $allocated,
@@ -147,26 +145,18 @@ class BatchController extends Controller
             DB::commit();
         } catch (\Exception $e) {
             DB::rollBack();
-            \Log::error('BatchController@store exception', [
-                'message'    => $e->getMessage(),
-                'class'      => get_class($e),
-                'file'       => $e->getFile(),
-                'line'       => $e->getLine(),
-                'test_date'  => $data['test_date'] ?? 'not set',
-                'project_id' => $data['project_id'] ?? 'not set',
-                'center_ids' => $data['center_ids'] ?? [],
-            ]);
-            return back()->with('error', $e->getMessage())->withInput();
+            \Log::error('Batch Allocation Failed: ' . $e->getMessage(), ['trace' => $e->getTraceAsString()]);
+            return back()->with('error', 'Allocation engine failed: ' . $e->getMessage())->withInput();
         }
 
         if (empty($batchIds)) {
-            $msg = "No eligible candidates found. Check if candidates have 'Paid' status and if their 'Desired Test City' matches the selected centers.";
-            return back()->with('error', $msg)->withInput();
+            return back()->with('error', 'No eligible candidates found for the selected criteria (City Match + Fee Paid).')->withInput();
         }
 
         return redirect()->route('admin.batches.index')
-            ->with('success', "Scheduled " . count($batchIds) . " sessions. Successfully allocated {$totalAllocated} candidates across selected centers.");
+            ->with('success', "Processed " . count($batchIds) . " sessions. Allocated {$totalAllocated} candidates.");
     }
+
 
     /** AJAX endpoint to get real-time pending candidate counts */
     public function stats(Request $request)

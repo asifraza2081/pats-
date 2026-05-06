@@ -168,31 +168,35 @@ class ResultController extends Controller
 
             // 3. Compute percentiles GLOBALLY per job category and update
             foreach ($jobAppeared as $jobId => $newEntries) {
-                $allScores = Result::join('applications', 'results.application_id', '=', 'applications.id')
+                // Fetch only IDs and percentages to minimize memory usage
+                $allScores = DB::table('results')
+                    ->join('applications', 'results.application_id', '=', 'applications.id')
                     ->where('applications.job_id', $jobId)
                     ->whereNotNull('published_at')
-                    ->select('results.*') // Select all to satisfy strict mode in the subsequent upsert
-                    ->get()
-                    ->toArray();
+                    ->select('results.application_id', 'results.percentage')
+                    ->orderByDesc('results.percentage')
+                    ->get();
 
-                if (!empty($allScores)) {
-                    $sorted = collect($allScores)->sortByDesc('percentage')->values();
-                    $total  = count($sorted);
+                if ($allScores->isNotEmpty()) {
+                    $total = $allScores->count();
                     $upsertData = [];
 
-                    foreach ($sorted as $index => $entry) {
+                    foreach ($allScores as $index => $entry) {
                         $rank = $index + 1;
-                        $entry['percentile'] = round((($total - $rank) / $total) * 100, 2);
+                        $percentile = round((($total - $rank) / $total) * 100, 2);
                         
-                        // Prepare data for bulk upsert, filtering out extraneous model properties
-                        $cleanEntry = array_filter($entry, function($k) {
-                            return !in_array($k, ['created_at', 'updated_at', 'application', 'job']) && !is_numeric($k);
-                        }, ARRAY_FILTER_USE_KEY);
-                        
-                        $upsertData[] = $cleanEntry;
+                        $upsertData[] = [
+                            'application_id' => $entry->application_id,
+                            'percentile'     => $percentile
+                        ];
+
+                        // Chunk the upsert to avoid huge SQL strings
+                        if (count($upsertData) >= 500) {
+                            Result::upsert($upsertData, ['application_id'], ['percentile']);
+                            $upsertData = [];
+                        }
                     }
 
-                    // Bulk update percentiles using upsert
                     if (!empty($upsertData)) {
                         Result::upsert($upsertData, ['application_id'], ['percentile']);
                     }
@@ -231,16 +235,29 @@ class ResultController extends Controller
         $ext = strtolower($file->getClientOriginalExtension());
         if ($ext === 'csv') {
             $rows = [];
-            $handle = fopen($file->getPathname(), 'r');
-            $headers = fgetcsv($handle);
-            $headers = array_map('strtolower', array_map('trim', $headers));
-            while ($row = fgetcsv($handle)) {
-                $rows[] = array_combine($headers, array_slice(array_pad($row, count($headers), ''), 0, count($headers)));
+            if (($handle = fopen($file->getPathname(), 'r')) !== false) {
+                // Handle BOM if present
+                $bom = fread($handle, 3);
+                if ($bom !== "\xEF\xBB\xBF") {
+                    rewind($handle);
+                }
+
+                $headers = fgetcsv($handle);
+                if ($headers) {
+                    $headers = array_map('strtolower', array_map('trim', $headers));
+                    while (($row = fgetcsv($handle)) !== false) {
+                        if (empty(array_filter($row))) continue; // Skip empty rows
+                        $rows[] = array_combine($headers, array_slice(array_pad($row, count($headers), ''), 0, count($headers)));
+                        
+                        // Limit rows to 15,000 for safety in this synchronous method
+                        if (count($rows) > 15000) break;
+                    }
+                }
+                fclose($handle);
             }
-            fclose($handle);
             return $rows;
         }
-        // Excel
+        // Excel (still uses PhpSpreadsheet, which is heavy)
         $spreadsheet = IOFactory::load($file->getPathname());
         $sheet = $spreadsheet->getActiveSheet()->toArray(null, true, true, false);
         $headers = array_map('strtolower', array_map('trim', array_shift($sheet)));
