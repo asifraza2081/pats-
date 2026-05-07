@@ -348,6 +348,16 @@
                                     <div class="col-md-5"><label class="form-label small fw-bold required">Organisation</label><input type="text" name="organization_name" class="form-control" required></div>
                                     <div class="col-md-4"><label class="form-label small fw-bold required">Designation</label><input type="text" name="designation" class="form-control" required></div>
                                     <div class="col-md-3"><label class="form-label small fw-bold required">From Date</label><input type="date" name="from_date" class="form-control" required></div>
+                                    <div class="col-md-3" id="to_date_wrapper">
+                                        <label class="form-label small fw-bold">To Date</label>
+                                        <input type="date" name="to_date" class="form-control">
+                                    </div>
+                                    <div class="col-md-2 d-flex align-items-center">
+                                        <div class="form-check mt-3">
+                                            <input class="form-check-input" type="checkbox" name="is_current" id="is_current" value="1">
+                                            <label class="form-check-label small fw-bold" for="is_current">Currently Working</label>
+                                        </div>
+                                    </div>
                                     <div class="col-md-4 d-flex align-items-end">
                                         <button type="submit" class="btn btn-teal w-100 py-2 rounded-pill fw-bold text-white">
                                             <span class="spinner-border spinner-border-sm me-2 d-none" id="expSpinner"></span>
@@ -516,13 +526,17 @@ function handleStepAjax(formId) {
             },
             body: formData
         })
-        .then(res => res.json())
-        .then(data => {
-            if (data.success) {
+        .then(async res => {
+            const data = await res.json();
+            if (res.ok && data.success) {
                 toastr.success(data.message);
                 setTimeout(() => location.reload(), 1000);
-            } else { 
-                alert('Error: ' + (data.message || 'Validation failed. Please check your input.')); 
+            } else {
+                let msg = data.message || 'Validation failed. Please check your input.';
+                if (data.errors) {
+                    msg = Object.values(data.errors).flat().join('\n');
+                }
+                Swal.fire({ title: 'Error', text: msg, icon: 'error' });
             }
         })
         .catch(err => {
@@ -558,18 +572,28 @@ function handleAjaxForm(formId, targetListId, spinnerId, emptyId) {
             },
             body: new FormData(this)
         })
-        .then(res => res.json())
-        .then(data => {
-            if (data.success) {
+        .then(async res => {
+            const data = await res.json();
+            if (res.ok && data.success) {
                 if (empty) empty.remove();
                 list.insertAdjacentHTML('afterbegin', data.html);
                 form.reset();
                 const coll = bootstrap.Collapse.getInstance(form.closest('.collapse'));
                 if (coll) coll.hide();
-                location.reload(); // Refresh to update progress sidebar
-            } else { alert('Error: ' + data.message); }
+                toastr.success(data.message);
+                setTimeout(() => location.reload(), 800); // Refresh to update progress sidebar
+            } else {
+                let msg = data.message || 'Validation failed.';
+                if (data.errors) {
+                    msg = Object.values(data.errors).flat().join('\n');
+                }
+                Swal.fire({ title: 'Error', text: msg, icon: 'error' });
+            }
         })
-        .catch(err => alert('An error occurred.'))
+        .catch(err => {
+            console.error(err);
+            toastr.error('An error occurred. Please try again.');
+        })
         .finally(() => {
             if (spinner) spinner.classList.add('d-none');
             if (window.stopSpinners) window.stopSpinners();
@@ -683,6 +707,20 @@ document.addEventListener('DOMContentLoaded', function() {
         }
         obtInput.addEventListener('input', updatePerc);
         totInput.addEventListener('input', updatePerc);
+    }
+
+    // Experience currently working toggle
+    const currentCheck = document.getElementById('is_current');
+    const toDateWrapper = document.getElementById('to_date_wrapper');
+    if (currentCheck && toDateWrapper) {
+        currentCheck.addEventListener('change', function() {
+            if (this.checked) {
+                toDateWrapper.classList.add('d-none');
+                toDateWrapper.querySelector('input').value = '';
+            } else {
+                toDateWrapper.classList.remove('d-none');
+            }
+        });
     }
 
     // Show loading on form submissions

@@ -24,12 +24,12 @@ class EducationHistory extends Model
     }
 
     public static array $levelLabels = [
-        1 => 'Matric (10 Years)',
-        2 => 'Intermediate (12 Years)',
+        1 => 'SSC / Matric',
+        2 => 'HSSC / Inter',
         3 => 'Bachelor (14 Years)',
-        4 => 'Master (16 Years)',
-        5 => 'M.Phil',
-        6 => 'PhD',
+        4 => 'Bachelor (16 Years)',
+        5 => 'Master (18 Years)',
+        6 => 'PHD (21 Years)',
     ];
 
     public function candidate() { return $this->belongsTo(Candidate::class); }

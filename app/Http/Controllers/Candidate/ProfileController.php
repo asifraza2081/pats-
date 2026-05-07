@@ -110,13 +110,13 @@ class ProfileController extends Controller
 
         // Photo upload handling
         if ($request->hasFile('photo')) {
-            if ($candidate->photo_path) Storage::delete($candidate->photo_path);
+            if ($candidate->photo_path) Storage::disk('public')->delete($candidate->photo_path);
             $candidate->photo_path = $request->file('photo')->store('photos', 'public');
         }
 
         // CNIC Front upload handling
         if ($request->hasFile('cnic_copy')) {
-            if ($candidate->cnic_front_path) Storage::delete($candidate->cnic_front_path);
+            if ($candidate->cnic_front_path) Storage::disk('public')->delete($candidate->cnic_front_path);
             $candidate->cnic_front_path = $request->file('cnic_copy')->store('cnics', 'public');
         }
 
