@@ -79,14 +79,16 @@ class RollNumberService
                 $jobId = $app->job_id;
                 $serial = ++$jobSerials[$jobId];
 
-                // Secure Roll Number: [TCID][Proj:3][Job:3][Serial:4]
-                // Example: LHR0010050001
+                // 3-letter City Code from center or city name
+                $cityCode = strtoupper(substr($batch->center->city->name ?? 'GEN', 0, 3));
+
+                // Even more compact Roll Number: CITY-PPJJSS (e.g. LHR-050201)
                 $rollNo = sprintf(
-                    '%s%03d%03d%04d',
-                    strtoupper($batch->center->tcid),
-                    $app->project_id % 1000,
-                    ((int) $app->job->job_code) % 1000,
-                    $serial % 10000
+                    '%s-%02d%02d%02d',
+                    $cityCode,
+                    $app->project_id % 100,
+                    ((int) $app->job->job_code) % 100,
+                    $serial % 100000
                 );
 
                 // Generate secure verification token for QR validation

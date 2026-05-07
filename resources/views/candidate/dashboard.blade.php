@@ -13,8 +13,8 @@
                         <span class="avatar avatar-xl rounded-circle shadow-sm border border-2 border-white border-opacity-25" style="background-image: url('{{ $candidate?->photo_path ? asset('storage/'.$candidate->photo_path) : 'https://ui-avatars.com/api/?name='.urlencode($user->first_name).'&background=random' }}'); width: 80px; height: 80px;"></span>
                     </div>
                     <div class="col">
-                        <h2 class="display-6 fw-black mb-1">Welcome back, {{ $user->first_name }}! ðŸ‘‹</h2>
-                        <div class="opacity-75 fs-3 mb-3">CNIC: <strong class="text-white">{{ $user->cnic }}</strong> <span class="mx-2">â€¢</span> Active Applications: <strong class="text-white">{{ $applications->count() }}</strong></div>
+                        <h2 class="display-6 fw-black mb-1">Welcome back, {{ $user->first_name }}! 👋</h2>
+                        <div class="opacity-75 fs-3 mb-3">CNIC: <strong class="text-white">{{ $user->cnic }}</strong> <span class="mx-2">•</span> Active Applications: <strong class="text-white">{{ $applications->count() }}</strong></div>
                         <div class="d-flex gap-3">
                             <a href="{{ route('candidate.profile.bio') }}" class="btn btn-dark rounded-pill border-0 shadow-sm px-4">
                                 <i class="ti ti-user-circle me-2"></i> View Professional Bio
@@ -100,7 +100,7 @@
                                     @elseif($status['next_step'] == $s)
                                         <ul class="list-unstyled mb-0 text-yellow-emphasis fw-bold">
                                             @foreach($sdata['errors'] as $err)
-                                                <li>â€¢ {{ $err }}</li>
+                                                <li>• {{ $err }}</li>
                                             @endforeach
                                         </ul>
                                     @else

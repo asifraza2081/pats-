@@ -528,7 +528,13 @@ function handleStepAjax(formId) {
             const data = await res.json();
             if (res.ok && data.success) {
                 toastr.success(data.message);
-                setTimeout(() => location.reload(), 1000);
+                if (data.next_step) {
+                    setTimeout(() => {
+                        window.location.href = "{{ route('candidate.profile.show') }}?step=" + data.next_step;
+                    }, 1000);
+                } else {
+                    setTimeout(() => location.reload(), 1000);
+                }
             } else {
                 let msg = data.message || 'Validation failed. Please check your input.';
                 if (data.errors) {

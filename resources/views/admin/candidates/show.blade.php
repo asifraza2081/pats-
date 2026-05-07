@@ -94,9 +94,9 @@
                     <tbody>
                         @forelse($candidate->experience as $exp)
                         <tr>
-                            <td><div class="fw-bold">{{ $exp->organization }}</div><div class="text-secondary small">{{ $exp->sector }}</div></td>
+                            <td><div class="fw-bold">{{ $exp->organization_name }}</div><div class="text-secondary small">{{ $exp->job_type }}</div></td>
                             <td>{{ $exp->designation }}</td>
-                            <td>{{ $exp->start_date->format('M Y') }} - {{ $exp->is_current ? 'Present' : $exp->end_date?->format('M Y') }}</td>
+                            <td>{{ $exp->from_date->format('M Y') }} - {{ $exp->is_current ? 'Present' : $exp->to_date?->format('M Y') }}</td>
                         </tr>
                         @empty
                         <tr><td colspan="3" class="text-center text-secondary py-3 italic">No work history found.</td></tr>

@@ -59,6 +59,8 @@ class BatchController extends Controller
 
     public function store(\App\Http\Requests\Admin\StoreBatchRequest $request)
     {
+        set_time_limit(600);
+        ini_set('memory_limit', '1G');
         $data = $request->validated();
 
         $testDateNormalized = Carbon::parse($data['test_date'])->toDateString();
@@ -264,6 +266,8 @@ class BatchController extends Controller
     /** Bulk mark all sessions in a group as ready */
     public function bulkPublish(Request $request)
     {
+        set_time_limit(600);
+        ini_set('memory_limit', '1G');
         $request->validate([
             'batch_ids' => 'required|array',
             'batch_ids.*' => 'exists:batches,id'
