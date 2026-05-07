@@ -14,6 +14,11 @@ class AppServiceProvider extends ServiceProvider
 
     public function boot(): void
     {
+        // Hardening: Super Admin Bypass
+        \Illuminate\Support\Facades\Gate::before(function ($user, $ability) {
+            return $user->hasRole('super_admin') ? true : null;
+        });
+
         // Hardening: Rate Limiters
         RateLimiter::for('login', function (Request $request) {
             return Limit::perMinutes(15, 5)->by($request->input('email', $request->input('cnic', $request->ip())));

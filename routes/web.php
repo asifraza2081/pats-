@@ -70,7 +70,7 @@ Route::middleware(['auth'])->group(function () {
 // ═══════════════════════════════════════════════════
 // CANDIDATE ROUTES
 // ═══════════════════════════════════════════════════
-Route::middleware(['auth', 'role:candidate', 'sanitize', \App\Http\Middleware\InactivityLogout::class])->prefix('candidate')->name('candidate.')->group(function () {
+Route::middleware(['auth', 'role:candidate|admin|super_admin', 'sanitize', \App\Http\Middleware\InactivityLogout::class])->prefix('candidate')->name('candidate.')->group(function () {
 
     // Dashboard
     Route::get('/dashboard', [DashboardController::class, 'index'])->name('dashboard');

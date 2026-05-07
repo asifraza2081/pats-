@@ -99,40 +99,42 @@ class EligibilityService
     public function getProfileStatus(Candidate $candidate): array
     {
         $status = [
-            'step1' => ['success' => true, 'label' => 'Personal Information', 'errors' => []],
-            'step2' => ['success' => true, 'label' => 'Academic Records', 'errors' => []],
-            'step3' => ['success' => true, 'label' => 'Work Experience', 'errors' => []],
-            'step4' => ['success' => true, 'label' => 'Verification Documents', 'errors' => []],
+            'step1' => ['success' => true, 'label' => 'Profile Picture', 'errors' => []],
+            'step2' => ['success' => true, 'label' => 'Personal Bio', 'errors' => []],
+            'step3' => ['success' => true, 'label' => 'Academic History', 'errors' => []],
+            'step4' => ['success' => true, 'label' => 'Experience (Optional)', 'errors' => []],
         ];
 
-        // 1. Bio Step
+        // 1. Documents Step
+        if (empty($candidate->photo_path)) {
+            $status['step1']['success'] = false;
+            $status['step1']['errors'][] = "Profile photo required.";
+        }
+        // CNIC Front is hidden/optional now as per request
+        /*
+        if (empty($candidate->cnic_front_path)) {
+            $status['step1']['success'] = false;
+            $status['step1']['errors'][] = "CNIC Front copy required.";
+        }
+        */
+
+        // 2. Bio Step
         $requiredBio = ['father_name', 'dob', 'gender', 'marital_status', 'religion', 'domicile_city_id', 'permanent_address'];
         foreach ($requiredBio as $field) {
             if (empty($candidate->$field)) {
-                $status['step1']['success'] = false;
-                $status['step1']['errors'][] = "Missing " . ucwords(str_replace('_', ' ', $field));
+                $status['step2']['success'] = false;
+                $status['step2']['errors'][] = "Missing " . ucwords(str_replace('_', ' ', $field));
             }
         }
 
-        // 2. Academic Step
+        // 3. Academic Step
         if (!$candidate->education()->exists()) {
-            $status['step2']['success'] = false;
-            $status['step2']['errors'][] = "Add at least one degree/certificate.";
+            $status['step3']['success'] = false;
+            $status['step3']['errors'][] = "Add at least one degree/certificate.";
         }
 
-        // 3. Experience Step (Optional by default, but tracked)
-        // For now, we mark it as success if the user has reached it. Or logic for specific jobs.
-        // We'll leave it as success: true unless there's a specific requirement.
-
-        // 4. Documents Step
-        if (empty($candidate->photo_path)) {
-            $status['step4']['success'] = false;
-            $status['step4']['errors'][] = "Profile photo required.";
-        }
-        if (empty($candidate->cnic_front_path)) {
-            $status['step4']['success'] = false;
-            $status['step4']['errors'][] = "CNIC Front copy required.";
-        }
+        // 4. Experience Step (Optional)
+        // success is always true unless specific rules added
 
         // Calculate Percent & Next Step
         $completedSteps = 0;

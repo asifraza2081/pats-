@@ -46,7 +46,7 @@ class DashboardController extends Controller
 
         // 🟢 PATH 2: Tactical Analytics Data
         // 1. Geographic Distribution (City-wise)
-        $cityDistribution = cache()->remember('dashboard_city_distribution', now()->addMinutes(15), function() {
+        $cityDistribution = cache()->remember('dashboard_city_distribution', now()->addMinutes(15), function() use ($stats) {
             return Application::select('desired_test_city_id', DB::raw('count(*) as count'))
                 ->groupBy('desired_test_city_id')
                 ->with('desiredTestCity')
@@ -113,7 +113,7 @@ class DashboardController extends Controller
 
         // 3. Project ROI (Revenue vs Expenses)
         $projectRoi = cache()->remember('dashboard_project_roi', now()->addMinutes(15), function() {
-            return Project::whereIn('status', [ProjectStatus::OPEN])
+            return Project::whereIn('status', [ProjectStatus::OPEN->value])
                 ->get()
                 ->map(function($project) {
                     $revenue = FinancialLedger::revenue()->forProject($project->id)->sum('net_amount');

@@ -93,12 +93,12 @@ class ProfileController extends Controller
             return response()->json([
                 'success' => true,
                 'message' => 'Biographical information saved.',
-                'next_step' => 2
+                'next_step' => 3
             ]);
         }
 
-        return redirect()->route('candidate.profile.show', ['step' => 2])
-            ->with('success', 'Biographical information saved. Proceed to Step 2.');
+        return redirect()->route('candidate.profile.show', ['step' => 3])
+            ->with('success', 'Biographical information saved. Proceed to Step 3.');
     }
 
     public function updateDocs(StepDocsRequest $request)
@@ -125,12 +125,13 @@ class ProfileController extends Controller
         if ($request->ajax()) {
             return response()->json([
                 'success' => true,
-                'message' => 'Documents uploaded successfully.'
+                'message' => 'Documents uploaded successfully.',
+                'next_step' => 2
             ]);
         }
 
-        return redirect()->route('candidate.profile.show', ['step' => 4])
-            ->with('success', 'Documents uploaded successfully.');
+        return redirect()->route('candidate.profile.show', ['step' => 2])
+            ->with('success', 'Documents uploaded successfully. Proceed to Step 2.');
     }
 
     // ── Education ─────────────────────────────────────────────

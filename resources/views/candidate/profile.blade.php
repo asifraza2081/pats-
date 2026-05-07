@@ -95,7 +95,7 @@
         
         <div class="card border-0 shadow-sm rounded-4 overflow-hidden sticky-top" style="top: 20px;">
             <div class="list-group list-group-flush">
-                @foreach(['1' => 'Personal Bio', '2' => 'Academic History', '3' => 'Work Experience', '4' => 'Documents'] as $s => $label)
+                @foreach(['1' => 'Profile Picture', '2' => 'Personal Bio', '3' => 'Academic History', '4' => 'Work Experience'] as $s => $label)
                     @php 
                         $isAccessible = $candidate->isStepAccessible((int)$s);
                         $isComplete = $status['step'.$s]['success'] ?? false;
@@ -147,21 +147,72 @@
         @endif
 
         <div class="tab-content">
-            <!-- STEP 1: PERSONAL BIO -->
+            <!-- STEP 1: VERIFICATION DOCUMENTS -->
             @if($step == 1)
             <div class="card border-0 shadow-lg rounded-5 overflow-hidden animate__animated animate__fadeInRight">
+                <div class="card-header border-0 py-4 px-5 text-white bg-pats-primary" style="background: linear-gradient(135deg, #be185d 0%, #831843 100%) !important;">
+                    <h3 class="card-title text-white m-0 fw-black fs-2"><i class="ti ti-camera me-2 fs-1"></i> Step 1: Verification Documents</h3>
+                </div>
+                <form method="POST" action="{{ route('candidate.profile.update.docs') }}" enctype="multipart/form-data" class="no-spinner" id="docsForm">
+                    @csrf @method('PUT')
+                    <div class="card-body p-4 p-md-5">
+                        <div class="row g-5 justify-content-center">
+                            <!-- Photo Upload -->
+                            <div class="col-md-6 text-center">
+                                <div class="p-4 border-dashed rounded-4 bg-light">
+                                    <div class="mb-3">
+                                        <img id="photo_preview" src="{{ $candidate->photo_path ? asset('storage/'.$candidate->photo_path) : 'https://ui-avatars.com/api/?name='.urlencode(auth()->user()->first_name) }}" 
+                                             class="rounded-4 border-4 border-white shadow-sm object-cover" 
+                                             style="width: 150px; height: 180px;">
+                                    </div>
+                                    <label class="btn btn-primary rounded-pill px-4">
+                                        <i class="ti ti-camera me-2"></i> UPLOAD PROFILE PHOTO
+                                        <input type="file" name="photo" class="d-none" onchange="previewFile(this, 'photo_preview')">
+                                    </label>
+                                    <div class="form-hint mt-2">Passport size, white background. Max 5MB.</div>
+                                </div>
+                            </div>
+                            <!-- CNIC Upload Hidden as per request -->
+                            <div class="col-md-6 text-center d-none">
+                                <div class="p-4 border-dashed rounded-4 bg-light">
+                                    <div class="mb-3">
+                                        <img id="cnic_preview" src="{{ $candidate->cnic_front_path ? asset('storage/'.$candidate->cnic_front_path) : 'https://placehold.co/300x200?text=CNIC+FRONT' }}" 
+                                             class="rounded-3 border shadow-sm object-cover" 
+                                             style="width: 100%; height: 180px;">
+                                    </div>
+                                    <label class="btn btn-secondary rounded-pill px-4">
+                                        <i class="ti ti-id me-2"></i> UPLOAD CNIC FRONT
+                                        <input type="file" name="cnic_copy" class="d-none" onchange="previewFile(this, 'cnic_preview')">
+                                    </label>
+                                    <div class="form-hint mt-2">Scanned copy of CNIC Front side. Max 5MB.</div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="card-footer bg-light p-4 d-flex justify-content-between">
+                        <button type="button" class="btn btn-ghost-secondary rounded-pill px-4" disabled>PREVIOUS</button>
+                        <button type="submit" class="btn btn-next-step px-5 py-3 rounded-pill fw-black shadow-lg text-white">
+                            SAVE & PROCEED TO PERSONAL BIO <i class="ti ti-arrow-right-bar ms-2"></i>
+                        </button>
+                    </div>
+                </form>
+            </div>
+            @endif
+
+            <!-- STEP 2: PERSONAL BIO -->
+            @if($step == 2)
+            <div class="card border-0 shadow-lg rounded-5 overflow-hidden animate__animated animate__fadeInRight">
                 <div class="card-header border-0 py-4 px-5 text-white bg-pats-primary">
-                    <h3 class="card-title text-white m-0 fw-black fs-2"><i class="ti ti-user-check me-2 fs-1 text-primary"></i> Step 1: Personal Information</h3>
+                    <h3 class="card-title text-white m-0 fw-black fs-2"><i class="ti ti-user-check me-2 fs-1 text-primary"></i> Step 2: Personal Information</h3>
                 </div>
                 <form method="POST" action="{{ route('candidate.profile.update.bio') }}" id="step1Form" class="no-spinner">
                     @csrf @method('PUT')
                     <div class="card-body p-4 p-md-5">
                         <div class="row g-4">
-                            <div class="col-md-6">
+                            <div class="col-md-6 d-none"> <!-- HIDE NIC AS PER REQUEST -->
                                 <label class="form-label text-pats-primary fw-bold">CNIC Number</label>
                                 <input type="text" name="cnic" id="cnic_mask" class="form-control bg-light" value="{{ old('cnic', auth()->user()->cnic) }}" placeholder="XXXXX-XXXXXXX-X" readonly tabindex="-1">
                                 <div class="form-hint small text-muted">CNIC cannot be changed after registration.</div>
-                                @error('cnic') <div class="text-danger small mt-1">{{ $message }}</div> @enderror
                             </div>
                             <div class="col-md-6">
                                 <label class="form-label required text-pats-primary fw-bold">Father's Name</label>
@@ -174,7 +225,6 @@
                             <div class="col-md-6">
                                 <label class="form-label">Alternative Mobile Number (Optional)</label>
                                 <input type="text" name="alternate_phone" class="form-control" value="{{ old('alternate_phone', $candidate->alternate_phone) }}" placeholder="e.g. 0300-1234567">
-                                @error('alternate_phone') <div class="text-danger small mt-1">{{ $message }}</div> @enderror
                             </div>
                             <div class="col-md-4">
                                 <label class="form-label required">Date of Birth</label>
@@ -239,7 +289,7 @@
                         </div>
                     </div>
                     <div class="card-footer bg-light p-4 d-flex justify-content-between align-items-center">
-                        <button type="button" class="btn btn-ghost-secondary rounded-pill px-4" disabled>PREVIOUS</button>
+                        <a href="{{ route('candidate.profile.show', ['step' => 1]) }}" class="btn btn-ghost-secondary rounded-pill px-4">PREVIOUS</a>
                         <button type="submit" class="btn btn-next-step px-5 py-3 rounded-pill fw-black shadow-lg">
                             SAVE & PROCEED TO ACADEMICS <i class="ti ti-arrow-right-bar ms-2"></i>
                         </button>
@@ -248,11 +298,11 @@
             </div>
             @endif
 
-            <!-- STEP 2: ACADEMIC RECORDS -->
-            @if($step == 2)
+            <!-- STEP 3: ACADEMIC RECORDS -->
+            @if($step == 3)
             <div class="card border-0 shadow-lg rounded-5 overflow-hidden animate__animated animate__fadeInRight">
                 <div class="card-header border-0 py-4 px-5 text-white bg-pats-primary d-flex justify-content-between align-items-center" style="background: linear-gradient(135deg, #4f46e5 0%, #312e81 100%) !important;">
-                    <h3 class="card-title text-white m-0 fw-black fs-2"><i class="ti ti-school me-2 fs-1"></i> Step 2: Academic History</h3>
+                    <h3 class="card-title text-white m-0 fw-black fs-2"><i class="ti ti-school me-2 fs-1"></i> Step 3: Academic History</h3>
                     <button type="button" class="btn bg-white text-indigo btn-sm fw-bold rounded-pill px-3 shadow-sm" data-bs-toggle="collapse" data-bs-target="#addEduForm">
                         <i class="ti ti-plus me-1"></i> ADD DEGREE
                     </button>
@@ -313,9 +363,9 @@
                 <div class="card-footer bg-light p-4 text-center">
                     <div class="text-muted small mb-3">Finished adding your educational qualifications?</div>
                     <div class="d-flex justify-content-between align-items-center">
-                        <a href="{{ route('candidate.profile.show', ['step' => 1]) }}" class="btn btn-ghost-secondary rounded-pill px-4">PREVIOUS</a>
-                        <a href="{{ $status['step2']['success'] ? route('candidate.profile.show', ['step' => 3]) : '#' }}" 
-                        class="btn btn-next-step px-5 py-3 rounded-pill fw-black shadow-lg {{ !$status['step2']['success'] ? 'disabled opacity-50' : '' }}">
+                        <a href="{{ route('candidate.profile.show', ['step' => 2]) }}" class="btn btn-ghost-secondary rounded-pill px-4">PREVIOUS</a>
+                        <a href="{{ $status['step3']['success'] ? route('candidate.profile.show', ['step' => 4]) : '#' }}" 
+                        class="btn btn-next-step px-5 py-3 rounded-pill fw-black shadow-lg {{ !$status['step3']['success'] ? 'disabled opacity-50' : '' }}">
                             PROCEED TO WORK EXPERIENCE <i class="ti ti-arrow-right-bar ms-2"></i>
                         </a>
                     </div>
@@ -323,11 +373,11 @@
             </div>
             @endif
 
-            <!-- STEP 3: WORK EXPERIENCE -->
-            @if($step == 3)
+            <!-- STEP 4: WORK EXPERIENCE -->
+            @if($step == 4)
             <div class="card border-0 shadow-lg rounded-5 overflow-hidden animate__animated animate__fadeInRight">
                 <div class="card-header border-0 py-4 px-5 text-white bg-pats-primary d-flex justify-content-between align-items-center" style="background: linear-gradient(135deg, #0f766e 0%, #134e4a 100%) !important;">
-                    <h3 class="card-title text-white m-0 fw-black fs-2"><i class="ti ti-briefcase me-2 fs-1"></i> Step 3: Work Experience</h3>
+                    <h3 class="card-title text-white m-0 fw-black fs-2"><i class="ti ti-briefcase me-2 fs-1"></i> Step 4: Work Experience</h3>
                     <button type="button" class="btn bg-white text-teal btn-sm fw-bold rounded-pill px-3 shadow-sm" data-bs-toggle="collapse" data-bs-target="#addExpForm">
                         <i class="ti ti-plus me-1"></i> ADD EXPERIENCE
                     </button>
@@ -375,72 +425,20 @@
                         @empty
                             <div class="text-center py-5 text-muted empty-exp">
                                 <i class="ti ti-briefcase fs-0 opacity-20 d-block mb-3"></i>
-                                Optional: Add your work history. You can click "Next" if you have no experience.
+                                Optional: Add your work history. You can click "Finish" if you have no experience.
                             </div>
                         @endforelse
                     </div>
                 </div>
                 <div class="card-footer bg-light p-4 text-center">
-                    <div class="text-muted small mb-3 text-teal">No work experience? No problem. It's optional for many positions.</div>
+                    <div class="text-muted small mb-3 text-teal">Finished your profile? You can now browse and apply for jobs.</div>
                     <div class="d-flex justify-content-between align-items-center">
-                        <a href="{{ route('candidate.profile.show', ['step' => 2]) }}" class="btn btn-ghost-secondary rounded-pill px-4">PREVIOUS</a>
-                        <a href="{{ route('candidate.profile.show', ['step' => 4]) }}" class="btn btn-next-step px-5 py-3 rounded-pill fw-black shadow-lg">
-                            PROCEED TO DOCUMENTS <i class="ti ti-arrow-right-bar ms-2"></i>
+                        <a href="{{ route('candidate.profile.show', ['step' => 3]) }}" class="btn btn-ghost-secondary rounded-pill px-4">PREVIOUS</a>
+                        <a href="{{ route('projects') }}" class="btn btn-next-step px-5 py-3 rounded-pill fw-black shadow-lg">
+                            FINISH & BROWSE JOBS <i class="ti ti-circle-check ms-2"></i>
                         </a>
                     </div>
                 </div>
-            </div>
-            @endif
-
-            <!-- STEP 4: DOCUMENTS -->
-            @if($step == 4)
-            <div class="card border-0 shadow-lg rounded-5 overflow-hidden animate__animated animate__fadeInRight">
-                <div class="card-header border-0 py-4 px-5 text-white bg-pats-primary" style="background: linear-gradient(135deg, #be185d 0%, #831843 100%) !important;">
-                    <h3 class="card-title text-white m-0 fw-black fs-2"><i class="ti ti-file-text me-2 fs-1"></i> Step 4: Verification Documents</h3>
-                </div>
-                <form method="POST" action="{{ route('candidate.profile.update.docs') }}" enctype="multipart/form-data" class="no-spinner" id="docsForm">
-                    @csrf @method('PUT')
-                    <div class="card-body p-4 p-md-5">
-                        <div class="row g-5">
-                            <!-- Photo Upload -->
-                            <div class="col-md-6 text-center">
-                                <div class="p-4 border-dashed rounded-4 bg-light">
-                                    <div class="mb-3">
-                                        <img id="photo_preview" src="{{ $candidate->photo_path ? asset('storage/'.$candidate->photo_path) : 'https://ui-avatars.com/api/?name='.urlencode(auth()->user()->first_name) }}" 
-                                             class="rounded-4 border-4 border-white shadow-sm object-cover" 
-                                             style="width: 150px; height: 180px;">
-                                    </div>
-                                    <label class="btn btn-primary rounded-pill px-4">
-                                        <i class="ti ti-camera me-2"></i> UPLOAD PROFILE PHOTO
-                                        <input type="file" name="photo" class="d-none" onchange="previewFile(this, 'photo_preview')">
-                                    </label>
-                                    <div class="form-hint mt-2">Passport size, white background. Max 5MB.</div>
-                                </div>
-                            </div>
-                            <!-- CNIC Upload -->
-                            <div class="col-md-6 text-center">
-                                <div class="p-4 border-dashed rounded-4 bg-light">
-                                    <div class="mb-3">
-                                        <img id="cnic_preview" src="{{ $candidate->cnic_front_path ? asset('storage/'.$candidate->cnic_front_path) : 'https://placehold.co/300x200?text=CNIC+FRONT' }}" 
-                                             class="rounded-3 border shadow-sm object-cover" 
-                                             style="width: 100%; height: 180px;">
-                                    </div>
-                                    <label class="btn btn-secondary rounded-pill px-4">
-                                        <i class="ti ti-id me-2"></i> UPLOAD CNIC FRONT
-                                        <input type="file" name="cnic_copy" class="d-none" onchange="previewFile(this, 'cnic_preview')">
-                                    </label>
-                                    <div class="form-hint mt-2">Scanned copy of CNIC Front side. Max 5MB.</div>
-                                </div>
-                            </div>
-                        </div>
-                    </div>
-                    <div class="card-footer bg-light p-4 d-flex justify-content-between">
-                        <a href="{{ route('candidate.profile.show', ['step' => 3]) }}" class="btn btn-ghost-secondary rounded-pill px-4">PREVIOUS</a>
-                        <button type="submit" class="btn btn-pink px-5 py-3 rounded-pill fw-black shadow-lg text-white" style="background: linear-gradient(135deg, #be185d 0%, #831843 100%) !important;">
-                            SAVE & FINISH PROFILE <i class="ti ti-circle-check ms-2"></i>
-                        </button>
-                    </div>
-                </form>
             </div>
             @endif
         </div>
